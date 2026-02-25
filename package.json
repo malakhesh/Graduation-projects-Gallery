@@ -1,0 +1,26 @@
+{
+  "name": "graduation-projects-gallery",
+  "version": "1.0.0",
+  "description": "- web\r - mobile\r - dashboard\r - docs",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ndosha123mo-lab/Graduation-projects-Gallery.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ndosha123mo-lab/Graduation-projects-Gallery/issues"
+  },
+  "homepage": "https://github.com/ndosha123mo-lab/Graduation-projects-Gallery#readme",
+  "dependencies": {
+    "firebase": "^12.9.0"
+  }
+}
