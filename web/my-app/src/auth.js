@@ -14,11 +14,9 @@ async function regUser(email, pass, name, role) {
     return u.user
   } catch (err) {
     if (err.code === "auth/email-already-in-use") {
-      alert("email used")
-      return {error: "email-used"}
+      return "email-used"
     } else {
-      alert("register fail")
-      return {error: "register-fail"}
+      return "register-fail"
     }
   }
 }
@@ -29,13 +27,10 @@ async function logUser(email, pass) {
     return u.user
   } catch (err) {
     if (err.code === "auth/wrong-password") {
-      alert("wrong pass")
-      return {error: "wrong-password"}
+      return "wrong-password"
     } else if (err.code === "auth/user-not-found") {
-      alert("no user")
-      return {error: "no user"}
+      return "no-user"
     } else {
-      alert("login fail")
       return null
     }
   }
