@@ -1,0 +1,127 @@
+body {
+  background-color: rgb(223, 205, 192);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border: 1px solid rgb(254, 251, 245);
+  border-radius: 10px;
+  padding: 40px;
+  background-color: rgb(254, 251, 245);
+  width: 350px;
+  height: 400px;
+}
+
+.login-container h1 {
+  margin-top: 25px;
+  color: rgb(47, 28, 15);
+  font-size: 40px;
+  font-family: 'Times New Roman', Times, serif;
+  font-weight: 700;
+}
+
+.l {
+  height: 40px;
+  color: rgb(104, 68, 42);
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 550;
+  font-size: 14px;
+}
+
+.input-email, .input-password {
+  width: 350px;
+  height: 40px;
+  padding: 10px;
+  padding-right: 35px; 
+  border-radius: 6px;
+  border: 1px solid rgb(185, 174, 167);
+  box-sizing: border-box;
+}
+/*hides on chrome*/
+.input-password::-webkit-credentials-auto-fill-button,
+.input-password::-webkit-textfield-decoration-container {
+  display: none;
+}
+
+/*hides on edge*/
+.input-password::-ms-reveal,
+.input-password::-ms-clear {
+  display: none;
+}
+
+.input-email {
+  margin-bottom: 20px;
+}
+
+.label-email, .label-pass {
+  display: block;
+  color: rgb(104, 68, 42);
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 550;
+  font-size: 14px;
+  margin-bottom: 7px;
+}
+
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-password {
+  width: 100%;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  cursor: pointer;
+  font-size: 16px;
+  color: rgb(104, 68, 42);
+}
+
+button {
+  width: 80px;
+  height: 30px;
+  background-color: rgb(104, 68, 42);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+button:hover {
+  background-color: rgb(75, 48, 28);
+}
+
+button:active {
+  background-color: rgb(50, 30, 15);
+}
+
+.swapper {
+  margin-top: 20px;
+  color: rgb(47, 28, 15);
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 550;
+  font-size: 14px;
+}
+
+.swapper a {
+  color: rgb(164, 132, 109);
+  text-decoration: none;
+}
+
+.swapper a:hover {
+  color: rgb(75, 48, 28);
+  text-decoration: underline;
+}
