@@ -43,6 +43,8 @@ function Register() {
     if (user) {
       console.log("Register successful");
       // redirect here later
+    }else {
+  setError("Registration failed. Please try again"); 
     }
   };
 
