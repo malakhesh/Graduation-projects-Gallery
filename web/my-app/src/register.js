@@ -45,9 +45,9 @@ function Register() {
     } else if (user) {
       console.log("Register successful");
       // redirect here later
-    } else {
+      } else {
       setError("Registration failed. Please try again");
-    }
+        }
   };
 
   return (
