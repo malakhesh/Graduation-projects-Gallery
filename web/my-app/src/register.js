@@ -40,11 +40,13 @@ function Register() {
     }
 
     const user = await regUser(email, password, fullName, "client");
-    if (user) {
+    if (user === "email-used") {
+      setError("This email is already registered. Please use a different email.");
+    } else if (user) {
       console.log("Register successful");
       // redirect here later
-    }else {
-  setError("Registration failed. Please try again"); 
+    } else {
+      setError("Registration failed. Please try again");
     }
   };
 

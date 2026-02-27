@@ -28,11 +28,15 @@ function Login() {
     }
 
     const user = await logUser(email, password);
-    if (user) {
+    if (user === 'no-user') {
+      setError('No account found with this email');
+    } else if (user === 'wrong-password') {
+      setError('Wrong password, please try again');
+    } else if (user) {
       console.log('Login successful');
       // redirect here later
     } else {
-      setError('Invalid email or password');
+      setError('Login failed. Please try again');
     }
   };
 
