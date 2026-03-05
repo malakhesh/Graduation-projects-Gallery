@@ -69,7 +69,7 @@ function AppLayout() {
                   transition: "all 0.3s ease",
                   fontWeight: hoveredNav === item ? "bold" : "normal",
                 }}
-              onClick={() => { if (item === "Dashboard") navigate("/"); }}
+              onClick={() => { if (item === "HOME") navigate("/"); }}
               >{item}</li>
             ))}
           </ul>
