@@ -53,9 +53,9 @@ function AppLayout() {
         display: "flex", flexDirection: "column", justifyContent: "space-between"
       }}>
         <div>
-          <h2 style={{ marginBottom: "20px", color: "#3B2F2F" }}>Graduation Projects Catalog</h2>
+          <h2 style={{ marginBottom: "20px", color: "#3B2F2F" }}>DASHBOARD</h2>
           <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: "55px" }}>
-            {["Dashboard", "Profile", "Team", "Settings"].map((item) => (
+            {["HOME", "PROFILE", "TEAM", "SETTINGS"].map((item) => (
               <li key={item}
                 onMouseEnter={() => setHoveredNav(item)}
                 onMouseLeave={() => setHoveredNav(null)}
