@@ -99,6 +99,9 @@ function AppLayout() {
           <h2 style={{ marginBottom:"20px", color:"#3B2F2F" }}>DASHBOARD</h2>
           <ul style={{ listStyle:"none", padding:0, display:"flex", flexDirection:"column", gap:"55px" }}>
             {["HOME","PROFILE","TEAM","SETTINGS"].map((item) => (
+          <h2 style={{ marginBottom: "20px", color: "#3B2F2F" }}>DASHBOARD</h2>
+          <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: "55px" }}>
+            {["HOME", "PROFILE", "TEAM", "SETTINGS"].map((item) => (
               <li key={item}
                 onMouseEnter={() => setHoveredNav(item)}
                 onMouseLeave={() => setHoveredNav(null)}
@@ -112,6 +115,7 @@ function AppLayout() {
                   transition:"all 0.3s ease",
                   fontWeight: hoveredNav===item ? "bold" : "normal",
                 }}
+              onClick={() => { if (item === "HOME") navigate("/"); }}
               >{item}</li>
             ))}
           </ul>
