@@ -1,6 +1,7 @@
-import { auth, db } from "./firebase.js"
+import { auth, db } from "./firebase";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged } from "firebase/auth"
 import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore"
+
 
 async function regUser(email, pass, name, role) {
   try {
@@ -13,9 +14,9 @@ async function regUser(email, pass, name, role) {
     return u.user
   } catch (err) {
     if (err.code === "auth/email-already-in-use") {
-      return  "email-in-use" 
+      alert("email used")
     } else {
-      return  "register-fail" 
+      alert("register fail")
     }
   }
 }
@@ -26,11 +27,11 @@ async function logUser(email, pass) {
     return u.user
   } catch (err) {
     if (err.code === "auth/wrong-password") {
-      return"wrong pass"
+      alert("wrong pass")
     } else if (err.code === "auth/user-not-found") {
-      return"no user"
+      alert("no user")
     } else {
-      return"login fail"
+      alert("login fail")
     }
   }
 }
