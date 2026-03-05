@@ -70,9 +70,16 @@ function AppLayout() {
 
   const getBoxStyle = (id, baseColor) => ({
     flex: 1, minWidth: 0, maxWidth: "none",
-    backgroundColor: hoveredBox === id ? lightenColor(baseColor) : baseColor,
+    backgroundColor: hoveredBox === id
+      ? lightenColor(baseColor) + "ee"
+      : baseColor + "cc",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
     borderRadius: "10px",
-    boxShadow: hoveredBox === id ? "0 12px 28px rgba(0,0,0,0.25)" : "0 4px 8px rgba(0,0,0,0.1)",
+    border: "1px solid rgba(255,255,255,0.3)",
+    boxShadow: hoveredBox === id
+      ? "0 12px 28px rgba(0,0,0,0.35)"
+      : "0 4px 16px rgba(0,0,0,0.2)",
     height: "270px",
     display: "flex", flexDirection: "column",
     justifyContent: "space-between", alignItems: "stretch",
@@ -93,19 +100,18 @@ function AppLayout() {
       <aside style={{
         position:"fixed", left:0, top:0, bottom:0, width:"200px",
         backgroundColor:"#f0e5d8", padding:"20px",
+        borderRight:"2px solid rgba(111,78,55,0.25)",
         display:"flex", flexDirection:"column", justifyContent:"space-between",
+        zIndex: 10,
       }}>
         <div>
           <h2 style={{ marginBottom:"20px", color:"#3B2F2F" }}>DASHBOARD</h2>
           <ul style={{ listStyle:"none", padding:0, display:"flex", flexDirection:"column", gap:"55px" }}>
             {["HOME","PROFILE","TEAM","SETTINGS"].map((item) => (
-          <h2 style={{ marginBottom: "20px", color: "#3B2F2F" }}>DASHBOARD</h2>
-          <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: "55px" }}>
-            {["HOME", "PROFILE", "TEAM", "SETTINGS"].map((item) => (
               <li key={item}
                 onMouseEnter={() => setHoveredNav(item)}
                 onMouseLeave={() => setHoveredNav(null)}
-                onClick={() => { if (item==="Dashboard") navigate("/"); }}
+                onClick={() => { if (item==="HOME") navigate("/"); }}
                 style={{
                   padding:"8px 10px", borderBottom:"1px solid #ccc",
                   cursor:"pointer", color:"#6F4E37", borderRadius:"8px",
@@ -115,7 +121,6 @@ function AppLayout() {
                   transition:"all 0.3s ease",
                   fontWeight: hoveredNav===item ? "bold" : "normal",
                 }}
-              onClick={() => { if (item === "HOME") navigate("/"); }}
               >{item}</li>
             ))}
           </ul>
@@ -140,94 +145,95 @@ function AppLayout() {
 
       <main style={{
         display:"flex", flexDirection:"column",
-        marginLeft:"200px", backgroundColor:"transparent",
+        marginLeft:"200px",
+        background:"linear-gradient(to top, #c9a882, #f0e5d8)",
         height:"100vh", width:"calc(100vw - 200px)",
         boxSizing:"border-box", overflow:"hidden",
       }}>
         <GoldenWreath />
 
-        <div style={{
-          display:"flex", flexDirection:"row",
-          padding:"0 60px 30px", gap:"30px",
-          flex:1, alignItems:"center",
-        }}>
-          <div style={getBoxStyle(1,"#eddcc8")}
-            onMouseEnter={()=>setHoveredBox(1)} onMouseLeave={()=>setHoveredBox(null)}>
-            <div style={{ display:"flex", alignItems:"center", gap:"8px", overflow:"hidden" }}>
-              <span style={{ fontSize:"22px", flexShrink:0 }}>📋</span>
-              <span style={{ fontSize:"22px", fontWeight:"700", letterSpacing:"0.5px", color:"#3B1F0F", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>PROJECTS TO REVIEW</span>
-            </div>
-            <div style={{ fontSize:"56px", fontWeight:"800", color:"#3B2F2F", lineHeight:1, textAlign:"center" }}>12</div>
-            <div>
-              <div style={{ width:"100%", backgroundColor:"#c8a882", borderRadius:"10px", height:"8px", overflow:"hidden" }}>
-                <div style={{ width:"60%", backgroundColor:"#6F4E37", height:"100%", borderRadius:"10px", transition:"width 0.5s ease" }}/>
+          <div style={{
+            display:"flex", flexDirection:"row",
+            padding:"0 60px 30px", gap:"30px",
+            flex:1, alignItems:"center",
+          }}>
+            <div style={getBoxStyle(1,"#eddcc8")}
+              onMouseEnter={()=>setHoveredBox(1)} onMouseLeave={()=>setHoveredBox(null)}>
+              <div style={{ display:"flex", alignItems:"center", gap:"8px", overflow:"hidden" }}>
+                <span style={{ fontSize:"22px", flexShrink:0 }}>📋</span>
+                <span style={{ fontSize:"22px", fontWeight:"700", letterSpacing:"0.5px", color:"#3B1F0F", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>PROJECTS TO REVIEW</span>
               </div>
-              <div style={{ fontSize:"12px", color:"#5C4033", marginTop:"4px" }}>60% reviewed</div>
-            </div>
-          </div>
-
-          <div style={getBoxStyle(2,"#e5ceb5")}
-            onMouseEnter={()=>setHoveredBox(2)} onMouseLeave={()=>setHoveredBox(null)}>
-            <div style={{ display:"flex", alignItems:"center", gap:"8px", overflow:"hidden" }}>
-              <span style={{ fontSize:"22px", flexShrink:0 }}>📝</span>
-              <span style={{ fontSize:"22px", fontWeight:"700", letterSpacing:"0.5px", color:"#3B1F0F", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>PROJECTS TO REPORT</span>
-            </div>
-            <div style={{ fontSize:"56px", fontWeight:"800", color:"#3B2F2F", lineHeight:1, textAlign:"center" }}>7</div>
-            <div>
-              <div style={{ width:"100%", backgroundColor:"#b89868", borderRadius:"10px", height:"8px", overflow:"hidden" }}>
-                <div style={{ width:"10%", backgroundColor:"#5C4033", height:"100%", borderRadius:"10px", transition:"width 0.5s ease" }}/>
+              <div style={{ fontSize:"56px", fontWeight:"800", color:"#3B2F2F", lineHeight:1, textAlign:"center" }}>12</div>
+              <div>
+                <div style={{ width:"100%", backgroundColor:"#c8a882", borderRadius:"10px", height:"8px", overflow:"hidden" }}>
+                  <div style={{ width:"60%", backgroundColor:"#6F4E37", height:"100%", borderRadius:"10px", transition:"width 0.5s ease" }}/>
+                </div>
+                <div style={{ fontSize:"12px", color:"#5C4033", marginTop:"4px" }}>60% reviewed</div>
               </div>
-              <div style={{ fontSize:"12px", color:"#5C4033", marginTop:"4px" }}>10% reported</div>
             </div>
-          </div>
 
-          <div style={getBoxStyle(3,"#dcc4a8")}
-            onMouseEnter={()=>setHoveredBox(3)} onMouseLeave={()=>setHoveredBox(null)}>
-            <p style={{ margin:"0", fontSize:"22px", fontWeight:"bold", color:"#3B1F0F" }}>Projects Distribution</p>
-            <div style={{ display:"flex", justifyContent:"center", alignItems:"center", flex:1, position:"relative" }}>
-              <svg width="170" height="170" viewBox="0 0 140 140">
+            <div style={getBoxStyle(2,"#e5ceb5")}
+              onMouseEnter={()=>setHoveredBox(2)} onMouseLeave={()=>setHoveredBox(null)}>
+              <div style={{ display:"flex", alignItems:"center", gap:"8px", overflow:"hidden" }}>
+                <span style={{ fontSize:"22px", flexShrink:0 }}>📝</span>
+                <span style={{ fontSize:"22px", fontWeight:"700", letterSpacing:"0.5px", color:"#3B1F0F", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>PROJECTS TO REPORT</span>
+              </div>
+              <div style={{ fontSize:"56px", fontWeight:"800", color:"#3B2F2F", lineHeight:1, textAlign:"center" }}>7</div>
+              <div>
+                <div style={{ width:"100%", backgroundColor:"#b89868", borderRadius:"10px", height:"8px", overflow:"hidden" }}>
+                  <div style={{ width:"10%", backgroundColor:"#5C4033", height:"100%", borderRadius:"10px", transition:"width 0.5s ease" }}/>
+                </div>
+                <div style={{ fontSize:"12px", color:"#5C4033", marginTop:"4px" }}>10% reported</div>
+              </div>
+            </div>
+
+            <div style={getBoxStyle(3,"#dcc4a8")}
+              onMouseEnter={()=>setHoveredBox(3)} onMouseLeave={()=>setHoveredBox(null)}>
+              <p style={{ margin:"0", fontSize:"22px", fontWeight:"bold", color:"#3B1F0F" }}>Projects Distribution</p>
+              <div style={{ display:"flex", justifyContent:"center", alignItems:"center", flex:1, position:"relative" }}>
+                <svg width="170" height="170" viewBox="0 0 140 140">
+                  {slices.map((slice) => (
+                    <g key={slice.id}
+                      onMouseEnter={()=>setHoveredSlice(slice.id)}
+                      onMouseLeave={()=>setHoveredSlice(null)}
+                      style={{ cursor:"pointer" }}>
+                      <path d={slice.path} fill={slice.color}
+                        opacity={hoveredSlice===slice.id ? 1 : 0.85}
+                        transform={hoveredSlice===slice.id ? `translate(${slice.id==="web"?4:slice.id==="ai"?0:-4},${slice.id==="web"?-4:slice.id==="ai"?4:-4})` : "translate(0,0)"}
+                        style={{ transition:"all 0.25s ease" }}/>
+                      <text x={slice.labelX} y={slice.labelY} textAnchor="middle" fill="white" fontSize="9" fontWeight="bold" style={{pointerEvents:"none"}}>{slice.percent}</text>
+                      <text x={slice.countX} y={slice.countY} textAnchor="middle" fill="white" fontSize="8" style={{pointerEvents:"none"}}>{slice.count} projects</text>
+                    </g>
+                  ))}
+                  <circle cx="70" cy="70" r="25" fill="#f0e5d8"/>
+                </svg>
+                {hoveredSlice && (() => {
+                  const s = slices.find(sl=>sl.id===hoveredSlice);
+                  return (
+                    <div style={{
+                      position:"absolute", top:"0px", right:"-10px",
+                      backgroundColor:"#3B2F2F", color:"white",
+                      padding:"6px 10px", borderRadius:"8px",
+                      fontSize:"12px", fontWeight:"bold",
+                      pointerEvents:"none", whiteSpace:"nowrap",
+                      boxShadow:"0 4px 12px rgba(0,0,0,0.3)", zIndex:10,
+                    }}>
+                      {s.label}: {s.count} projects ({s.percent})
+                    </div>
+                  );
+                })()}
+              </div>
+              <div style={{ display:"flex", gap:"10px", flexWrap:"wrap", justifyContent:"center" }}>
                 {slices.map((slice) => (
-                  <g key={slice.id}
-                    onMouseEnter={()=>setHoveredSlice(slice.id)}
-                    onMouseLeave={()=>setHoveredSlice(null)}
-                    style={{ cursor:"pointer" }}>
-                    <path d={slice.path} fill={slice.color}
-                      opacity={hoveredSlice===slice.id ? 1 : 0.85}
-                      transform={hoveredSlice===slice.id ? `translate(${slice.id==="web"?4:slice.id==="ai"?0:-4},${slice.id==="web"?-4:slice.id==="ai"?4:-4})` : "translate(0,0)"}
-                      style={{ transition:"all 0.25s ease" }}/>
-                    <text x={slice.labelX} y={slice.labelY} textAnchor="middle" fill="white" fontSize="9" fontWeight="bold" style={{pointerEvents:"none"}}>{slice.percent}</text>
-                    <text x={slice.countX} y={slice.countY} textAnchor="middle" fill="white" fontSize="8" style={{pointerEvents:"none"}}>{slice.count} projects</text>
-                  </g>
+                  <span key={slice.id} style={{ display:"flex", alignItems:"center", gap:"4px", fontSize:"11px", fontWeight:"bold",
+                    opacity: hoveredSlice===slice.id ? 1 : 0.7, transition:"opacity 0.25s ease" }}>
+                    <span style={{ width:"10px", height:"10px", borderRadius:"50%", backgroundColor:slice.color, display:"inline-block" }}/>
+                    {slice.label}
+                  </span>
                 ))}
-                <circle cx="70" cy="70" r="25" fill="#f0e5d8"/>
-              </svg>
-              {hoveredSlice && (() => {
-                const s = slices.find(sl=>sl.id===hoveredSlice);
-                return (
-                  <div style={{
-                    position:"absolute", top:"0px", right:"-10px",
-                    backgroundColor:"#3B2F2F", color:"white",
-                    padding:"6px 10px", borderRadius:"8px",
-                    fontSize:"12px", fontWeight:"bold",
-                    pointerEvents:"none", whiteSpace:"nowrap",
-                    boxShadow:"0 4px 12px rgba(0,0,0,0.3)", zIndex:10,
-                  }}>
-                    {s.label}: {s.count} projects ({s.percent})
-                  </div>
-                );
-              })()}
-            </div>
-            <div style={{ display:"flex", gap:"10px", flexWrap:"wrap", justifyContent:"center" }}>
-              {slices.map((slice) => (
-                <span key={slice.id} style={{ display:"flex", alignItems:"center", gap:"4px", fontSize:"11px", fontWeight:"bold",
-                  opacity: hoveredSlice===slice.id ? 1 : 0.7, transition:"opacity 0.25s ease" }}>
-                  <span style={{ width:"10px", height:"10px", borderRadius:"50%", backgroundColor:slice.color, display:"inline-block" }}/>
-                  {slice.label}
-                </span>
-              ))}
+              </div>
             </div>
           </div>
-        </div>
       </main>
     </div>
   );
