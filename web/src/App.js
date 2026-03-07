@@ -1,57 +1,18 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./App.css";
 import heroImage from "./assets/photo.jpg";
 
-import DashboardHome from "./dashboard/DashboardHome";
-
 export default function App() {
   const navigate = useNavigate();
-  const [isDashboardOpen, setIsDashboardOpen] = useState(false);
 
-  // (Landing validation) 
-  const [formData, setFormData] = useState({ name: "", email: "", role: "" });
-  const [errors, setErrors] = useState({});
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((p) => ({ ...p, [name]: value }));
+  const handleBrowseProjects = () => {
+    navigate("/gallery");
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-    if (formData.name.trim() === "") newErrors.name = "Name is required";
-
-    if (formData.email.trim() === "") {
-      newErrors.email = "Email is required";
-    } else if (!formData.email.includes("@") || !formData.email.includes(".")) {
-      newErrors.email = "Enter a valid email";
-    }
-
-    if (formData.role === "") newErrors.role = "Please select a role";
-    return newErrors;
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const v = validateForm();
-    setErrors(v);
-
-    if (Object.keys(v).length === 0) {
-      alert("Form submitted successfully!");
-      setFormData({ name: "", email: "", role: "" });
-      setErrors({});
-    }
-  };
-
-  // Actions
-  const handleBrowseProjects = () =>
-    alert("Later this button will open Gallery page");
-  const handleUploadProject = () =>
+  const handleUploadProject = () => {
     alert("Later this button will open Upload Project page");
-
-  
-  const toggleDashboard = () => setIsDashboardOpen((v) => !v);
+  };
 
   return (
     <div className="app">
@@ -68,20 +29,12 @@ export default function App() {
             <a href="#about">About</a>
           </li>
 
-          
           <li onClick={() => navigate("/login")}>Login</li>
           <li onClick={() => navigate("/register")}>Register</li>
-
-         
-          <li className="hamburger-btn" onClick={toggleDashboard} title="Dashboard">
-            <span className="bar"></span>
-            <span className="bar"></span>
-            <span className="bar"></span>
-          </li>
         </ul>
       </nav>
 
-      {/*Hero */}
+      {/* Hero */}
       <section className="hero" id="home">
         <div className="hero-content">
           <div className="hero-image-box">
@@ -96,7 +49,8 @@ export default function App() {
             <h1>Explore Graduation Projects in One Place</h1>
             <p>
               Discover inspiring graduation projects, explore technologies used,
-              and learn from previous students&apos; work in one organized platform.
+              and learn from previous students&apos; work in one organized
+              platform.
             </p>
 
             <div className="hero-buttons">
@@ -142,7 +96,7 @@ export default function App() {
         </div>
       </section>
 
-      {/*About  */}
+      {/* About */}
       <section className="about-section" id="about">
         <h2>About the Platform</h2>
         <p>
@@ -153,53 +107,7 @@ export default function App() {
         </p>
       </section>
 
-      {/* Form */}
-      <section className="join-section">
-        <h2>Register Your Interest</h2>
-
-        <form className="join-form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Name</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Enter your name"
-            />
-            {errors.name && <small className="error">{errors.name}</small>}
-          </div>
-
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="text"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-            />
-            {errors.email && <small className="error">{errors.email}</small>}
-          </div>
-
-          <div className="form-group">
-            <label>Role</label>
-            <select name="role" value={formData.role} onChange={handleChange}>
-              <option value="">Select role</option>
-              <option value="student">Student</option>
-              <option value="faculty">Faculty</option>
-              <option value="guest">Guest</option>
-            </select>
-            {errors.role && <small className="error">{errors.role}</small>}
-          </div>
-
-          <button type="submit" className="btn primary full-width">
-            Submit
-          </button>
-        </form>
-      </section>
-
-      {/*  Footer  */}
+      {/* Footer */}
       <footer className="footer">
         <div className="footer-links">
           <span>About</span>
@@ -209,24 +117,6 @@ export default function App() {
         </div>
         <p>© 2026 Graduation Projects Gallery Portal. All rights reserved.</p>
       </footer>
-
-      
-      {isDashboardOpen && (
-  <div className="dashboard-overlay">
-    <div className="dashboard-drawer">
-      <button
-        className="drawer-x"
-        onClick={() => setIsDashboardOpen(false)}
-        aria-label="Close dashboard"
-        title="Close"
-      >
-        ×
-      </button>
-
-      <DashboardHome />
-    </div>
-  </div>
-)}
     </div>
   );
 }
