@@ -1,0 +1,223 @@
+/* ===========================
+   PAGE LAYOUT
+=========================== */
+.st-page {
+  min-height: 100vh;
+  background: rgb(223, 205, 192);
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  color: rgb(47, 28, 15);
+}
+
+.st-page *,
+.st-page *::before,
+.st-page *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.st-page a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.st-main-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 60px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 64px);
+}
+
+/* ===========================
+   NAVBAR
+=========================== */
+.st-navbar {
+  background: rgb(254, 251, 245);
+  border-bottom: 1px solid rgb(185, 174, 167);
+  padding: 0 40px 0 16px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 6px rgba(47, 28, 15, 0.08);
+}
+
+.st-navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 18px;
+  color: rgb(104, 68, 42);
+  text-decoration: none;
+}
+
+.st-logo-icon { font-size: 22px; color: rgb(104, 68, 42); }
+.st-logo-text strong { font-weight: 700; }
+
+.st-navbar-links {
+  display: flex;
+  gap: 28px;
+  align-items: center;
+}
+
+.st-nav-link {
+  font-size: 14px;
+  color: rgb(164, 132, 109);
+  font-weight: 500;
+  transition: color 0.2s, background 0.2s;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.st-nav-link:hover {
+  color: rgb(254, 251, 245);
+  background: rgb(164, 132, 109);
+}
+
+.st-nav-link-active {
+  color: rgb(254, 251, 245) !important;
+  background: rgb(164, 132, 109) !important;
+  font-weight: 600;
+}
+
+.st-nav-icon { font-size: 13px; vertical-align: middle; }
+
+.st-navbar-right { display: flex; align-items: center; }
+
+.st-upload-btn {
+  background: rgb(164, 132, 109);
+  color: rgb(254, 251, 245);
+  border: none;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.st-upload-btn:hover { background: rgb(75, 48, 28); }
+
+/* ===========================
+   HAMBURGER
+=========================== */
+.st-hamburger {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: rgb(104, 68, 42);
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.st-hamburger:hover { background: rgb(223, 205, 192); }
+
+/* ===========================
+   ADMIN SIDEBAR
+=========================== */
+.st-sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 200;
+}
+
+.st-admin-sidebar {
+  position: fixed;
+  top: 0;
+  left: -280px;
+  width: 260px;
+  height: 100vh;
+  background-color: rgb(254, 251, 245);
+  border-right: 1px solid rgb(185, 174, 167);
+  border-radius: 0 10px 10px 0;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  z-index: 300;
+  transition: left 0.3s ease;
+  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.1);
+}
+
+.st-sidebar-open { left: 0; }
+
+.st-sidebar-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.st-sidebar-title {
+  color: rgb(47, 28, 15);
+  font-size: clamp(18px, 8%, 28px);
+  font-family: 'Times New Roman', Times, serif;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.st-sidebar-title:hover { color: rgb(104, 68, 42); }
+
+.st-sidebar-links {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.st-sidebar-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  color: rgb(104, 68, 42);
+  border-radius: 15px;
+  font-size: 14px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 550;
+  transition: background 0.2s, color 0.2s;
+}
+
+.st-sidebar-item:hover {
+  background-color: rgb(164, 132, 109);
+  color: rgb(254, 251, 245);
+  font-weight: 600;
+}
+
+/* ===========================
+   SPINNER
+=========================== */
+.st-spinner-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 0;
+}
+
+.st-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgb(185, 174, 167);
+  border-top-color: rgb(104, 68, 42);
+  border-radius: 50%;
+  animation: st-spin 0.8s linear infinite;
+}
+
+@keyframes st-spin {
+  to { transform: rotate(360deg); }
+}
