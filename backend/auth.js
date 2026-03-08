@@ -27,12 +27,12 @@ async function logUser(email, pass) {
     const u = await signInWithEmailAndPassword(auth, email, pass)
     return u.user
   } catch (err) {
-    if (err.code === "auth/wrong-password") {
-      return "wrong pass"
+    if (err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
+      return "wrong-password"
     } else if (err.code === "auth/user-not-found") {
-      return "no user"
+      return "no-user"
     } else {
-      return "login fail"
+      return "login-fail"
     }
   }
 }
@@ -42,13 +42,11 @@ async function logWithGoogle() {
     const provider = new GoogleAuthProvider()
     const result = await signInWithPopup(auth, provider)
     const user = result.user
-
     await setDoc(doc(db, "users", user.uid), {
       email: user.email,
       name: user.displayName,
       role: "client" 
     }, { merge: true }) 
-
     return user
   } catch (err) {
     alert("google login fail")
@@ -60,13 +58,11 @@ async function logWithGithub() {
     const provider = new GithubAuthProvider()
     const result = await signInWithPopup(auth, provider)
     const user = result.user
-
     await setDoc(doc(db, "users", user.uid), {
       email: user.email,
       name: user.displayName,
       role: "client"
     }, { merge: true })
-
     return user
   } catch (err) {
     alert("github login fail")
@@ -76,9 +72,8 @@ async function logWithGithub() {
 async function resetPass(email) {
   try {
     await sendPasswordResetEmail(auth, email)
-    alert("reset sent")
   } catch (err) {
-    alert("reset fail")
+    throw err
   }
 }
 
