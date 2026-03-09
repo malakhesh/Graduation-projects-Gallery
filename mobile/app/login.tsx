@@ -7,12 +7,36 @@ import {
     StyleSheet,
     TextInput,
     TouchableOpacity,
+    Alert,
 } from "react-native";
 
 export default function LoginScreen() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+
+    const handleLogin = async () => {
+        if (!email.trim() || !password.trim()) {
+            Alert.alert("Missing Fields", "Please enter your email and password.");
+            return;
+        }
+
+        Alert.alert("Login", "Email/password login will be connected next.");
+    };
+
+    const handleGoogleLogin = async () => {
+        Alert.alert(
+            "Google Login",
+            "Google login UI is ready, but the real Expo/Firebase setup is still needed."
+        );
+    };
+
+    const handleGithubLogin = async () => {
+        Alert.alert(
+            "GitHub Login",
+            "GitHub login UI is ready, but the real Expo/Firebase setup is still needed."
+        );
+    };
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -83,8 +107,34 @@ export default function LoginScreen() {
                         <Text style={styles.forgotText}>Forgot Password?</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.loginButton} activeOpacity={0.85}>
+                    <TouchableOpacity
+                        style={styles.loginButton}
+                        activeOpacity={0.85}
+                        onPress={handleLogin}
+                    >
                         <Text style={styles.loginButtonText}>Login</Text>
+                    </TouchableOpacity>
+
+                    <View style={styles.dividerRow}>
+                        <View style={styles.dividerLine} />
+                        <Text style={styles.dividerText}>or</Text>
+                        <View style={styles.dividerLine} />
+                    </View>
+
+                    <TouchableOpacity
+                        style={styles.socialButton}
+                        activeOpacity={0.85}
+                        onPress={handleGoogleLogin}
+                    >
+                        <Text style={styles.socialButtonText}>Continue with Google</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.socialButton}
+                        activeOpacity={0.85}
+                        onPress={handleGithubLogin}
+                    >
+                        <Text style={styles.socialButtonText}>Continue with GitHub</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -217,10 +267,41 @@ const styles = StyleSheet.create({
         fontSize: 17,
         fontWeight: "700",
     },
+    dividerRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginVertical: 18,
+    },
+    dividerLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: "rgb(185, 174, 167)",
+    },
+    dividerText: {
+        marginHorizontal: 10,
+        color: "rgb(104, 68, 42)",
+        fontSize: 13,
+        fontWeight: "600",
+    },
+    socialButton: {
+        backgroundColor: "rgb(223, 205, 192)",
+        borderRadius: 16,
+        paddingVertical: 14,
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 1,
+        borderColor: "rgb(164, 132, 109)",
+        marginBottom: 12,
+    },
+    socialButtonText: {
+        color: "rgb(75, 48, 28)",
+        fontSize: 15,
+        fontWeight: "700",
+    },
     bottomSection: {
         flexDirection: "row",
         justifyContent: "center",
-        marginTop: 26,
+        marginTop: 12,
         flexWrap: "wrap",
     },
     bottomText: {
