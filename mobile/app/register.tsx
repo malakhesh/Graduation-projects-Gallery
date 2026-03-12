@@ -8,7 +8,9 @@ import {
     TextInput,
     TouchableOpacity,
     ScrollView,
+    Alert,
 } from "react-native";
+import { regUser } from "../services/auth";
 
 export default function RegisterScreen() {
     const [fullName, setFullName] = useState("");
@@ -17,6 +19,63 @@ export default function RegisterScreen() {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const handleRegister = async () => {
+        if (
+            !fullName.trim() ||
+            !email.trim() ||
+            !password.trim() ||
+            !confirmPassword.trim()
+        ) {
+            Alert.alert("Missing Fields", "Please fill in all fields.");
+            return;
+        }
+
+        if (password.length < 6) {
+            Alert.alert("Weak Password", "Password must be at least 6 characters.");
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            Alert.alert("Password Mismatch", "Password and confirm password do not match.");
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            const result = await regUser(
+                email.trim(),
+                password,
+                fullName.trim(),
+                "client",
+                "",
+                ""
+            );
+
+            if (result === "email-in-use") {
+                Alert.alert("Registration Failed", "This email is already in use.");
+                return;
+            }
+
+            if (result === "register-fail") {
+                Alert.alert("Registration Failed", "Something went wrong. Please try again.");
+                return;
+            }
+
+            Alert.alert("Success", "Account created successfully!", [
+                {
+                    text: "OK",
+                    onPress: () => router.replace("/login"),
+                },
+            ]);
+        } catch (error) {
+            Alert.alert("Error", "Unexpected error happened during registration.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -121,10 +180,14 @@ export default function RegisterScreen() {
                         </View>
 
                         <TouchableOpacity
-                            style={styles.registerButton}
+                            style={[styles.registerButton, loading && styles.disabledButton]}
                             activeOpacity={0.85}
+                            onPress={handleRegister}
+                            disabled={loading}
                         >
-                            <Text style={styles.registerButtonText}>Create Account</Text>
+                            <Text style={styles.registerButtonText}>
+                                {loading ? "Creating Account..." : "Create Account"}
+                            </Text>
                         </TouchableOpacity>
                     </View>
 
@@ -247,6 +310,9 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         marginTop: 6,
+    },
+    disabledButton: {
+        opacity: 0.7,
     },
     registerButtonText: {
         color: "rgb(254, 251, 245)",
