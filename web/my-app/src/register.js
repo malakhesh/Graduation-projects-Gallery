@@ -145,7 +145,7 @@ function Register() {
         <button type="submit">Register</button>
       </form>
       <div className="swapper2">
-        already have an account? <Link to="/">Login</Link>
+        already have an account? <Link to="/login">Login</Link>
       </div>
     </div>
   );

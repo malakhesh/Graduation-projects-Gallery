@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Landing from './landing'; 
 import Login from './login';
 import Register from './register';
 import Home from './home';
@@ -9,7 +10,7 @@ import Dashboard from './dashboard.js';
 import Bookmarks from './Bookmarks';
 import Profile from './Profile';
 import Settings from './Settings';
-import MyProjects from './MyProjects';
+import MyProjects from './MyProjects.js';
 import { auth } from './firebase.js';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { checkRole } from './auth.js';
@@ -47,7 +48,8 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
