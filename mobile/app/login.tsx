@@ -9,11 +9,13 @@ import {
     TouchableOpacity,
     Alert,
 } from "react-native";
+import { logUser } from "../services/auth";
 
 export default function LoginScreen() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const handleLogin = async () => {
         if (!email.trim() || !password.trim()) {
@@ -21,20 +23,46 @@ export default function LoginScreen() {
             return;
         }
 
-        Alert.alert("Login", "Email/password login will be connected next.");
+        try {
+            setLoading(true);
+
+            const result = await logUser(email.trim(), password);
+
+            if (result === "wrong-password") {
+                Alert.alert("Login Failed", "Wrong email or password.");
+                return;
+            }
+
+            if (result === "no-user") {
+                Alert.alert("Login Failed", "No account found with this email.");
+                return;
+            }
+
+            if (result === "login-fail") {
+                Alert.alert("Login Failed", "Something went wrong. Please try again.");
+                return;
+            }
+
+            Alert.alert("Success", "Logged in successfully!");
+            router.replace("/Gallery");
+        } catch (error) {
+            Alert.alert("Error", "Unexpected error happened during login.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleGoogleLogin = async () => {
         Alert.alert(
             "Google Login",
-            "Google login UI is ready, but the real Expo/Firebase setup is still needed."
+            "Google login is not ready yet in Expo because signInWithPopup does not work here."
         );
     };
 
     const handleGithubLogin = async () => {
         Alert.alert(
             "GitHub Login",
-            "GitHub login UI is ready, but the real Expo/Firebase setup is still needed."
+            "GitHub login is not ready yet in Expo because signInWithPopup does not work here."
         );
     };
 
@@ -108,11 +136,14 @@ export default function LoginScreen() {
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={styles.loginButton}
+                        style={[styles.loginButton, loading && styles.disabledButton]}
                         activeOpacity={0.85}
                         onPress={handleLogin}
+                        disabled={loading}
                     >
-                        <Text style={styles.loginButtonText}>Login</Text>
+                        <Text style={styles.loginButtonText}>
+                            {loading ? "Logging in..." : "Login"}
+                        </Text>
                     </TouchableOpacity>
 
                     <View style={styles.dividerRow}>
@@ -261,6 +292,9 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         alignItems: "center",
         justifyContent: "center",
+    },
+    disabledButton: {
+        opacity: 0.7,
     },
     loginButtonText: {
         color: "rgb(254, 251, 245)",
