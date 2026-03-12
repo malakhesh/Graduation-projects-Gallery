@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import UploadModal from './UploadModal';
 import "./home.css";
 import { logOut, checkRole } from './auth.js';
 import { auth } from './firebase.js';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { FaGraduationCap, FaUser, FaCog, FaBell, FaSearch, FaFilter, FaChevronDown, FaBookOpen, FaBookmark, FaFolderOpen, FaBriefcase, FaShoppingCart, FaFilm, FaNewspaper, FaBars } from "react-icons/fa";
+import { FaGraduationCap, FaUser, FaBell, FaSearch, FaFilter, FaChevronDown, FaBookOpen, FaBookmark, FaFolderOpen, FaBriefcase, FaShoppingCart, FaFilm, FaNewspaper, FaBars } from "react-icons/fa";
 
 const projects = [
   { id: 1, title: "AI Robotics Research", author: "Emily Johnson", date: "May 12, 2024", tags: ["Technology", "Engineering"], tagClass: ["hg-tag-brown", "hg-tag-brown"], image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=220&fit=crop", avatar: "https://i.pravatar.cc/32?img=1" },
@@ -44,17 +45,23 @@ function AdminSidebar({ open, onClose }) {
 
 export function Navbar({ isAdmin }) {
   const [hasNotifications] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const dropdownRef = useRef(null);
+  const notifRef = useRef(null);
   const [user] = useAuthState(auth);
 
   useEffect(() => {
     function handleClickOutside(e) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setDropdownOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -66,7 +73,7 @@ export function Navbar({ isAdmin }) {
     navigate('/');
   };
 
-  const avatarSrc = user?.photoURL || "https://i.pravatar.cc/36?img=8";
+
 
   return (
     <>
@@ -90,19 +97,40 @@ export function Navbar({ isAdmin }) {
           <Link to="/bookmarks" className={`hg-nav-link${location.pathname === '/bookmarks' ? ' hg-nav-link-active' : ''}`}>
             <FaBookmark className="hg-nav-icon" /> Bookmarks
           </Link>
-          <a href="#" className={`hg-nav-link${location.pathname === '/notifications' ? ' hg-nav-link-active' : ''}`}>
-            <span className="hg-notif-wrapper">
-              <FaBell className="hg-nav-icon" />
-              {hasNotifications && <span className="hg-notif-dot" />}
-            </span>
-            Notifications
-          </a>
+          <div ref={notifRef} style={{ position: 'relative' }}>
+            <button
+              className={`hg-nav-link${notifOpen ? ' hg-nav-link-active' : ''}`}
+              onClick={() => setNotifOpen(!notifOpen)}
+            >
+              <span className="hg-notif-wrapper">
+                <FaBell className="hg-nav-icon" />
+                {hasNotifications && <span className="hg-notif-dot" />}
+              </span>
+              Notifications
+            </button>
+            {notifOpen && (
+              <div className="hg-notif-dropdown">
+                <div className="hg-notif-dropdown-header">Notifications</div>
+                <div className="hg-notif-empty">
+                  <FaBell className="hg-notif-empty-icon" />
+                  <p className="hg-notif-empty-text">No notifications yet</p>
+                  <p className="hg-notif-empty-sub">When someone interacts with<br />your projects, you'll see it here.</p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="hg-navbar-right">
-          <button className="hg-upload-btn">Upload Project</button>
+          <button className="hg-upload-btn" onClick={() => setShowUpload(true)}>Upload Project</button>
           <div className="hg-avatar-wrapper" ref={dropdownRef} onClick={() => setDropdownOpen(!dropdownOpen)}>
-            <img src={avatarSrc} alt="User avatar" className="hg-user-avatar" />
+            {user?.photoURL ? (
+              <img src={user.photoURL} alt="User avatar" className="hg-user-avatar" />
+            ) : (
+              <div className="hg-user-avatar-placeholder">
+                <FaUser className="hg-user-avatar-icon" />
+              </div>
+            )}
             <FaChevronDown className={`hg-dropdown-arrow ${dropdownOpen ? 'hg-arrow-up' : ''}`} />
             {dropdownOpen && (
               <div className="hg-dropdown-menu">
@@ -117,6 +145,16 @@ export function Navbar({ isAdmin }) {
         </div>
       </nav>
       <AdminSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {showUpload && (
+        <UploadModal
+          onClose={() => setShowUpload(false)}
+          onSubmit={async (data) => {
+            console.log("Project submitted:", data);
+            // Wire to Firestore later
+          }}
+        />
+      )}
     </>
   );
 }
@@ -156,11 +194,11 @@ function ProjectCard({ project }) {
           </div>
         </div>
       </div>
-      <img src={project.image} alt={project.title} className="hg-card-image" />
-      <div className="hg-card-tags">
-        {project.tags.map((tag, i) => (
-          <span key={tag} className={`hg-tag ${project.tagClass[i]}`}>{tag}</span>
-        ))}
+      <div className="hg-card-image-wrapper">
+        <img src={project.image} alt={project.title} className="hg-card-image" />
+      </div>
+      <div className="hg-card-footer">
+        <span className="hg-tag hg-tag-brown">{project.tags[0]}</span>
       </div>
     </div>
   );

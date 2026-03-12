@@ -18,8 +18,9 @@
 
 .hg-page a {
   text-decoration: none;
-  color: inherit;
+  color: rgb(47, 28, 15);
 }
+
 
 .hg-main-content {
   max-width: 1100px;
@@ -70,7 +71,7 @@
 
 .hg-nav-link {
   font-size: 14px;
-  color: rgb(164, 132, 109);
+  color: rgb(47, 28, 15);
   font-weight: 500;
   transition: color 0.2s, background 0.2s;
   text-decoration: none;
@@ -79,6 +80,10 @@
   gap: 6px;
   padding: 6px 12px;
   border-radius: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 
 .hg-nav-link:hover {
@@ -181,7 +186,7 @@
 
 .hg-search-icon {
   font-size: 15px;
-  color: rgb(164, 132, 109);
+  color: rgb(47, 28, 15);
 }
 
 .hg-search-input {
@@ -194,7 +199,7 @@
 }
 
 .hg-search-input::placeholder {
-  color: rgb(164, 132, 109);
+  color: rgb(47, 28, 15);
 }
 
 .hg-search-divider {
@@ -301,11 +306,13 @@
 =========================== */
 .hg-project-card {
   background: rgb(254, 251, 245);
-  border-radius: 10px;
+  border-radius: 14px;
   border: 1px solid rgb(185, 174, 167);
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(47, 28, 15, 0.06);
   transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
 }
 
 .hg-project-card:hover {
@@ -347,23 +354,29 @@
 
 .hg-author-date {
   font-size: 11px;
-  color: rgb(164, 132, 109);
+  color: rgb(47, 28, 15);
+}
+
+/* Image with padding so it doesn't touch the border */
+.hg-card-image-wrapper {
+  padding: 0 12px;
 }
 
 .hg-card-image {
   width: 100%;
   height: 180px;
   object-fit: cover;
+  border-radius: 10px;
   display: block;
-  border-top: 1px solid rgb(185, 174, 167);
-  border-bottom: 1px solid rgb(185, 174, 167);
 }
 
-.hg-card-tags {
-  padding: 12px 16px;
+/* Footer with single tag */
+.hg-card-footer {
+  padding: 10px 16px 14px;
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
+  margin-top: auto;
 }
 
 /* ===========================
@@ -435,7 +448,7 @@
    NO RESULTS
 =========================== */
 .hg-no-results {
-  color: rgb(164, 132, 109);
+  color: rgb(47, 28, 15);
   font-size: 15px;
   padding: 20px 0;
   grid-column: 1 / -1;
@@ -565,7 +578,7 @@
   background-color: rgb(254, 251, 245);
   border-right: 1px solid rgb(185, 174, 167);
   border-radius: 0 10px 10px 0;
-  padding: 40px 20px;
+  padding: 80px 20px;
   display: flex;
   flex-direction: column;
   z-index: 300;
@@ -623,4 +636,81 @@
   background-color: rgb(164, 132, 109);
   color: rgb(254, 251, 245);
   font-weight: 600;
+}
+
+/* ===========================
+   NOTIFICATIONS DROPDOWN
+=========================== */
+.hg-notif-dropdown {
+  position: absolute;
+  top: 48px;
+  right: -100px;
+  width: 340px;
+  background: rgb(254, 251, 245);
+  border: 1px solid rgb(185, 174, 167);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(47, 28, 15, 0.12);
+  z-index: 200;
+  overflow: hidden;
+  animation: hg-dropdown-in 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes hg-dropdown-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hg-notif-dropdown-header {
+  padding: 14px 18px 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgb(47, 28, 15);
+  font-family: 'Times New Roman', Times, serif;
+  border-bottom: 1px solid rgb(185, 174, 167);
+}
+
+.hg-notif-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  gap: 10px;
+}
+
+.hg-notif-empty-icon {
+  font-size: 36px;
+  color: rgb(185, 174, 167);
+}
+
+.hg-notif-empty-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(104, 68, 42);
+}
+
+.hg-notif-empty-sub {
+  font-size: 12px;
+  color: rgb(47, 28, 15);
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ===========================
+   AVATAR PLACEHOLDER
+=========================== */
+.hg-user-avatar-placeholder {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgb(223, 205, 192);
+  border: 2px solid rgb(185, 174, 167);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hg-user-avatar-icon {
+  font-size: 16px;
+  color: rgb(104, 68, 42);
 }
