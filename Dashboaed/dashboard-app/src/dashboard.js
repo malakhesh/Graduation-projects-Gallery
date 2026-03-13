@@ -123,12 +123,12 @@ function AppLayout() {
         <div>
           <h2 style={{ marginBottom:"20px", color:"#3B2F2F" }}>DASHBOARD</h2>
           <ul style={{ listStyle:"none", padding:0, display:"flex", flexDirection:"column", gap:"55px" }}>
-            {["HOME","ALL PROJECTS","USERS","SETTINGS"].map((item) => (
+            {["WEBSITE VIEW","ALL PROJECTS","USERS","SETTINGS"].map((item) => (
               <li key={item}
                 onMouseEnter={() => setHoveredNav(item)}
                 onMouseLeave={() => setHoveredNav(null)}
                 onClick={() => {
-                  if (item === "HOME")         setShowHome(true);
+                  if (item === "WEBSITE VIEW")         setShowHome(true);
                   if (item === "ALL PROJECTS") setShowProjects(true);
                   if (item === "USERS")        setShowUsers(true);
                 }}
