@@ -1,0 +1,294 @@
+/* ===========================
+   OVERLAY
+=========================== */
+.um-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(47, 28, 15, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: um-fade-in 0.2s ease;
+}
+
+@keyframes um-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ===========================
+   MODAL
+=========================== */
+.um-modal {
+  background: rgb(254, 251, 245);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(47, 28, 15, 0.25);
+  animation: um-slide-up 0.25s ease;
+  overflow: hidden;
+}
+
+@keyframes um-slide-up {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ===========================
+   HEADER
+=========================== */
+.um-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid rgb(185, 174, 167);
+}
+
+.um-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: rgb(47, 28, 15);
+  font-family: 'Times New Roman', Times, serif;
+}
+
+.um-close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: rgb(164, 132, 109);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: background 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.um-close:hover {
+  background: rgb(223, 205, 192);
+  color: rgb(47, 28, 15);
+}
+
+/* ===========================
+   BODY
+=========================== */
+.um-body {
+  padding: 24px 28px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ===========================
+   FIELDS
+=========================== */
+.um-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.um-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(104, 68, 42);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.um-label-icon {
+  font-size: 12px;
+}
+
+.um-required {
+  font-size: 11px;
+  font-weight: 400;
+  color: rgb(164, 132, 109);
+  margin-left: 4px;
+}
+
+.um-optional {
+  font-size: 11px;
+  font-weight: 400;
+  color: rgb(185, 174, 167);
+  margin-left: 4px;
+}
+
+.um-input,
+.um-textarea {
+  background: rgb(223, 205, 192);
+  border: 1.5px solid transparent;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: rgb(47, 28, 15);
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  outline: none;
+  transition: border-color 0.2s;
+  resize: none;
+  width: 100%;
+}
+
+.um-input::placeholder,
+.um-textarea::placeholder {
+  color: rgb(164, 132, 109);
+}
+
+.um-input:focus,
+.um-textarea:focus {
+  border-color: rgb(104, 68, 42);
+}
+
+.um-input-error {
+  border-color: #c0392b !important;
+}
+
+.um-error {
+  font-size: 12px;
+  color: #c0392b;
+}
+
+.um-char-count {
+  font-size: 11px;
+  color: rgb(164, 132, 109);
+  text-align: right;
+}
+
+/* ===========================
+   TAGS
+=========================== */
+.um-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.um-tag-btn {
+  background: rgb(223, 205, 192);
+  border: 1.5px solid transparent;
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgb(104, 68, 42);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.um-tag-btn:hover {
+  border-color: rgb(104, 68, 42);
+}
+
+.um-tag-selected {
+  background: rgb(104, 68, 42);
+  color: rgb(254, 251, 245);
+  border-color: rgb(104, 68, 42);
+  font-weight: 600;
+}
+
+/* ===========================
+   IMAGE UPLOAD
+=========================== */
+.um-image-drop {
+  border: 2px dashed rgb(185, 174, 167);
+  border-radius: 12px;
+  padding: 24px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  overflow: hidden;
+}
+
+.um-image-drop:hover {
+  border-color: rgb(104, 68, 42);
+  background: rgb(223, 205, 192);
+}
+
+.um-image-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: rgb(164, 132, 109);
+}
+
+.um-image-icon {
+  font-size: 28px;
+}
+
+.um-image-placeholder p {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgb(104, 68, 42);
+}
+
+.um-image-placeholder span {
+  font-size: 12px;
+  color: rgb(164, 132, 109);
+}
+
+.um-image-preview {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
+
+/* ===========================
+   FOOTER
+=========================== */
+.um-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 18px 28px;
+  border-top: 1px solid rgb(185, 174, 167);
+}
+
+.um-btn-cancel {
+  background: none;
+  border: 1.5px solid rgb(185, 174, 167);
+  border-radius: 20px;
+  padding: 9px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(104, 68, 42);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.um-btn-cancel:hover {
+  background: rgb(223, 205, 192);
+  border-color: rgb(104, 68, 42);
+}
+
+.um-btn-upload {
+  background: rgb(104, 68, 42);
+  border: none;
+  border-radius: 20px;
+  padding: 9px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(254, 251, 245);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.um-btn-upload:hover {
+  background: rgb(47, 28, 15);
+}
+
+.um-btn-upload:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
