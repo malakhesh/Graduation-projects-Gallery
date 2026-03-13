@@ -1,31 +1,48 @@
 import React, { useState, useEffect } from "react";
 import "./home.css";
-import { checkRole } from './auth.js';
+import { checkRole, getBookmarks, addBookmark, removeBookmark } from './auth.js';
 import { auth } from './firebase.js';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { Navbar } from './home.js';
 import EmptyBookmarks from "./EmptyBookmarks.js";
+import { getProj } from './projects.js';
+import { FaUser, FaBookmark, FaRegBookmark } from "react-icons/fa";
 
-const mockBookmarks = [];
+function BookmarkCard({ project, onRemove }) {
+  const image = project.image || project.imgUrl;
+  const author = project.author || project.userId;
+  const date = project.date || (project.createdAt?.toDate?.().toLocaleDateString()) || "";
+  const tag = project.tag || (project.tags && project.tags[0]) || "";
 
-function ProjectCard({ project }) {
   return (
     <div className="hg-project-card">
       <div className="hg-card-header">
-        <h3 className="hg-card-title">{project.title}</h3>
+        <div className="hg-card-title-row">
+          <h3 className="hg-card-title">{project.title}</h3>
+          <button
+            className="hg-card-bookmark hg-card-bookmark-active"
+            onClick={() => onRemove(project.id)}
+            title="Remove bookmark"
+          >
+            <FaBookmark />
+          </button>
+        </div>
         <div className="hg-card-author">
-          <img src={project.avatar} alt={project.author} className="hg-author-avatar" />
+          {project.avatar
+            ? <img src={project.avatar} alt={author} className="hg-author-avatar" />
+            : <div className="hg-user-avatar-placeholder" style={{ width: 30, height: 30 }}><FaUser style={{ fontSize: 13 }} /></div>
+          }
           <div>
-            <p className="hg-author-name">{project.author}</p>
-            <p className="hg-author-date">{project.date}</p>
+            <p className="hg-author-name">{author}</p>
+            <p className="hg-author-date">{date}</p>
           </div>
         </div>
       </div>
-      <img src={project.image} alt={project.title} className="hg-card-image" />
-      <div className="hg-card-tags">
-        {project.tags.map((tag, i) => (
-          <span key={tag} className={`hg-tag ${project.tagClass[i]}`}>{tag}</span>
-        ))}
+      <div className="hg-card-image-wrapper">
+        <img src={image} alt={project.title} className="hg-card-image" />
+      </div>
+      <div className="hg-card-footer">
+        <span className="hg-tag hg-tag-brown">{tag}</span>
       </div>
     </div>
   );
@@ -40,15 +57,24 @@ function Bookmarks() {
   useEffect(() => {
     if (user) {
       checkRole(user.uid).then((role) => setIsAdmin(role === 'admin'));
+
+      // Fetch bookmark IDs then fetch each project
+      getBookmarks(user.uid).then(async (ids) => {
+        if (!Array.isArray(ids)) { setLoading(false); return; }
+        const projects = await Promise.all(ids.map((id) => getProj(id)));
+        const valid = projects.filter((p) => p && p !== "no-proj" && p !== "get-fail");
+        // getProj returns data without id, so attach id
+        const withIds = valid.map((p, i) => ({ ...p, id: ids[i] }));
+        setBookmarks(withIds);
+        setLoading(false);
+      });
     }
   }, [user]);
 
-  useEffect(() => {
-    setTimeout(() => {
-      setBookmarks(mockBookmarks);
-      setLoading(false);
-    }, 400);
-  }, []);
+  const handleRemove = async (projectId) => {
+    await removeBookmark(user.uid, projectId);
+    setBookmarks((prev) => prev.filter((p) => p.id !== projectId));
+  };
 
   return (
     <div className="hg-page">
@@ -63,7 +89,7 @@ function Bookmarks() {
           ) : (
             <div className="hg-projects-grid">
               {bookmarks.map((project) => (
-                <ProjectCard key={project.id} project={project} />
+                <BookmarkCard key={project.id} project={project} onRemove={handleRemove} />
               ))}
             </div>
           )}

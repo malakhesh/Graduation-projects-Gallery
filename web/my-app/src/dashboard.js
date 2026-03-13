@@ -2,6 +2,11 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { logOut } from "./auth.js";
 import wreathImg from "./wreath.png";
+import Login from "./login.js";
+import Home from "./home.js";
+import ReviewProjects from "./Reviewprojects.js";
+import Users from "./Users.js";
+import Projects from "./AllProjects.js";
 
 function GoldenWreath() {
   return (
@@ -57,10 +62,21 @@ function GoldenWreath() {
 
 function AppLayout() {
   const navigate = useNavigate();
+  const [showLogin,    setShowLogin]    = useState(false);
+  const [showHome,     setShowHome]     = useState(false);
+  const [showReview,   setShowReview]   = useState(false);
+  const [showUsers,    setShowUsers]    = useState(false);
+  const [showProjects, setShowProjects] = useState(false);
   const [hoveredBox,    setHoveredBox]    = useState(null);
   const [hoveredNav,    setHoveredNav]    = useState(null);
   const [hoveredSignIn, setHoveredSignIn] = useState(false);
   const [hoveredSlice,  setHoveredSlice]  = useState(null);
+
+  if (showLogin)    return <Login />;
+  if (showHome)     return <Home />;
+  if (showReview)   return <ReviewProjects onBack={() => setShowReview(false)} />;
+  if (showUsers)    return <Users onBack={() => setShowUsers(false)} />;
+  if (showProjects) return <Projects onBack={() => setShowProjects(false)} />;
 
   const lightenColor = (hex) => ({
     "#eddcc8": "#f5ece0",
@@ -107,11 +123,15 @@ function AppLayout() {
         <div>
           <h2 style={{ marginBottom:"20px", color:"#3B2F2F" }}>DASHBOARD</h2>
           <ul style={{ listStyle:"none", padding:0, display:"flex", flexDirection:"column", gap:"55px" }}>
-            {["HOME","PROFILE","TEAM","SETTINGS"].map((item) => (
+            {["WEBSITE VIEW","ALL PROJECTS","USERS","SETTINGS"].map((item) => (
               <li key={item}
                 onMouseEnter={() => setHoveredNav(item)}
                 onMouseLeave={() => setHoveredNav(null)}
-                onClick={() => { if (item === "HOME") navigate("/home"); }}
+                onClick={() => {
+                  if (item === "WEBSITE VIEW")         setShowHome(true);
+                  if (item === "ALL PROJECTS") setShowProjects(true);
+                  if (item === "USERS")        setShowUsers(true);
+                }}
                 style={{
                   padding:"8px 10px", borderBottom:"1px solid #ccc",
                   cursor:"pointer", color:"#6F4E37", borderRadius:"8px",
@@ -128,7 +148,7 @@ function AppLayout() {
         <div>
           <div style={{ marginTop:"20px", textAlign:"center", color:"#5C4033" }}>
             <span
-              onClick={async () => { await logOut(); navigate("/"); }}
+              onClick={async () => { await logOut(); setShowLogin(true); }}
               onMouseEnter={() => setHoveredSignIn(true)}
               onMouseLeave={() => setHoveredSignIn(false)}
               style={{
@@ -157,8 +177,10 @@ function AppLayout() {
           padding:"0 60px 30px", gap:"30px",
           flex:1, alignItems:"center",
         }}>
+
           <div style={getBoxStyle(1,"#eddcc8")}
-            onMouseEnter={()=>setHoveredBox(1)} onMouseLeave={()=>setHoveredBox(null)}>
+            onMouseEnter={()=>setHoveredBox(1)} onMouseLeave={()=>setHoveredBox(null)}
+            onClick={() => setShowReview(true)}>
             <div style={{ display:"flex", alignItems:"center", gap:"8px", overflow:"hidden" }}>
               <span style={{ fontSize:"22px", flexShrink:0 }}>📋</span>
               <span style={{ fontSize:"22px", fontWeight:"700", letterSpacing:"0.5px", color:"#3B1F0F", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>PROJECTS TO REVIEW</span>

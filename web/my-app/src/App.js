@@ -11,6 +11,7 @@ import Bookmarks from './Bookmarks';
 import Profile from './Profile';
 import Settings from './Settings';
 import MyProjects from './MyProjects.js';
+import AllProjects from './projectGarbage';
 import { auth } from './firebase.js';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { checkRole } from './auth.js';
@@ -53,36 +54,13 @@ function App() {
         <Route path="/signup" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/home" element={
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        } />
-        <Route path="/bookmarks" element={
-          <ProtectedRoute>
-            <Bookmarks />
-          </ProtectedRoute>
-        } />
-        <Route path="/profile" element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        } />
-        <Route path="/settings" element={
-          <ProtectedRoute>
-            <Settings />
-          </ProtectedRoute>
-        } />
-        <Route path="/projects" element={
-          <ProtectedRoute>
-            <MyProjects />
-          </ProtectedRoute>
-        } />
-        <Route path="/dashboard" element={
-          <AdminRoute>
-            <Dashboard />
-          </AdminRoute>
-        } />
+        <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+        <Route path="/bookmarks" element={<ProtectedRoute><Bookmarks /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+        <Route path="/projects" element={<ProtectedRoute><MyProjects /></ProtectedRoute>} />
+        <Route path="/all-projects" element={<ProtectedRoute><AllProjects /></ProtectedRoute>} />
+        <Route path="/dashboard" element={<AdminRoute><Dashboard /></AdminRoute>} />
       </Routes>
     </Router>
   );

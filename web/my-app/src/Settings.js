@@ -5,8 +5,10 @@ import { checkRole } from './auth.js';
 import { auth } from './firebase.js';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import {
-  FaGraduationCap, FaUser, FaCog, FaFolderOpen, FaBars
+  FaGraduationCap, FaUser, FaCog, FaFolderOpen, FaBars, FaChevronDown
 } from "react-icons/fa";
+import { useRef } from "react";
+import { logOut } from './auth.js';
 
 function AdminSidebar({ open, onClose }) {
   const navigate = useNavigate();
@@ -32,7 +34,26 @@ function AdminSidebar({ open, onClose }) {
 
 function Navbar({ isAdmin }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const navigate = useNavigate();
   const location = useLocation();
+  const [user] = useAuthState(auth);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = async () => {
+    await logOut();
+    navigate('/');
+  };
   return (
     <>
       <nav className="st-navbar">
@@ -60,6 +81,23 @@ function Navbar({ isAdmin }) {
         </div>
         <div className="st-navbar-right">
           <button className="st-upload-btn">Upload Project</button>
+          <div className="st-avatar-pill" ref={dropdownRef} onClick={() => setDropdownOpen(!dropdownOpen)}>
+            {user?.photoURL ? (
+              <img src={user.photoURL} alt="avatar" className="st-nav-avatar" />
+            ) : (
+              <div className="st-nav-avatar-placeholder"><FaUser /></div>
+            )}
+            <FaChevronDown className={`st-dropdown-arrow ${dropdownOpen ? 'st-arrow-up' : ''}`} />
+            {dropdownOpen && (
+              <div className="st-dropdown-menu">
+                <div className="st-dropdown-item st-dropdown-item-active">
+                  <FaCog style={{fontSize: '12px'}} /> Settings
+                </div>
+                <div className="st-dropdown-divider" />
+                <button className="st-dropdown-item st-dropdown-logout" onClick={handleLogout}>Log Out</button>
+              </div>
+            )}
+          </div>
         </div>
       </nav>
       <AdminSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />

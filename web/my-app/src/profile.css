@@ -106,7 +106,7 @@
   transition: background 0.2s;
 }
 
-.pf-upload-btn:hover { background: rgb(75, 48, 28); }
+.pf-upload-btn:hover { background: rgb(104, 68, 42); }
 
 /* ===========================
    HAMBURGER
@@ -486,4 +486,114 @@
   .pf-card-right { align-items: center; text-align: center; }
   .pf-detail { justify-content: center; }
   .pf-social-links { justify-content: center; }
+}
+
+/* ===========================
+   NAVBAR AVATAR PILL
+=========================== */
+.pf-navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pf-avatar-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgb(164, 132, 109);
+  border-radius: 50px;
+  padding: 4px 12px 4px 4px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s;
+}
+
+.pf-avatar-pill:hover {
+  background: rgb(104, 68, 42);
+}
+
+.pf-nav-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgb(185, 174, 167);
+}
+
+.pf-nav-avatar-placeholder {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgb(223, 205, 192);
+  border: 2px solid rgb(185, 174, 167);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: rgb(104, 68, 42);
+}
+
+.pf-dropdown-arrow {
+  font-size: 10px;
+  color: rgb(254, 251, 245);
+  transition: transform 0.2s ease;
+}
+
+.pf-arrow-up {
+  transform: rotate(180deg);
+}
+
+.pf-dropdown-menu {
+  position: absolute;
+  top: 44px;
+  right: 0;
+  background: rgb(254, 251, 245);
+  border: 1px solid rgb(185, 174, 167);
+  border-radius: 10px;
+  padding: 8px 0;
+  width: 140px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 200;
+}
+
+.pf-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 550;
+  cursor: pointer;
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  color: rgb(47, 28, 15);
+  font-family: Arial, Helvetica, sans-serif;
+  transition: background 0.2s;
+}
+
+.pf-dropdown-item:hover {
+  background: rgb(223, 205, 192);
+}
+
+.pf-dropdown-divider {
+  border-top: 1px solid rgb(185, 174, 167);
+  margin: 4px 0;
+}
+
+.pf-dropdown-logout {
+  color: rgb(180, 60, 60);
+}
+
+.pf-dropdown-item-active {
+  background: rgb(223, 205, 192);
+  color: rgb(47, 28, 15);
+  font-weight: 700;
+  cursor: default;
+}
+
+.pf-dropdown-item-active:hover {
+  background: rgb(223, 205, 192);
 }
