@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./profile.css";
-import { checkRole, getUser } from './auth.js';
+import { checkRole, getUser, updateUser, logOut } from './auth.js';
+import { getUserProjs } from './projects.js';
 import { auth } from './firebase.js';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import {
   FaGraduationCap, FaUser, FaCog, FaFolderOpen, FaBars,
   FaEnvelope, FaProjectDiagram, FaGithub, FaLinkedin,
-  FaGlobe, FaQuoteLeft, FaPen, FaCheck, FaTimes
+  FaGlobe, FaQuoteLeft, FaPen, FaCheck, FaTimes, FaChevronDown
 } from "react-icons/fa";
 
 function AdminSidebar({ open, onClose }) {
@@ -21,10 +22,7 @@ function AdminSidebar({ open, onClose }) {
         </div>
         <ul className="pf-sidebar-links">
           {["HOME", "PROFILE", "TEAM", "SETTINGS"].map((item) => (
-            <li key={item}
-              onClick={() => { if (item === "HOME") onClose(); }}
-              className="pf-sidebar-item"
-            >{item}</li>
+            <li key={item} onClick={() => { if (item === "HOME") onClose(); }} className="pf-sidebar-item">{item}</li>
           ))}
         </ul>
       </aside>
@@ -34,16 +32,27 @@ function AdminSidebar({ open, onClose }) {
 
 function Navbar({ isAdmin }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const navigate = useNavigate();
   const location = useLocation();
+  const [user] = useAuthState(auth);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setDropdownOpen(false);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = async () => { await logOut(); navigate('/'); };
+
   return (
     <>
       <nav className="pf-navbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isAdmin && (
-            <button className="pf-hamburger" onClick={() => setSidebarOpen(true)}>
-              <FaBars />
-            </button>
-          )}
+          {isAdmin && <button className="pf-hamburger" onClick={() => setSidebarOpen(true)}><FaBars /></button>}
           <Link to="/home" className="pf-navbar-logo">
             <FaGraduationCap className="pf-logo-icon" />
             <span className="pf-logo-text"><strong>Graduation</strong> Gallery</span>
@@ -62,6 +71,20 @@ function Navbar({ isAdmin }) {
         </div>
         <div className="pf-navbar-right">
           <button className="pf-upload-btn">Upload Project</button>
+          <div className="pf-avatar-pill" ref={dropdownRef} onClick={() => setDropdownOpen(!dropdownOpen)}>
+            {user?.photoURL
+              ? <img src={user.photoURL} alt="avatar" className="pf-nav-avatar" />
+              : <div className="pf-nav-avatar-placeholder"><FaUser /></div>
+            }
+            <FaChevronDown className={`pf-dropdown-arrow ${dropdownOpen ? 'pf-arrow-up' : ''}`} />
+            {dropdownOpen && (
+              <div className="pf-dropdown-menu">
+                <div className="pf-dropdown-item pf-dropdown-item-active"><FaUser style={{ fontSize: '12px' }} /> My Profile</div>
+                <div className="pf-dropdown-divider" />
+                <button className="pf-dropdown-item pf-dropdown-logout" onClick={handleLogout}>Log Out</button>
+              </div>
+            )}
+          </div>
         </div>
       </nav>
       <AdminSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -74,15 +97,19 @@ function Profile() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
-
   const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+  const [projectCount, setProjectCount] = useState(0);
 
   const [bio, setBio] = useState('');
+  const [year, setYear] = useState('');
   const [github, setGithub] = useState('');
   const [linkedin, setLinkedin] = useState('');
   const [portfolio, setPortfolio] = useState('');
 
   const [tempBio, setTempBio] = useState('');
+  const [tempYear, setTempYear] = useState('');
   const [tempGithub, setTempGithub] = useState('');
   const [tempLinkedin, setTempLinkedin] = useState('');
   const [tempPortfolio, setTempPortfolio] = useState('');
@@ -90,49 +117,58 @@ function Profile() {
   useEffect(() => {
     if (user) {
       checkRole(user.uid).then((role) => setIsAdmin(role === 'admin'));
-      const fetchProfile = async () => {
-        try {
-          const data = await getUser(user.uid);
-          if (data) {
-            setProfileData(data);
-            setBio(data.bio || '');
-            setGithub(data.socialLinks?.github || '');
-            setLinkedin(data.socialLinks?.linkedin || '');
-            setPortfolio(data.socialLinks?.portfolio || '');
-          }
-        } catch (e) {
-          console.error("Could not fetch profile data", e);
-        } finally {
-          setLoading(false);
+
+      getUser(user.uid).then((data) => {
+        if (data && data !== "no-data" && data !== "get-fail") {
+          setProfileData(data);
+          setBio(data.bio || '');
+          setYear(data.year || '');
+          setGithub(data.socialLinks?.github || '');
+          setLinkedin(data.socialLinks?.linkedin || '');
+          setPortfolio(data.socialLinks?.portfolio || '');
         }
-      };
-      fetchProfile();
+        setLoading(false);
+      });
+
+      getUserProjs(user.uid).then((data) => {
+        if (Array.isArray(data)) setProjectCount(data.length);
+      });
     }
   }, [user]);
 
   const handleEdit = () => {
     setTempBio(bio);
+    setTempYear(year);
     setTempGithub(github);
     setTempLinkedin(linkedin);
     setTempPortfolio(portfolio);
+    setSaveError(null);
     setEditing(true);
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
+    setSaving(true);
+    setSaveError(null);
+    const result = await updateUser(user.uid, {
+      bio: tempBio,
+      year: tempYear,
+      socialLinks: { github: tempGithub, linkedin: tempLinkedin, portfolio: tempPortfolio }
+    });
+    setSaving(false);
+    if (result === "update-fail") { setSaveError("Failed to save. Please try again."); return; }
     setBio(tempBio);
+    setYear(tempYear);
     setGithub(tempGithub);
     setLinkedin(tempLinkedin);
     setPortfolio(tempPortfolio);
     setEditing(false);
   };
 
-  const handleCancel = () => setEditing(false);
+  const handleCancel = () => { setEditing(false); setSaveError(null); };
 
   const displayName = user?.displayName || profileData?.name || "User";
   const email = user?.email || "";
   const avatarSrc = user?.photoURL || null;
-  const projectCount = profileData?.projectCount ?? 0;
-  const year = profileData?.year || null;
 
   return (
     <div className="pf-page">
@@ -142,83 +178,57 @@ function Profile() {
           <div className="pf-spinner-wrapper"><div className="pf-spinner" /></div>
         ) : (
           <div className="pf-card">
-
-            {/* Edit controls */}
             <div className="pf-card-actions">
               {!editing ? (
-                <button className="pf-icon-btn" onClick={handleEdit} title="Edit profile">
-                  <FaPen />
-                </button>
+                <button className="pf-icon-btn" onClick={handleEdit} title="Edit profile"><FaPen /></button>
               ) : (
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button className="pf-icon-btn pf-icon-btn-save" onClick={handleConfirm} title="Save">
-                    <FaCheck />
+                  <button className="pf-icon-btn pf-icon-btn-save" onClick={handleConfirm} disabled={saving} title="Save">
+                    {saving ? "..." : <FaCheck />}
                   </button>
-                  <button className="pf-icon-btn pf-icon-btn-cancel" onClick={handleCancel} title="Cancel">
-                    <FaTimes />
-                  </button>
+                  <button className="pf-icon-btn pf-icon-btn-cancel" onClick={handleCancel} title="Cancel"><FaTimes /></button>
                 </div>
               )}
             </div>
 
-            {/* Left: avatar */}
             <div className="pf-card-left">
-              {avatarSrc ? (
-                <img src={avatarSrc} alt="Profile" className="pf-avatar" />
-              ) : (
-                <div className="pf-avatar-placeholder">
-                  <FaUser />
-                </div>
-              )}
+              {avatarSrc
+                ? <img src={avatarSrc} alt="Profile" className="pf-avatar" />
+                : <div className="pf-avatar-placeholder"><FaUser /></div>
+              }
             </div>
 
-            {/* Right: info */}
             <div className="pf-card-right">
-
-              {/* 1. Name */}
               <h2 className="pf-name">{displayName}</h2>
-
-              {/* 2. Bio */}
-              {editing ? (
-                <textarea
-                  className="pf-textarea"
-                  placeholder="Write a short bio about yourself..."
-                  value={tempBio}
-                  onChange={e => setTempBio(e.target.value)}
-                  maxLength={300}
-                  rows={3}
-                />
-              ) : (
-                bio ? (
-                  <div className="pf-bio">
-                    <FaQuoteLeft className="pf-bio-quote" />
-                    <p>{bio}</p>
-                  </div>
-                ) : (
-                  <p className="pf-placeholder-text">No bio yet</p>
-                )
-              )}
-
-              {/* 3. Divider */}
               <div className="pf-divider" />
 
-              {/* 4. Email, projects, grad year */}
               <div className="pf-details">
                 <div className="pf-detail">
                   <FaEnvelope className="pf-detail-icon" />
                   <span>{email}</span>
                 </div>
                 <div className="pf-detail">
+                  <FaGraduationCap className="pf-detail-icon" />
+                  {editing ? (
+                    <input className="pf-input" placeholder="Graduation year e.g. 2025" value={tempYear} onChange={e => setTempYear(e.target.value)} maxLength={4} />
+                  ) : (
+                    year ? <span>Class of {year}</span> : <span className="pf-placeholder-text">No graduation year specified</span>
+                  )}
+                </div>
+                <div className="pf-detail">
                   <FaProjectDiagram className="pf-detail-icon" />
                   <span>{projectCount} project{projectCount !== 1 ? 's' : ''} uploaded</span>
                 </div>
-                <div className="pf-detail">
-                  <FaGraduationCap className="pf-detail-icon" />
-                  <span>{year ? `Class of ${year}` : 'No graduation year specified'}</span>
-                </div>
               </div>
 
-              {/* 5. Social links */}
+              {editing ? (
+                <textarea className="pf-textarea" placeholder="Write a short bio about yourself..." value={tempBio} onChange={e => setTempBio(e.target.value)} maxLength={300} rows={3} />
+              ) : (
+                bio
+                  ? <div className="pf-bio"><FaQuoteLeft className="pf-bio-quote" /><p>{bio}</p></div>
+                  : <p className="pf-placeholder-text">No bio yet</p>
+              )}
+
               {editing ? (
                 <div className="pf-social-inputs">
                   <div className="pf-social-input-row">
@@ -237,27 +247,16 @@ function Profile() {
               ) : (
                 (github || linkedin || portfolio) ? (
                   <div className="pf-social-links">
-                    {github && (
-                      <a href={github} target="_blank" rel="noreferrer" className="pf-social-btn">
-                        <FaGithub /> GitHub
-                      </a>
-                    )}
-                    {linkedin && (
-                      <a href={linkedin} target="_blank" rel="noreferrer" className="pf-social-btn">
-                        <FaLinkedin /> LinkedIn
-                      </a>
-                    )}
-                    {portfolio && (
-                      <a href={portfolio} target="_blank" rel="noreferrer" className="pf-social-btn">
-                        <FaGlobe /> Portfolio
-                      </a>
-                    )}
+                    {github && <a href={github} target="_blank" rel="noreferrer" className="pf-social-btn"><FaGithub /> GitHub</a>}
+                    {linkedin && <a href={linkedin} target="_blank" rel="noreferrer" className="pf-social-btn"><FaLinkedin /> LinkedIn</a>}
+                    {portfolio && <a href={portfolio} target="_blank" rel="noreferrer" className="pf-social-btn"><FaGlobe /> Portfolio</a>}
                   </div>
                 ) : (
                   <p className="pf-placeholder-text">No social links yet</p>
                 )
               )}
 
+              {saveError && <p style={{ color: '#c0392b', fontSize: 13, marginTop: 8 }}>{saveError}</p>}
             </div>
           </div>
         )}

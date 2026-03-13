@@ -13,6 +13,8 @@
   justify-content: center;
   padding: 20px;
   animation: um-fade-in 0.2s ease;
+  text-align: left;
+  box-sizing: border-box;
 }
 
 @keyframes um-fade-in {
@@ -29,11 +31,18 @@
   width: 100%;
   max-width: 560px;
   max-height: 90vh;
+  margin: auto;
   display: flex;
   flex-direction: column;
   box-shadow: 0 20px 60px rgba(47, 28, 15, 0.25);
   animation: um-slide-up 0.25s ease;
   overflow: hidden;
+  text-align: left;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  color: rgb(47, 28, 15);
+  line-height: normal;
+  letter-spacing: normal;
 }
 
 @keyframes um-slide-up {
@@ -48,8 +57,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 28px 20px;
+  padding: 12px 28px;
   border-bottom: 1px solid rgb(185, 174, 167);
+  flex-shrink: 0;
 }
 
 .um-title {
@@ -81,11 +91,32 @@
    BODY
 =========================== */
 .um-body {
-  padding: 24px 28px;
+  padding: 24px 32px 24px 28px;
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  flex: 1;
+}
+
+/* Custom scrollbar */
+.um-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.um-body::-webkit-scrollbar-track {
+  background: rgb(254, 251, 245);
+  border-radius: 10px;
+}
+
+.um-body::-webkit-scrollbar-thumb {
+  background: rgb(164, 132, 109);
+  border-radius: 10px;
+}
+
+.um-body::-webkit-scrollbar-thumb:hover {
+  background: rgb(104, 68, 42);
 }
 
 /* ===========================
@@ -95,6 +126,8 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  align-items: center;
+  width: 100%;
 }
 
 .um-label {
@@ -104,6 +137,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  width: 100%;
 }
 
 .um-label-icon {
@@ -150,7 +184,7 @@
 }
 
 .um-input-error {
-  border-color: #c0392b !important;
+  border-color: #c0392b;
 }
 
 .um-error {
@@ -253,6 +287,7 @@
   gap: 12px;
   padding: 18px 28px;
   border-top: 1px solid rgb(185, 174, 167);
+  flex-shrink: 0;
 }
 
 .um-btn-cancel {
