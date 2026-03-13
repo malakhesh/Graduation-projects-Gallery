@@ -1,19 +1,39 @@
 import React, { useState, useEffect } from "react";
-import { getAllUsers } from "./auth.js";
+import { getDocs, collection } from "firebase/firestore";
+import { db } from "./firebase.js";
+import { checkRole } from "./auth.js";
+import { auth } from "./firebase.js";
 import "./Users.css";
 
 function Users({ onBack }) {
   const [users,   setUsers]   = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter,  setFilter]  = useState("all"); // "all" or "admin"
+  const [filter,  setFilter]  = useState("all");
+  const [allowed, setAllowed] = useState(false);
 
   useEffect(() => {
-    const fetch = async () => {
-      const data = await getAllUsers();
-      setUsers(data);
+    const init = async () => {
+      // تأكد إن اللي فاتح الصفحة admin
+      const uid  = auth.currentUser?.uid;
+      const role = uid ? await checkRole(uid) : null;
+
+      if (role !== "admin") {
+        setAllowed(false);
+        setLoading(false);
+        return;
+      }
+
+      setAllowed(true);
+
+      // الـ backend ما عندوش getAllUsers —
+      // بنقرأ من Firestore مباشرة (نفس الـ db اللي بيستخدمه الـ backend)
+      const snapshot = await getDocs(collection(db, "users"));
+      const arr = [];
+      snapshot.forEach((d) => arr.push({ id: d.id, ...d.data() }));
+      setUsers(arr);
       setLoading(false);
     };
-    fetch();
+    init();
   }, []);
 
   const admins  = users.filter((u) => u.role === "admin").length;
@@ -37,22 +57,6 @@ function Users({ onBack }) {
         </div>
       </div>
 
-      {/* Filter Buttons */}
-      <div className="us-filter-row">
-        <button
-          className={`us-filter-btn ${filter === "all" ? "us-filter-active" : ""}`}
-          onClick={() => setFilter("all")}
-        >
-          All Users
-        </button>
-        <button
-          className={`us-filter-btn ${filter === "admin" ? "us-filter-active" : ""}`}
-          onClick={() => setFilter("admin")}
-        >
-          ⭐ Admins Only
-        </button>
-      </div>
-
       {/* Loading */}
       {loading && (
         <div className="us-loading">
@@ -61,15 +65,40 @@ function Users({ onBack }) {
         </div>
       )}
 
+      {/* No Permission */}
+      {!loading && !allowed && (
+        <div className="us-empty">
+          <p>⛔ You don't have permission to view users.</p>
+        </div>
+      )}
+
+      {/* Filter Buttons */}
+      {!loading && allowed && (
+        <div className="us-filter-row">
+          <button
+            className={`us-filter-btn ${filter === "all" ? "us-filter-active" : ""}`}
+            onClick={() => setFilter("all")}
+          >
+            All Users
+          </button>
+          <button
+            className={`us-filter-btn ${filter === "admin" ? "us-filter-active" : ""}`}
+            onClick={() => setFilter("admin")}
+          >
+            ⭐ Admins Only
+          </button>
+        </div>
+      )}
+
       {/* Empty */}
-      {!loading && displayed.length === 0 && (
+      {!loading && allowed && displayed.length === 0 && (
         <div className="us-empty">
           <p>No users found.</p>
         </div>
       )}
 
       {/* Table */}
-      {!loading && displayed.length > 0 && (
+      {!loading && allowed && displayed.length > 0 && (
         <div className="us-table-wrapper">
           <table className="us-table">
             <thead>

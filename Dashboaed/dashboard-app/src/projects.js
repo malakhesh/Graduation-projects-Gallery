@@ -1,98 +1,142 @@
-import { collection, addDoc, doc, getDoc, getDocs, updateDoc, arrayUnion, deleteDoc } from "firebase/firestore"
-import { db } from "./firebase.js"
+import { 
+  collection, addDoc, doc, getDoc, getDocs, updateDoc, arrayUnion, deleteDoc, query, where, serverTimestamp 
+} from "firebase/firestore"
+import { db, storage } from "./firebase.js"
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 
-async function addProject(title, description, ownerId, year, techStack) {
+async function addProj(title, desc, userId, year, stack, gitLink, imgFile, tags) {
   try {
-    const ref = await addDoc(collection(db, "projects"), {
+    let imgUrl = null
+    if (imgFile) {
+      const sRef = ref(storage, `projects/${userId}/${imgFile.name}`)
+      await uploadBytes(sRef, imgFile)
+      imgUrl = await getDownloadURL(sRef)
+    }
+    const r = await addDoc(collection(db, "projects"), {
       title,
-      description,
-      ownerId,
+      desc,
+      userId,
       year,
-      techStack,
-      createdAt: new Date(),
+      stack,
+      gitLink,
+      imgUrl,
+      tags,
+      createdAt: serverTimestamp(),
       comments: [],
-      ratings: []
+      ratings: [],
+      status: "pending"
     })
-    return ref.id
+    return r.id
   } catch {
-    return "add fail"
+    return "add-fail"
   }
 }
 
-async function getProject(id) {
+async function getProj(id) {
   try {
     const d = await getDoc(doc(db, "projects", id))
-    if (d.exists()) {
-      return d.data()
-    } else {
-      return "no project"
-    }
+    if (d.exists()) return d.data()
+    else return "no-proj"
   } catch {
-    return "get fail"
+    return "get-fail"
   }
 }
 
-async function getAllProjects() {
+async function getApproved() {
   try {
-    const snap = await getDocs(collection(db, "projects"))
-    let list = []
-    snap.forEach((d) => {
-      list.push({ id: d.id, ...d.data() })
-    })
-    return list
+    const q = query(collection(db, "projects"), where("status", "==", "approved"))
+    const s = await getDocs(q)
+    let arr = []
+    s.forEach((d) => arr.push({ id: d.id, ...d.data() }))
+    return arr
   } catch {
-    return "get all fail"
+    return "approved-fail"
   }
 }
 
-async function Comment(id, c) {
+async function getPending() {
   try {
+    const q = query(collection(db, "projects"), where("status", "==", "pending"))
+    const s = await getDocs(q)
+    let arr = []
+    s.forEach((d) => arr.push({ id: d.id, ...d.data() }))
+    return arr
+  } catch {
+    return "pending-fail"
+  }
+}
+
+async function setStatus(id, status, role) {
+  try {
+    if (role !== "admin") return "unauth"
     await updateDoc(doc(db, "projects", id), {
-      comments: arrayUnion(c)
+      status,
+      statusAt: serverTimestamp()
     })
-    return "comment added"
+    return "status-ok"
   } catch {
-    return "comment fail"
+    return "status-fail"
   }
 }
 
-async function Rating(id, r) {
+async function getUserProjs(uid) {
   try {
-    await updateDoc(doc(db, "projects", id), {
-      ratings: arrayUnion(r)
-    })
-    return "rating added"
+    const q = query(collection(db, "projects"), where("userId", "==", uid))
+    const s = await getDocs(q)
+    let arr = []
+    s.forEach((d) => arr.push({ id: d.id, ...d.data() }))
+    return arr
   } catch {
-    return "rating fail"
+    return "user-fail"
   }
 }
 
-async function deleteProj(id) {
+async function getByTag(tag) {
+  try {
+    const q = query(collection(db, "projects"), where("tags", "array-contains", tag))
+    const s = await getDocs(q)
+    let arr = []
+    s.forEach((d) => arr.push({ id: d.id, ...d.data() }))
+    return arr
+  } catch {
+    return "tag-fail"
+  }
+}
+
+async function addComment(id, c) {
+  try {
+    await updateDoc(doc(db, "projects", id), { comments: arrayUnion(c) })
+    return "comment-ok"
+  } catch {
+    return "comment-fail"
+  }
+}
+
+async function addRate(id, r) {
+  try {
+    await updateDoc(doc(db, "projects", id), { ratings: arrayUnion(r) })
+    return "rate-ok"
+  } catch {
+    return "rate-fail"
+  }
+}
+
+async function delProj(id) {
   try {
     await deleteDoc(doc(db, "projects", id))
-    return "project deleted"
+    return "del-ok"
   } catch {
-    return "delete fail"
+    return "del-fail"
   }
 }
 
-async function updateProj(id, newData) {
+async function updProj(id, data) {
   try {
-    const ref = doc(db, "projects", id)
-    await updateDoc(ref, newData)
-    return "project updated"
+    await updateDoc(doc(db, "projects", id), data)
+    return "upd-ok"
   } catch {
-    return "update fail"
+    return "upd-fail"
   }
 }
 
-async function updateProjectStatus(id, status) {
-  try {
-    await updateDoc(doc(db, "projects", id), { status: status })
-    return "status updated"
-  } catch {
-    return "update status fail"
-  }
-}
-
-export { addProject, getProject, getAllProjects, Comment, Rating, deleteProj, updateProj, updateProjectStatus }
+export { addProj, getProj, getApproved, getPending, setStatus, getUserProjs, getByTag, addComment, addRate, delProj, updProj }

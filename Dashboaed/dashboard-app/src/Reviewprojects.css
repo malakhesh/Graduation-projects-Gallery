@@ -16,7 +16,7 @@
   display: flex;
   align-items: center;
   gap: 24px;
-  margin-bottom: 36px;
+  margin-bottom: 24px;
   flex-wrap: wrap;
 }
 
@@ -63,6 +63,38 @@
 .rp-stat-rejected { background: rgb(248, 215, 218); color: rgb(130, 30, 30);  }
 
 /* ===========================
+   FILTER BUTTONS
+=========================== */
+.rp-filter-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.rp-filter-btn {
+  padding: 8px 22px;
+  border-radius: 20px;
+  border: 1.5px solid rgb(185, 174, 167);
+  background: rgb(254, 251, 245);
+  color: rgb(47, 28, 15);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.rp-filter-btn:hover {
+  border-color: rgb(104, 68, 42);
+  color: rgb(104, 68, 42);
+}
+
+.rp-filter-active          { color: white !important; border-color: transparent !important; }
+.rp-filter-active-pending  { background: rgb(133, 100, 10)  !important; }
+.rp-filter-active-approved { background: rgb(30, 100, 40)   !important; }
+.rp-filter-active-rejected { background: rgb(130, 30, 30)   !important; }
+
+/* ===========================
    GRID
 =========================== */
 .rp-grid {
@@ -71,13 +103,8 @@
   gap: 24px;
 }
 
-@media (max-width: 1000px) {
-  .rp-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (max-width: 620px) {
-  .rp-grid { grid-template-columns: 1fr; }
-}
+@media (max-width: 1000px) { .rp-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 620px)  { .rp-grid { grid-template-columns: 1fr; } }
 
 /* ===========================
    CARD
@@ -123,9 +150,7 @@
 /* ===========================
    IMAGE
 =========================== */
-.rp-img-wrapper {
-  padding: 12px 12px 0;
-}
+.rp-img-wrapper { padding: 12px 12px 0; }
 
 .rp-img {
   width: 100%;
@@ -211,9 +236,7 @@
   animation: rp-spin 0.8s linear infinite;
 }
 
-@keyframes rp-spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes rp-spin { to { transform: rotate(360deg); } }
 
 /* ===========================
    EMPTY
@@ -244,33 +267,14 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.15s;
 }
 
-.rp-btn-approve {
-  background: rgb(100, 180, 110);
-  color: white;
-}
+.rp-btn-approve               { background: rgb(100, 180, 110); color: white; }
+.rp-btn-approve:hover         { background: rgb(60, 140, 75); transform: scale(1.03); }
 
-.rp-btn-approve:hover {
-  background: rgb(60, 140, 75);
-}
+.rp-btn-reject                { background: rgb(200, 80, 80); color: white; }
+.rp-btn-reject:hover          { background: rgb(160, 40, 40); transform: scale(1.03); }
 
-.rp-btn-reject {
-  background: rgb(200, 80, 80);
-  color: white;
-}
-
-.rp-btn-reject:hover {
-  background: rgb(160, 40, 40);
-}
-
-.rp-btn-undo {
-  background: rgb(185, 174, 167);
-  color: rgb(47, 28, 15);
-}
-
-.rp-btn-undo:hover {
-  background: rgb(150, 130, 115);
-  color: white;
-}
+.rp-btn-undo                  { background: rgb(185, 174, 167); color: rgb(47, 28, 15); }
+.rp-btn-undo:hover            { background: rgb(140, 120, 105); color: white; transform: scale(1.03); }

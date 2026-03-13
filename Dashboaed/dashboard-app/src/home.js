@@ -31,9 +31,9 @@ function AdminSidebar({ open, onClose }) {
                     <h2 className="hg-sidebar-title" onClick={() => navigate('/dashboard')}>DASHBOARD</h2>
                 </div>
                 <ul className="hg-sidebar-links">
-                    {["HOME", "PROFILE", "TEAM", "SETTINGS"].map((item) => (
+                    {["WEBSITE VIEW", "PROFILE", "TEAM", "SETTINGS"].map((item) => (
                         <li key={item}
-                            onClick={() => { if (item === "HOME") onClose(); }}
+                            onClick={() => { if (item === "WEBSITE VIEW") onClose(); }}
                             className="hg-sidebar-item"
                         >{item}</li>
                     ))}
