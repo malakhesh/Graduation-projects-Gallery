@@ -362,7 +362,7 @@
 }
 
 .hg-card-title {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
   color: rgb(47, 28, 15);
   font-family: 'Times New Roman', Times, serif;
@@ -431,6 +431,57 @@
   background: rgb(223, 205, 192);
   color: rgb(104, 68, 42);
   border: 1px solid rgb(185, 174, 167);
+}
+
+.hg-tag-github {
+  background: rgb(47, 28, 15);
+  color: rgb(254, 251, 245) !important;
+  border-color: rgb(47, 28, 15);
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.hg-tag-github:hover {
+  background: rgb(104, 68, 42);
+  border-color: rgb(104, 68, 42);
+}
+
+.hg-card-title {
+  font-size: 15px;
+}
+
+/* ===========================
+   CARD FOOTER BUTTONS
+=========================== */
+.hg-card-footer-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgb(223, 205, 192);
+  color: rgb(104, 68, 42);
+  border: 1px solid rgb(185, 174, 167);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+.hg-card-footer-btn:hover {
+  background: rgb(164, 132, 109);
+  color: rgb(254, 251, 245);
+  border-color: rgb(164, 132, 109);
+}
+
+.hg-card-footer-btn-active {
+  background: rgb(47, 28, 15);
+  color: rgb(254, 251, 245);
+  border-color: rgb(47, 28, 15);
 }
 
 /* ===========================
