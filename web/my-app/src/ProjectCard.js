@@ -328,6 +328,8 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
                 )}
               </div>
 
+              {(!project.status || project.status === "approved") && (
+                <>
               <div className="hg-pm-comment-section">
                 <h4 className="hg-pm-comment-title">Rate this project</h4>
                 {userHasRated ? (
@@ -421,6 +423,8 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
                     </div>
                   ))}
                 </div>
+              )}
+                </>
               )}
             </div>
           </>
