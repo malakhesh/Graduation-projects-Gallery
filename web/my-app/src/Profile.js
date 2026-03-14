@@ -5,6 +5,7 @@ import { checkRole, getUser, updateUser, logOut } from './auth.js';
 import { getUserProjs } from './projects.js';
 import { auth } from './firebase.js';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import UploadModal from './UploadModal';
 import {
   FaGraduationCap, FaUser, FaCog, FaFolderOpen, FaBars,
   FaEnvelope, FaProjectDiagram, FaGithub, FaLinkedin,
@@ -33,6 +34,7 @@ function AdminSidebar({ open, onClose }) {
 function Navbar({ isAdmin }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -70,7 +72,7 @@ function Navbar({ isAdmin }) {
           </Link>
         </div>
         <div className="pf-navbar-right">
-          <button className="pf-upload-btn">Upload Project</button>
+          <button className="pf-upload-btn" onClick={() => setShowUpload(true)}>Upload Project</button>
           <div className="pf-avatar-pill" ref={dropdownRef} onClick={() => setDropdownOpen(!dropdownOpen)}>
             {user?.photoURL
               ? <img src={user.photoURL} alt="avatar" className="pf-nav-avatar" />
@@ -88,6 +90,7 @@ function Navbar({ isAdmin }) {
         </div>
       </nav>
       <AdminSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      {showUpload && <UploadModal onClose={() => setShowUpload(false)} />}
     </>
   );
 }
@@ -117,7 +120,6 @@ function Profile() {
   useEffect(() => {
     if (user) {
       checkRole(user.uid).then((role) => setIsAdmin(role === 'admin'));
-
       getUser(user.uid).then((data) => {
         if (data && data !== "no-data" && data !== "get-fail") {
           setProfileData(data);
@@ -129,7 +131,6 @@ function Profile() {
         }
         setLoading(false);
       });
-
       getUserProjs(user.uid).then((data) => {
         if (Array.isArray(data)) setProjectCount(data.length);
       });
@@ -137,30 +138,21 @@ function Profile() {
   }, [user]);
 
   const handleEdit = () => {
-    setTempBio(bio);
-    setTempYear(year);
-    setTempGithub(github);
-    setTempLinkedin(linkedin);
-    setTempPortfolio(portfolio);
-    setSaveError(null);
-    setEditing(true);
+    setTempBio(bio); setTempYear(year); setTempGithub(github);
+    setTempLinkedin(linkedin); setTempPortfolio(portfolio);
+    setSaveError(null); setEditing(true);
   };
 
   const handleConfirm = async () => {
-    setSaving(true);
-    setSaveError(null);
+    setSaving(true); setSaveError(null);
     const result = await updateUser(user.uid, {
-      bio: tempBio,
-      year: tempYear,
+      bio: tempBio, year: tempYear,
       socialLinks: { github: tempGithub, linkedin: tempLinkedin, portfolio: tempPortfolio }
     });
     setSaving(false);
     if (result === "update-fail") { setSaveError("Failed to save. Please try again."); return; }
-    setBio(tempBio);
-    setYear(tempYear);
-    setGithub(tempGithub);
-    setLinkedin(tempLinkedin);
-    setPortfolio(tempPortfolio);
+    setBio(tempBio); setYear(tempYear); setGithub(tempGithub);
+    setLinkedin(tempLinkedin); setPortfolio(tempPortfolio);
     setEditing(false);
   };
 
