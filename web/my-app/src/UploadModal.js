@@ -5,7 +5,6 @@ import { FaGithub, FaImage, FaTag } from "react-icons/fa";
 import { addProj } from "./projects.js";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "./firebase.js";
-
 const TAGS = ["Business", "Education", "E-commerce", "Entertainment", "Blog"];
 const CLOUDINARY_CLOUD = "df4nquqin";
 const CLOUDINARY_PRESET = "snqtqhha";

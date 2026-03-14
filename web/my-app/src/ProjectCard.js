@@ -94,49 +94,49 @@ export function AuthorCard({ project, onBack }) {
           background: "rgb(254, 251, 245)",
           border: "1px solid rgb(185, 174, 167)",
           borderRadius: "20px",
-          padding: "32px 36px",
+          padding: "48px 52px",
           display: "flex",
           flexDirection: "row",
           alignItems: "flex-start",
-          gap: "36px",
+          gap: "52px",
         }}>
           {/* Left: Avatar */}
           <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "8px" }}>
             {avatar
-              ? <img src={avatar} alt={name} style={{ width: 90, height: 90, borderRadius: "50%", objectFit: "cover", border: "4px solid rgb(185, 174, 167)" }} />
-              : <div style={{ width: 90, height: 90, borderRadius: "50%", background: "rgb(223, 205, 192)", border: "4px solid rgb(185, 174, 167)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: "rgb(104, 68, 42)" }}><FaUser /></div>
+              ? <img src={avatar} alt={name} style={{ width: 120, height: 120, borderRadius: "50%", objectFit: "cover", border: "4px solid rgb(185, 174, 167)" }} />
+              : <div style={{ width: 120, height: 120, borderRadius: "50%", background: "rgb(223, 205, 192)", border: "4px solid rgb(185, 174, 167)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48, color: "rgb(104, 68, 42)" }}><FaUser /></div>
             }
           </div>
 
           {/* Right: Info */}
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "12px" }}>
-            <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: "22px", fontWeight: 700, color: "rgb(47, 28, 15)", margin: 0 }}>{name}</h2>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "18px" }}>
+            <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: "26px", fontWeight: 700, color: "rgb(47, 28, 15)", margin: 0 }}>{name}</h2>
             <div style={{ width: 40, height: 3, background: "rgb(185, 174, 167)", borderRadius: 2 }} />
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {email && (
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: 14, color: "rgb(104, 68, 42)", fontFamily: "Arial, Helvetica, sans-serif" }}>
-                  <FaEnvelope style={{ color: "rgb(164, 132, 109)", fontSize: 13 }} /> {email}
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: 15, color: "rgb(104, 68, 42)", fontFamily: "Arial, Helvetica, sans-serif" }}>
+                  <FaEnvelope style={{ color: "rgb(164, 132, 109)", fontSize: 14 }} /> {email}
                 </div>
               )}
               {year && (
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: 14, color: "rgb(104, 68, 42)", fontFamily: "Arial, Helvetica, sans-serif" }}>
-                  <FaGraduationCap style={{ color: "rgb(164, 132, 109)", fontSize: 13 }} /> Class of {year}
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: 15, color: "rgb(104, 68, 42)", fontFamily: "Arial, Helvetica, sans-serif" }}>
+                  <FaGraduationCap style={{ color: "rgb(164, 132, 109)", fontSize: 14 }} /> Class of {year}
                 </div>
               )}
             </div>
 
             {bio && (
-              <div style={{ background: "rgb(243, 236, 229)", borderLeft: "3px solid rgb(185, 174, 167)", borderRadius: "8px", padding: "10px 14px" }}>
-                <p style={{ fontSize: 14, color: "rgb(104, 68, 42)", lineHeight: 1.6, fontFamily: "Arial, Helvetica, sans-serif", margin: 0 }}>{bio}</p>
+              <div style={{ background: "rgb(243, 236, 229)", borderLeft: "3px solid rgb(185, 174, 167)", borderRadius: "8px", padding: "14px 18px" }}>
+                <p style={{ fontSize: 15, color: "rgb(104, 68, 42)", lineHeight: 1.7, fontFamily: "Arial, Helvetica, sans-serif", margin: 0 }}>{bio}</p>
               </div>
             )}
 
             {(github || linkedin || portfolio) && (
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                {github && <a href={github} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", border: "1.5px solid rgb(185, 174, 167)", borderRadius: 20, fontSize: 13, fontWeight: 600, color: "rgb(104, 68, 42)", background: "rgb(254, 251, 245)", textDecoration: "none", fontFamily: "Arial, Helvetica, sans-serif" }}><FaGithub /> GitHub</a>}
-                {linkedin && <a href={linkedin} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", border: "1.5px solid rgb(185, 174, 167)", borderRadius: 20, fontSize: 13, fontWeight: 600, color: "rgb(104, 68, 42)", background: "rgb(254, 251, 245)", textDecoration: "none", fontFamily: "Arial, Helvetica, sans-serif" }}><FaLinkedin /> LinkedIn</a>}
-                {portfolio && <a href={portfolio} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", border: "1.5px solid rgb(185, 174, 167)", borderRadius: 20, fontSize: 13, fontWeight: 600, color: "rgb(104, 68, 42)", background: "rgb(254, 251, 245)", textDecoration: "none", fontFamily: "Arial, Helvetica, sans-serif" }}><FaGlobe /> Portfolio</a>}
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                {github && <a href={github} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 18px", border: "1.5px solid rgb(185, 174, 167)", borderRadius: 20, fontSize: 14, fontWeight: 600, color: "rgb(104, 68, 42)", background: "rgb(254, 251, 245)", textDecoration: "none", fontFamily: "Arial, Helvetica, sans-serif" }}><FaGithub /> GitHub</a>}
+                {linkedin && <a href={linkedin} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 18px", border: "1.5px solid rgb(185, 174, 167)", borderRadius: 20, fontSize: 14, fontWeight: 600, color: "rgb(104, 68, 42)", background: "rgb(254, 251, 245)", textDecoration: "none", fontFamily: "Arial, Helvetica, sans-serif" }}><FaLinkedin /> LinkedIn</a>}
+                {portfolio && <a href={portfolio} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 18px", border: "1.5px solid rgb(185, 174, 167)", borderRadius: 20, fontSize: 14, fontWeight: 600, color: "rgb(104, 68, 42)", background: "rgb(254, 251, 245)", textDecoration: "none", fontFamily: "Arial, Helvetica, sans-serif" }}><FaGlobe /> Portfolio</a>}
               </div>
             )}
           </div>
@@ -246,12 +246,14 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
                 <a href={github} target="_blank" rel="noreferrer" className="hg-pm-github-btn">
                   <FaGithub /> View on GitHub
                 </a>
-                <button
-                  className={`hg-pm-bookmark-btn${bookmarked ? " hg-pm-bookmark-active" : ""}`}
-                  onClick={(e) => { e.stopPropagation(); onToggleBookmark(); }}
-                >
-                  {bookmarked ? <FaBookmark /> : <FaRegBookmark />}
-                </button>
+                {(!project.status || project.status === "approved") && (
+                  <button
+                    className={`hg-pm-bookmark-btn${bookmarked ? " hg-pm-bookmark-active" : ""}`}
+                    onClick={(e) => { e.stopPropagation(); onToggleBookmark(); }}
+                  >
+                    {bookmarked ? <FaBookmark /> : <FaRegBookmark />}
+                  </button>
+                )}
                 {canDelete && (
                   <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
                     <button
@@ -343,6 +345,7 @@ export function ProjectCard({ project, onOpen, bookmarked, onToggleBookmark, sho
 
   const handleBookmark = (e) => {
     e.stopPropagation();
+    if (project.status && project.status !== "approved") return;
     onToggleBookmark(project.id);
   };
 
@@ -386,12 +389,14 @@ export function ProjectCard({ project, onOpen, bookmarked, onToggleBookmark, sho
               <FaGithub style={{ marginRight: 4 }} /> GitHub
             </a>
           )}
-          <button
-            className={`hg-card-bookmark${bookmarked ? " hg-card-bookmark-active" : ""}`}
-            onClick={handleBookmark}
-          >
-            {bookmarked ? <FaBookmark /> : <FaRegBookmark />}
-          </button>
+          {(!project.status || project.status === "approved") && (
+            <button
+              className={`hg-card-bookmark${bookmarked ? " hg-card-bookmark-active" : ""}`}
+              onClick={handleBookmark}
+            >
+              {bookmarked ? <FaBookmark /> : <FaRegBookmark />}
+            </button>
+          )}
         </div>
       </div>
       {showStatus && project.status === "rejected" && (

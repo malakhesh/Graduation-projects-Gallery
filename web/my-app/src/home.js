@@ -8,7 +8,7 @@ import { auth } from './firebase.js';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { getApproved, addComment, addRate, delProj } from './projects.js';
 import { ProjectCard, ProjectModal } from './ProjectCard.js';
-import { FaGraduationCap, FaUser, FaBell, FaSearch, FaFilter, FaChevronDown, FaBookOpen, FaBookmark, FaFolderOpen, FaBriefcase, FaShoppingCart, FaFilm, FaNewspaper, FaBars } from "react-icons/fa";
+import { FaGraduationCap, FaUser, FaBell, FaSearch, FaFilter, FaChevronDown, FaBookOpen, FaBookmark, FaFolderOpen, FaBriefcase, FaShoppingCart, FaFilm, FaNewspaper } from "react-icons/fa";
 
 const exploreTags = [
   { label: "Business", icon: <FaBriefcase /> },
@@ -18,36 +18,14 @@ const exploreTags = [
   { label: "Blog", icon: <FaNewspaper /> },
 ];
 
-function AdminSidebar({ open, onClose, onNavigate }) {
-  return (
-    <>
-      {open && <div className="hg-sidebar-overlay" onClick={onClose} />}
-      <aside className={`hg-admin-sidebar ${open ? "hg-sidebar-open" : ""}`}>
-        <div className="hg-sidebar-header">
-          <Link to="/dashboard" className="hg-sidebar-title">DASHBOARD</Link>
-        </div>
-        <ul className="hg-sidebar-links">
-          {["WEBSITE VIEW", "ALL PROJECTS", "USERS", "SETTINGS"].map((item) => (
-            <li key={item} className="hg-sidebar-item">{item}</li>
-          ))}
-        </ul>
-      </aside>
-    </>
-  );
-}
-
 export function Navbar({ isAdmin }) {
   const [hasNotifications] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [location.pathname]);
   const dropdownRef = useRef(null);
   const notifRef = useRef(null);
   const [user] = useAuthState(auth);
@@ -66,12 +44,16 @@ export function Navbar({ isAdmin }) {
   return (
     <>
       <nav className="hg-navbar">
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          {isAdmin && <button className="hg-hamburger" onClick={() => setSidebarOpen(true)}><FaBars /></button>}
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           <Link to="/home" className="hg-navbar-logo">
             <FaGraduationCap className="hg-logo-icon" />
             <span className="hg-logo-text"><strong>Graduation</strong> Gallery</span>
           </Link>
+          {isAdmin && (
+            <Link to="/dashboard" className={`hg-dashboard-btn${location.pathname === "/dashboard" ? " hg-dashboard-btn-active" : ""}`}>
+              Dashboard
+            </Link>
+          )}
         </div>
         <div className="hg-navbar-links">
           <Link to="/projects" className={`hg-nav-link${location.pathname === "/projects" ? " hg-nav-link-active" : ""}`}>
@@ -80,6 +62,7 @@ export function Navbar({ isAdmin }) {
           <Link to="/bookmarks" className={`hg-nav-link${location.pathname === "/bookmarks" ? " hg-nav-link-active" : ""}`}>
             <FaBookmark className="hg-nav-icon" /> Bookmarks
           </Link>
+
           <div ref={notifRef} style={{ position: "relative" }}>
             <button className={`hg-nav-link${notifOpen ? " hg-nav-link-active" : ""}`} onClick={() => setNotifOpen(!notifOpen)}>
               <span className="hg-notif-wrapper">
@@ -119,7 +102,6 @@ export function Navbar({ isAdmin }) {
           </div>
         </div>
       </nav>
-      <AdminSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} onNavigate={(path) => { setSidebarOpen(false); navigate(path); }} />
       {showUpload && <UploadModal onClose={() => setShowUpload(false)} />}
     </>
   );
