@@ -1,17 +1,10 @@
 import { 
   collection, addDoc, doc, getDoc, getDocs, updateDoc, arrayUnion, deleteDoc, query, where, serverTimestamp 
 } from "firebase/firestore"
-import { db, storage } from "./firebase.js"
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
+import { db } from "./firebase.js"
 
-async function addProj(title, desc, userId, year, stack, gitLink, imgFile, tags) {
+async function addProj(title, desc, userId, year, stack, gitLink, imgUrl, tags) {
   try {
-    let imgUrl = null
-    if (imgFile) {
-      const sRef = ref(storage, `projects/${userId}/${imgFile.name}`)
-      await uploadBytes(sRef, imgFile)
-      imgUrl = await getDownloadURL(sRef)
-    }
     const r = await addDoc(collection(db, "projects"), {
       title,
       desc,
@@ -35,7 +28,7 @@ async function addProj(title, desc, userId, year, stack, gitLink, imgFile, tags)
 async function getProj(id) {
   try {
     const d = await getDoc(doc(db, "projects", id))
-    if (d.exists()) return d.data()
+    if (d.exists()) return { id: d.id, ...d.data() }
     else return "no-proj"
   } catch {
     return "get-fail"

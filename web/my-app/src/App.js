@@ -1,5 +1,8 @@
+import { auth } from './firebase.js';
+import { checkRole } from './auth.js';
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useAuthState } from 'react-firebase-hooks/auth';
 import Landing from './landing'; 
 import Login from './login';
 import Register from './register';
@@ -12,9 +15,6 @@ import Profile from './Profile';
 import Settings from './Settings';
 import MyProjects from './MyProjects.js';
 import AllProjects from './projectGarbage';
-import { auth } from './firebase.js';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { checkRole } from './auth.js';
 
 function ProtectedRoute({ children }) {
   const [user, loading] = useAuthState(auth);
