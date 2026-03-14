@@ -362,7 +362,7 @@
 }
 
 .hg-card-title {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   color: rgb(47, 28, 15);
   font-family: 'Times New Roman', Times, serif;
@@ -446,10 +446,6 @@
 .hg-tag-github:hover {
   background: rgb(104, 68, 42);
   border-color: rgb(104, 68, 42);
-}
-
-.hg-card-title {
-  font-size: 15px;
 }
 
 /* ===========================
@@ -639,6 +635,104 @@
 
 @keyframes hg-spin {
   to { transform: rotate(360deg); }
+}
+
+/* ===========================
+   HAMBURGER BUTTON
+=========================== */
+.hg-hamburger {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: rgb(104, 68, 42);
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+  margin-right: 0;
+}
+
+.hg-hamburger:hover {
+  background: rgb(223, 205, 192);
+}
+
+/* ===========================
+   ADMIN SIDEBAR
+=========================== */
+.hg-sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 200;
+}
+
+.hg-admin-sidebar {
+  position: fixed;
+  top: 0;
+  left: -280px;
+  width: 260px;
+  height: 100vh;
+  background-color: rgb(254, 251, 245);
+  border-right: 1px solid rgb(185, 174, 167);
+  border-radius: 0 10px 10px 0;
+  padding: 80px 20px;
+  display: flex;
+  flex-direction: column;
+  z-index: 300;
+  transition: left 0.3s ease;
+  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.1);
+}
+
+.hg-sidebar-open {
+  left: 0;
+}
+
+.hg-sidebar-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.hg-sidebar-title {
+  color: rgb(47, 28, 15);
+  font-size: clamp(18px, 8%, 28px);
+  font-family: 'Times New Roman', Times, serif;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hg-sidebar-title:hover {
+  color: rgb(104, 68, 42);
+}
+
+.hg-sidebar-links {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.hg-sidebar-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  color: rgb(104, 68, 42);
+  border-radius: 15px;
+  font-size: 14px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 550;
+  transition: background 0.2s, color 0.2s;
+}
+
+.hg-sidebar-item:hover {
+  background-color: rgb(164, 132, 109);
+  color: rgb(254, 251, 245);
+  font-weight: 600;
 }
 
 /* ===========================

@@ -14,6 +14,7 @@ function MyProjects() {
   const [loading, setLoading] = useState(true);
   const [selectedProject, setSelectedProject] = useState(null);
   const [bookmarkedIds, setBookmarkedIds] = useState([]);
+  const [filter, setFilter] = useState("all");
   const [user] = useAuthState(auth);
 
   useEffect(() => {
@@ -40,19 +41,46 @@ function MyProjects() {
     }
   };
 
+  const filtered = filter === "approved"
+    ? projects.filter(p => p.status === "approved")
+    : filter === "other"
+    ? projects.filter(p => p.status !== "approved")
+    : projects;
+
   return (
     <div className="hg-page">
       <Navbar isAdmin={isAdmin} />
       <main className="hg-main-content">
         <section className="hg-section">
           <h2 className="hg-section-title">My Projects</h2>
+
+          {!loading && projects.length > 0 && (
+            <div className="hg-tags-grid" style={{ marginBottom: 24 }}>
+              {[
+                { key: "all", label: "All" },
+                { key: "approved", label: "Approved" },
+                { key: "other", label: "Pending & Rejected" },
+              ].map(({ key, label }) => (
+                <div
+                  key={key}
+                  className={`hg-tag-card${filter === key ? " hg-tag-card-active" : ""}`}
+                  onClick={() => setFilter(key)}
+                >
+                  <span className="hg-tag-label">{label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
           {loading ? (
             <div className="hg-spinner-wrapper"><div className="hg-spinner" /></div>
           ) : projects.length === 0 ? (
             <EmptyProjects />
+          ) : filtered.length === 0 ? (
+            <p className="hg-no-results">No projects found for this filter.</p>
           ) : (
             <div className="hg-projects-grid">
-              {projects.map((p) => (
+              {filtered.map((p) => (
                 <ProjectCard
                   key={p.id}
                   project={p}

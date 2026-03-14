@@ -4,7 +4,7 @@ import "./home.css";
 import { getUser, checkRole } from './auth.js';
 import { auth } from './firebase.js';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { addComment, addRate, delProj } from './projects.js';
+import { addComment, addRate, removeRate, delProj, removeComment, getProj } from './projects.js';
 import {
   FaUser, FaBookmark, FaRegBookmark, FaGithub, FaStar, FaRegStar,
   FaTimes, FaArrowLeft, FaEnvelope, FaLinkedin, FaGlobe, FaGraduationCap
@@ -155,15 +155,49 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState(project.comments || []);
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [submittingRating, setSubmittingRating] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [user] = useAuthState(auth);
   const [userRole, setUserRole] = useState(null);
   const [authorName, setAuthorName] = useState(null);
+  const [userRatings, setUserRatings] = useState(project.userRatings || {});
 
   useEffect(() => {
     if (user) checkRole(user.uid).then(setUserRole);
   }, [user]);
+
+  // Fetch latest project data on open
+  useEffect(() => {
+    getProj(project.id).then((data) => {
+      if (data && data !== "no-proj" && data !== "get-fail") {
+        if (data.comments) setComments(data.comments);
+        if (data.userRatings) {
+          setUserRatings(data.userRatings);
+          if (user && data.userRatings[user.uid]) setRating(data.userRatings[user.uid]);
+        }
+      }
+    });
+  }, [project.id, user]);
+
+  const userHasRated = user && !!userRatings[user.uid];
+
+  const handleRate = async () => {
+    if (!user || rating === 0) return;
+    setSubmittingRating(true);
+    await addRate(project.id, rating, user.uid);
+    setUserRatings(prev => ({ ...prev, [user.uid]: rating }));
+    setSubmittingRating(false);
+  };
+
+  const handleRemoveRate = async () => {
+    if (!user) return;
+    setSubmittingRating(true);
+    await removeRate(project.id, user.uid, userRatings[user.uid]);
+    setUserRatings(prev => { const n = {...prev}; delete n[user.uid]; return n; });
+    setRating(0);
+    setSubmittingRating(false);
+  };
 
   useEffect(() => {
     const uid = project.userId || project.authorId;
@@ -189,17 +223,17 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
   const handleComment = async () => {
     if (!comment.trim()) return;
     setSubmittingComment(true);
+    const userData = user ? await getUser(user.uid) : null;
+    const userName = userData?.name || user?.displayName || "Anonymous";
     const newComment = {
       text: comment,
-      rating,
       date: new Date().toLocaleDateString(),
       userId: user?.uid || "anonymous",
+      userName,
     };
-    if (rating > 0) await addRate(project.id, rating);
     await addComment(project.id, newComment);
     setComments([...comments, newComment]);
     setComment("");
-    setRating(0);
     setSubmittingComment(false);
   };
 
@@ -211,6 +245,8 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
   const date = project.date || (project.createdAt?.toDate?.().toLocaleDateString()) || "";
   const description = project.description || project.desc;
   const github = project.github || project.gitLink;
+  const ratings = project.ratings || [];
+  const avgRating = ratings.length > 0 ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : null;
 
   return createPortal(
     <div className="hg-pm-overlay" onClick={onClose}>
@@ -224,7 +260,14 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
               <img src={image} alt={title} className="hg-pm-image" />
               <div className="hg-pm-image-overlay">
                 <h2 className="hg-pm-title">{title}</h2>
-                <span className="hg-pm-tag">{tag}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span className="hg-pm-tag">{tag}</span>
+                  {avgRating && (
+                    <span className="hg-pm-tag">
+                      ⭐ {avgRating} ({ratings.length} {ratings.length === 1 ? "rating" : "ratings"})
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
             <div className="hg-pm-body">
@@ -285,11 +328,52 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
                 )}
               </div>
 
-              <div className="hg-pm-divider" />
-
               <div className="hg-pm-comment-section">
-                <h4 className="hg-pm-comment-title">Rate & Comment</h4>
-                <StarRating value={rating} onChange={setRating} />
+                <h4 className="hg-pm-comment-title">Rate this project</h4>
+                {userHasRated ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <StarRating value={userRatings[user.uid]} onChange={() => {}} />
+                    <button
+                      onClick={handleRemoveRate}
+                      disabled={submittingRating}
+                      style={{
+                        background: "none",
+                        border: "1.5px solid rgb(185, 174, 167)",
+                        borderRadius: 20,
+                        padding: "5px 12px",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: "rgb(180, 60, 40)",
+                        cursor: "pointer",
+                        fontFamily: "Arial, Helvetica, sans-serif",
+                      }}
+                    >{submittingRating ? "..." : "Remove"}</button>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <StarRating value={rating} onChange={setRating} />
+                    <button
+                      onClick={handleRate}
+                      disabled={submittingRating || rating === 0}
+                      style={{
+                        background: rating > 0 ? "rgb(164, 132, 109)" : "rgb(223, 205, 192)",
+                        border: "none",
+                        borderRadius: 20,
+                        padding: "5px 14px",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: rating > 0 ? "rgb(254, 251, 245)" : "rgb(164, 132, 109)",
+                        cursor: rating > 0 ? "pointer" : "default",
+                        fontFamily: "Arial, Helvetica, sans-serif",
+                        transition: "all 0.2s",
+                      }}
+                    >{submittingRating ? "..." : "Submit"}</button>
+                  </div>
+                )}
+
+                <div className="hg-pm-divider" />
+
+                <h4 className="hg-pm-comment-title">Comments</h4>
                 <textarea
                   className="hg-pm-textarea"
                   placeholder="Share your thoughts on this project..."
@@ -307,13 +391,31 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
                   {comments.map((c, i) => (
                     <div key={i} className="hg-pm-comment">
                       <div className="hg-pm-comment-header">
-                        <div className="hg-pm-comment-stars">
-                          {[1,2,3,4,5].map(s => s <= c.rating
-                            ? <FaStar key={s} className="hg-comment-star" />
-                            : <FaRegStar key={s} className="hg-comment-star" />
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: "rgb(47, 28, 15)" }}>{c.userName || "Anonymous"}</span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span className="hg-pm-comment-date">{c.date}</span>
+                          {(isAdmin || (user && c.userId === user.uid)) && (
+                            <button
+                              onClick={async () => {
+                                await removeComment(project.id, c);
+                                setComments(prev => prev.filter((_, idx) => idx !== i));
+                              }}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                color: "rgb(180, 60, 40)",
+                                fontSize: 11,
+                                fontWeight: 600,
+                                padding: "2px 6px",
+                                borderRadius: 10,
+                                fontFamily: "Arial, Helvetica, sans-serif",
+                              }}
+                            >Delete</button>
                           )}
                         </div>
-                        <span className="hg-pm-comment-date">{c.date}</span>
                       </div>
                       <p className="hg-pm-comment-text">{c.text}</p>
                     </div>
@@ -353,6 +455,8 @@ export function ProjectCard({ project, onOpen, bookmarked, onToggleBookmark, sho
   const date = project.date || (project.createdAt?.toDate?.().toLocaleDateString()) || "";
   const tag = project.tag || (project.tags && project.tags[0]) || "";
   const github = project.github || project.gitLink;
+  const cardRatings = project.ratings || [];
+  const cardAvgRating = cardRatings.length > 0 ? (cardRatings.reduce((a, b) => a + b, 0) / cardRatings.length).toFixed(1) : null;
 
   return (
     <div className="hg-project-card" onClick={() => onOpen(project)}>
@@ -377,6 +481,11 @@ export function ProjectCard({ project, onOpen, bookmarked, onToggleBookmark, sho
       </div>
       <div className="hg-card-footer">
         <span className="hg-tag hg-tag-brown">{tag}</span>
+        {cardAvgRating && (
+          <span className="hg-tag" style={{ background: "rgb(254, 251, 245)", color: "rgb(104, 68, 42)" }}>
+            ⭐ {cardAvgRating}
+          </span>
+        )}
         <div style={{ display: "flex", gap: 8, marginLeft: "auto", alignItems: "center" }}>
           {github && (
             <a
