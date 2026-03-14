@@ -7,6 +7,8 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "./firebase.js";
 
 const TAGS = ["Business", "Education", "E-commerce", "Entertainment", "Blog"];
+const CLOUDINARY_CLOUD = "df4nquqin";
+const CLOUDINARY_PRESET = "snqtqhha";
 
 function UploadModal({ onClose }) {
   const [user] = useAuthState(auth);
@@ -29,6 +31,18 @@ function UploadModal({ onClose }) {
     }
   };
 
+  const uploadToCloudinary = async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", CLOUDINARY_PRESET);
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json();
+    return data.secure_url;
+  };
+
   const validate = () => {
     const e = {};
     if (!name.trim()) e.name = "Project name is required";
@@ -46,25 +60,30 @@ function UploadModal({ onClose }) {
     if (Object.keys(e).length > 0) { setErrors(e); return; }
     setSubmitting(true);
 
-    const result = await addProj(
-      name,
-      description,
-      user.uid,
-      null,
-      null,
-      github,
-      image,
-      [tag]
-    );
+    try {
+      const imgUrl = await uploadToCloudinary(image);
+      const result = await addProj(
+        name,
+        description,
+        user.uid,
+        null,
+        null,
+        github,
+        imgUrl,
+        [tag]
+      );
+
+      if (result === "add-fail") {
+        setErrors({ submit: "Something went wrong. Please try again." });
+      } else {
+        setSuccess(true);
+        setTimeout(() => onClose(), 1500);
+      }
+    } catch {
+      setErrors({ submit: "Image upload failed. Please try again." });
+    }
 
     setSubmitting(false);
-
-    if (result === "add-fail") {
-      setErrors({ submit: "Something went wrong. Please try again." });
-    } else {
-      setSuccess(true);
-      setTimeout(() => onClose(), 1500);
-    }
   };
 
   return createPortal(
