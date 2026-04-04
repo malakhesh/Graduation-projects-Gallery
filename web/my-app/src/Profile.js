@@ -9,7 +9,7 @@ import UploadModal from './UploadModal';
 import {
   FaGraduationCap, FaUser, FaCog, FaFolderOpen, FaBars,
   FaEnvelope, FaProjectDiagram, FaGithub, FaLinkedin,
-  FaGlobe, FaQuoteLeft, FaPen, FaCheck, FaTimes, FaChevronDown
+  FaGlobe, FaQuoteLeft, FaPen, FaCheck, FaTimes, FaChevronDown, FaCamera
 } from "react-icons/fa";
 
 function AdminSidebar({ open, onClose }) {
@@ -104,6 +104,8 @@ function Profile() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [projectCount, setProjectCount] = useState(0);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const photoRef = useRef();
 
   const [bio, setBio] = useState('');
   const [year, setYear] = useState('');
@@ -184,10 +186,23 @@ function Profile() {
             </div>
 
             <div className="pf-card-left">
-              {avatarSrc
-                ? <img src={avatarSrc} alt="Profile" className="pf-avatar" />
-                : <div className="pf-avatar-placeholder"><FaUser /></div>
-              }
+              <div className="pf-avatar-wrapper-edit">
+                {photoPreview
+                  ? <img src={photoPreview} alt="Profile" className="pf-avatar" />
+                  : avatarSrc
+                  ? <img src={avatarSrc} alt="Profile" className="pf-avatar" />
+                  : <div className="pf-avatar-placeholder"><FaUser /></div>
+                }
+                {editing && (
+                  <button className="pf-avatar-edit-btn" onClick={() => photoRef.current.click()} title="Change photo">
+                    <FaCamera />
+                  </button>
+                )}
+                <input ref={photoRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
+                  const file = e.target.files[0];
+                  if (file) setPhotoPreview(URL.createObjectURL(file));
+                }} />
+              </div>
             </div>
 
             <div className="pf-card-right">

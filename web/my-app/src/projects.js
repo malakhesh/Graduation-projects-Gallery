@@ -3,7 +3,7 @@ import {
 } from "firebase/firestore"
 import { db } from "./firebase.js"
 
-async function addProj(title, desc, userId, year, stack, gitLink, imgUrl, tags) {
+async function addProj(title, desc, userId, year, stack, category, gitLink, imgUrl, tags) {
   try {
     const r = await addDoc(collection(db, "projects"), {
       title,
@@ -11,6 +11,7 @@ async function addProj(title, desc, userId, year, stack, gitLink, imgUrl, tags) 
       userId,
       year,
       stack,
+      category,
       gitLink,
       imgUrl,
       tags,
@@ -96,6 +97,38 @@ async function getByTag(tag) {
   }
 }
 
+async function getByCategory(category) {
+  try {
+    const q = query(
+      collection(db, "projects"),
+      where("status", "==", "approved"),
+      where("category", "==", category)
+    )
+    const s = await getDocs(q)
+    let arr = []
+    s.forEach((d) => arr.push({ id: d.id, ...d.data() }))
+    return arr
+  } catch {
+    return "category-fail"
+  }
+}
+
+async function getByStack(tech) {
+  try {
+    const q = query(
+      collection(db, "projects"),
+      where("status", "==", "approved"),
+      where("stack", "array-contains", tech)
+    )
+    const s = await getDocs(q)
+    let arr = []
+    s.forEach((d) => arr.push({ id: d.id, ...d.data() }))
+    return arr
+  } catch {
+    return "stack-fail"
+  }
+}
+
 async function addComment(id, c) {
   try {
     await updateDoc(doc(db, "projects", id), { comments: arrayUnion(c) })
@@ -116,12 +149,10 @@ async function addRate(id, r, uid) {
     const oldRating = userRatings[uid] || null;
     let ratings = Array.isArray(data.ratings) ? [...data.ratings] : [];
 
-    // Remove old rating if exists
     if (oldRating !== null) {
       const idx = ratings.indexOf(oldRating);
       if (idx > -1) ratings.splice(idx, 1);
     }
-    // Add new rating
     ratings.push(r);
 
     await updateDoc(projectRef, {
@@ -179,4 +210,8 @@ async function updProj(id, data) {
   }
 }
 
-export { addProj, getProj, getApproved, getPending, setStatus, getUserProjs, getByTag, addComment, addRate, removeRate, delProj, updProj, removeComment }
+export { 
+  addProj, getProj, getApproved, getPending, setStatus, 
+  getUserProjs, getByTag, getByCategory, getByStack,
+  addComment, addRate, removeRate, delProj, updProj, removeComment 
+}
