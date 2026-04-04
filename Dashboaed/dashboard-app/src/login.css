@@ -1,0 +1,169 @@
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border: 1px solid rgb(254, 251, 245);
+  border-radius: 10px;
+  padding: 40px;
+  background-color: rgb(254, 251, 245);
+  width: 350px;
+  height: auto; /* ← changed from 450px to fit new buttons */
+}
+
+.login-container h1 {
+  margin-top: 25px;
+  color: rgb(47, 28, 15);
+  font-size: 40px;
+  font-family: 'Times New Roman', Times, serif;
+  font-weight: 700;
+}
+
+.login-container .l {
+  height: 40px;
+  color: rgb(104, 68, 42);
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 550;
+  font-size: 14px;
+}
+
+.login-container .input-email,
+.login-container .input-password {
+  width: 350px;
+  height: 40px;
+  padding: 10px;
+  padding-right: 35px;
+  border-radius: 6px;
+  border: 1px solid rgb(185, 174, 167);
+  box-sizing: border-box;
+}
+
+.login-container .input-password::-webkit-credentials-auto-fill-button,
+.login-container .input-password::-webkit-textfield-decoration-container {
+  display: none;
+}
+
+.login-container .input-password::-ms-reveal,
+.login-container .input-password::-ms-clear {
+  display: none;
+}
+
+.login-container .input-email {
+  margin-bottom: 20px;
+}
+
+.login-container .label-email,
+.login-container .label-pass {
+  display: block;
+  color: rgb(104, 68, 42);
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 550;
+  font-size: 14px;
+  margin-bottom: 7px;
+}
+
+.login-container .password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.login-container .input-password {
+  width: 100%;
+}
+
+.login-container .toggle-password {
+  position: absolute;
+  right: 10px;
+  cursor: pointer;
+  font-size: 16px;
+  color: rgb(104, 68, 42);
+}
+
+.login-container button {
+  width: 80px;
+  height: 30px;
+  background-color: rgb(104, 68, 42);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.login-container button:hover {
+  background-color: rgb(75, 48, 28);
+}
+
+.login-container button:active {
+  background-color: rgb(50, 30, 15);
+}
+
+.login-container .swapper {
+  margin-top: 20px;
+  color: rgb(47, 28, 15);
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 550;
+  font-size: 14px;
+}
+
+.login-container .swapper a {
+  color: rgb(164, 132, 109);
+  text-decoration: none;
+}
+
+.login-container .swapper a:hover {
+  color: rgb(75, 48, 28);
+  text-decoration: underline;
+}
+
+.login-container .divider {
+  width: 100%;
+  text-align: center;
+  color: rgb(104, 68, 42);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  margin-top: 15px;
+}
+
+.login-container .social-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.login-container .google-btn,
+.login-container .github-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 50%;
+  height: 35px;
+  border: 1px solid rgb(185, 174, 167);
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0;
+}
+
+.login-container .google-btn {
+  background-color: white;
+  color: rgb(47, 28, 15);
+}
+
+.login-container .github-btn {
+  background-color: rgb(47, 28, 15);
+  color: white;
+}
+
+.login-container .google-btn:hover {
+  background-color: rgb(240, 240, 240);
+}
+
+.login-container .github-btn:hover {
+  background-color: rgb(75, 48, 28);
+}
