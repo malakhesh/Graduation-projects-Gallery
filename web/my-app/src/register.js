@@ -1,5 +1,5 @@
 import "./register.css";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { regUser } from './auth.js';
@@ -11,6 +11,24 @@ function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    document.body.style.backgroundColor = 'rgb(223, 205, 192)';
+    document.body.style.display = 'flex';
+    document.body.style.justifyContent = 'center';
+    document.body.style.alignItems = 'center';
+    document.body.style.height = '100vh';
+    document.body.style.margin = '0';
+
+    return () => {
+      document.body.style.backgroundColor = '';
+      document.body.style.display = '';
+      document.body.style.justifyContent = '';
+      document.body.style.alignItems = '';
+      document.body.style.height = '';
+      document.body.style.margin = '';
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,14 +58,14 @@ function Register() {
     }
 
     const user = await regUser(email, password, fullName, "client");
-    if (user === "email-in-use") {
+    if (user === "email-used") {
       setError("This email is already registered. Please use a different email.");
     } else if (user) {
       console.log("Register successful");
       // redirect here later
-      } else {
+    } else {
       setError("Registration failed. Please try again");
-        }
+    }
   };
 
   return (
@@ -127,7 +145,7 @@ function Register() {
         <button type="submit">Register</button>
       </form>
       <div className="swapper2">
-        already have an account? <Link to="/">Login</Link>
+        already have an account? <Link to="/login">Login</Link>
       </div>
     </div>
   );
