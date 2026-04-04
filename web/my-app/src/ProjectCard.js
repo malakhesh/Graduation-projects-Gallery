@@ -167,7 +167,6 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
     if (user) checkRole(user.uid).then(setUserRole);
   }, [user]);
 
-  // Fetch latest project data on open
   useEffect(() => {
     getProj(project.id).then((data) => {
       if (data && data !== "no-proj" && data !== "get-fail") {
@@ -260,8 +259,11 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
               <img src={image} alt={title} className="hg-pm-image" />
               <div className="hg-pm-image-overlay">
                 <h2 className="hg-pm-title">{title}</h2>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span className="hg-pm-tag">{tag}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  {tag && <span className="hg-pm-tag">{tag}</span>}
+                  {project.category && (
+                    <span className="hg-pm-tag hg-pm-tag-category">{project.category}</span>
+                  )}
                   {avgRating && (
                     <span className="hg-pm-tag">
                       ⭐ {avgRating} ({ratings.length} {ratings.length === 1 ? "rating" : "ratings"})
@@ -270,6 +272,7 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
                 </div>
               </div>
             </div>
+
             <div className="hg-pm-body">
               <div className="hg-pm-author-row" onClick={() => setView("author")}>
                 {avatar
@@ -284,6 +287,15 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
               </div>
 
               <p className="hg-pm-description">{description}</p>
+
+              {/* Tech stack chips */}
+              {Array.isArray(project.stack) && project.stack.length > 0 && (
+                <div className="hg-pm-stack">
+                  {project.stack.map((tech) => (
+                    <span key={tech} className="hg-pm-stack-chip">{tech}</span>
+                  ))}
+                </div>
+              )}
 
               <div className="hg-pm-actions">
                 <a href={github} target="_blank" rel="noreferrer" className="hg-pm-github-btn">
@@ -330,100 +342,100 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
 
               {(!project.status || project.status === "approved") && (
                 <>
-              <div className="hg-pm-comment-section">
-                <h4 className="hg-pm-comment-title">Rate this project</h4>
-                {userHasRated ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <StarRating value={userRatings[user.uid]} onChange={() => {}} />
-                    <button
-                      onClick={handleRemoveRate}
-                      disabled={submittingRating}
-                      style={{
-                        background: "none",
-                        border: "1.5px solid rgb(185, 174, 167)",
-                        borderRadius: 20,
-                        padding: "5px 12px",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: "rgb(180, 60, 40)",
-                        cursor: "pointer",
-                        fontFamily: "Arial, Helvetica, sans-serif",
-                      }}
-                    >{submittingRating ? "..." : "Remove"}</button>
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <StarRating value={rating} onChange={setRating} />
-                    <button
-                      onClick={handleRate}
-                      disabled={submittingRating || rating === 0}
-                      style={{
-                        background: rating > 0 ? "rgb(164, 132, 109)" : "rgb(223, 205, 192)",
-                        border: "none",
-                        borderRadius: 20,
-                        padding: "5px 14px",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: rating > 0 ? "rgb(254, 251, 245)" : "rgb(164, 132, 109)",
-                        cursor: rating > 0 ? "pointer" : "default",
-                        fontFamily: "Arial, Helvetica, sans-serif",
-                        transition: "all 0.2s",
-                      }}
-                    >{submittingRating ? "..." : "Submit"}</button>
-                  </div>
-                )}
-
-                <div className="hg-pm-divider" />
-
-                <h4 className="hg-pm-comment-title">Comments</h4>
-                <textarea
-                  className="hg-pm-textarea"
-                  placeholder="Share your thoughts on this project..."
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  rows={3}
-                />
-                <button className="hg-pm-submit-btn" onClick={handleComment} disabled={submittingComment}>
-                  {submittingComment ? "Posting..." : "Post Comment"}
-                </button>
-              </div>
-
-              {comments.length > 0 && (
-                <div className="hg-pm-comments-list">
-                  {comments.map((c, i) => (
-                    <div key={i} className="hg-pm-comment">
-                      <div className="hg-pm-comment-header">
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: "rgb(47, 28, 15)" }}>{c.userName || "Anonymous"}</span>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span className="hg-pm-comment-date">{c.date}</span>
-                          {(isAdmin || (user && c.userId === user.uid)) && (
-                            <button
-                              onClick={async () => {
-                                await removeComment(project.id, c);
-                                setComments(prev => prev.filter((_, idx) => idx !== i));
-                              }}
-                              style={{
-                                background: "none",
-                                border: "none",
-                                cursor: "pointer",
-                                color: "rgb(180, 60, 40)",
-                                fontSize: 11,
-                                fontWeight: 600,
-                                padding: "2px 6px",
-                                borderRadius: 10,
-                                fontFamily: "Arial, Helvetica, sans-serif",
-                              }}
-                            >Delete</button>
-                          )}
-                        </div>
+                  <div className="hg-pm-comment-section">
+                    <h4 className="hg-pm-comment-title">Rate this project</h4>
+                    {userHasRated ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <StarRating value={userRatings[user.uid]} onChange={() => {}} />
+                        <button
+                          onClick={handleRemoveRate}
+                          disabled={submittingRating}
+                          style={{
+                            background: "none",
+                            border: "1.5px solid rgb(185, 174, 167)",
+                            borderRadius: 20,
+                            padding: "5px 12px",
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: "rgb(180, 60, 40)",
+                            cursor: "pointer",
+                            fontFamily: "Arial, Helvetica, sans-serif",
+                          }}
+                        >{submittingRating ? "..." : "Remove"}</button>
                       </div>
-                      <p className="hg-pm-comment-text">{c.text}</p>
+                    ) : (
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <StarRating value={rating} onChange={setRating} />
+                        <button
+                          onClick={handleRate}
+                          disabled={submittingRating || rating === 0}
+                          style={{
+                            background: rating > 0 ? "rgb(164, 132, 109)" : "rgb(223, 205, 192)",
+                            border: "none",
+                            borderRadius: 20,
+                            padding: "5px 14px",
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: rating > 0 ? "rgb(254, 251, 245)" : "rgb(164, 132, 109)",
+                            cursor: rating > 0 ? "pointer" : "default",
+                            fontFamily: "Arial, Helvetica, sans-serif",
+                            transition: "all 0.2s",
+                          }}
+                        >{submittingRating ? "..." : "Submit"}</button>
+                      </div>
+                    )}
+
+                    <div className="hg-pm-divider" />
+
+                    <h4 className="hg-pm-comment-title">Comments</h4>
+                    <textarea
+                      className="hg-pm-textarea"
+                      placeholder="Share your thoughts on this project..."
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      rows={3}
+                    />
+                    <button className="hg-pm-submit-btn" onClick={handleComment} disabled={submittingComment}>
+                      {submittingComment ? "Posting..." : "Post Comment"}
+                    </button>
+                  </div>
+
+                  {comments.length > 0 && (
+                    <div className="hg-pm-comments-list">
+                      {comments.map((c, i) => (
+                        <div key={i} className="hg-pm-comment">
+                          <div className="hg-pm-comment-header">
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: "rgb(47, 28, 15)" }}>{c.userName || "Anonymous"}</span>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <span className="hg-pm-comment-date">{c.date}</span>
+                              {(isAdmin || (user && c.userId === user.uid)) && (
+                                <button
+                                  onClick={async () => {
+                                    await removeComment(project.id, c);
+                                    setComments(prev => prev.filter((_, idx) => idx !== i));
+                                  }}
+                                  style={{
+                                    background: "none",
+                                    border: "none",
+                                    cursor: "pointer",
+                                    color: "rgb(180, 60, 40)",
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    padding: "2px 6px",
+                                    borderRadius: 10,
+                                    fontFamily: "Arial, Helvetica, sans-serif",
+                                  }}
+                                >Delete</button>
+                              )}
+                            </div>
+                          </div>
+                          <p className="hg-pm-comment-text">{c.text}</p>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
+                  )}
                 </>
               )}
             </div>

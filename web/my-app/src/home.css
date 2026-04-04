@@ -1036,6 +1036,27 @@
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* ===========================
+   TECH STACK CHIPS (modal)
+=========================== */
+.hg-pm-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.hg-pm-stack-chip {
+  background: rgb(237, 228, 218);
+  color: rgb(104, 68, 42);
+  border: 1.5px solid rgb(210, 195, 180);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: "Segoe UI", Arial, sans-serif;
+  white-space: nowrap;
+}
+
 /* Actions */
 .hg-pm-actions {
   display: flex;

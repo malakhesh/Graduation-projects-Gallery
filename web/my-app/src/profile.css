@@ -597,3 +597,33 @@
 .pf-dropdown-item-active:hover {
   background: rgb(223, 205, 192);
 }
+
+/* ===========================
+   AVATAR EDIT BUTTON
+=========================== */
+.pf-avatar-wrapper-edit {
+  position: relative;
+  display: inline-block;
+}
+
+.pf-avatar-edit-btn {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgb(104, 68, 42);
+  color: rgb(254, 251, 245);
+  border: 2px solid rgb(254, 251, 245);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s;
+}
+
+.pf-avatar-edit-btn:hover {
+  background: rgb(47, 28, 15);
+}
