@@ -4,32 +4,18 @@
 .um-overlay {
   position: fixed;
   inset: 0;
-<<<<<<< HEAD:web/my-app/src/uploadmodal.css
-  background: rgba(30, 16, 6, 0.6);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-=======
   background: rgba(47, 28, 15, 0.55);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/uploadmodal.css
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
-<<<<<<< HEAD:web/my-app/src/uploadmodal.css
-  animation: um-fade 0.2s ease;
-  box-sizing: border-box;
-}
-
-@keyframes um-fade {
-=======
   animation: um-fade-in 0.2s ease;
 }
 
 @keyframes um-fade-in {
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/uploadmodal.css
   from { opacity: 0; }
   to { opacity: 1; }
 }
@@ -39,24 +25,6 @@
 =========================== */
 .um-modal {
   background: rgb(254, 251, 245);
-<<<<<<< HEAD:web/my-app/src/uploadmodal.css
-  border-radius: 24px;
-  width: 100%;
-  max-width: 520px;
-  max-height: 92vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: um-rise 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  font-size: 14px;
-  color: rgb(47, 28, 15);
-}
-
-@keyframes um-rise {
-  from { transform: translateY(32px) scale(0.98); opacity: 0; }
-  to { transform: translateY(0) scale(1); opacity: 1; }
-=======
   border-radius: 20px;
   width: 100%;
   max-width: 560px;
@@ -71,116 +39,23 @@
 @keyframes um-slide-up {
   from { transform: translateY(24px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/uploadmodal.css
 }
 
 /* ===========================
    HEADER
 =========================== */
 .um-header {
-<<<<<<< HEAD:web/my-app/src/uploadmodal.css
-  padding: 20px 28px 18px;
-  border-bottom: 1px solid rgb(220, 208, 198);
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-=======
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 24px 28px 20px;
   border-bottom: 1px solid rgb(185, 174, 167);
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/uploadmodal.css
 }
 
 .um-title {
   font-size: 20px;
   font-weight: 700;
   color: rgb(47, 28, 15);
-<<<<<<< HEAD:web/my-app/src/uploadmodal.css
-  font-family: 'Georgia', 'Times New Roman', serif;
-  margin: 0;
-}
-
-/* ===========================
-   STEPPER — fixed, no wobble
-=========================== */
-.um-stepper {
-  display: flex;
-  align-items: center;
-  width: 100%;
-}
-
-/* Each step item: dot + label stacked, fixed width */
-.um-stepper-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  flex-shrink: 0;
-  width: 64px;
-}
-
-/* The line between steps stretches to fill remaining space */
-.um-stepper-line {
-  flex: 1;
-  height: 1.5px;
-  background: rgb(220, 208, 198);
-  margin-bottom: 20px; /* pushes line up to align with dots */
-  transition: background 0.3s;
-}
-
-.um-stepper-line.done {
-  background: rgb(104, 68, 42);
-}
-
-.um-stepper-dot {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 1.5px solid rgb(200, 185, 170);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  color: rgb(185, 164, 145);
-  background: rgb(254, 251, 245);
-  flex-shrink: 0;
-  transition: all 0.25s;
-  box-sizing: border-box;
-}
-
-.um-stepper-dot.active {
-  background: rgb(104, 68, 42);
-  border-color: rgb(104, 68, 42);
-  color: rgb(254, 251, 245);
-}
-
-.um-stepper-dot.done {
-  background: rgb(104, 68, 42);
-  border-color: rgb(104, 68, 42);
-  color: rgb(254, 251, 245);
-}
-
-.um-stepper-label {
-  font-size: 11px;
-  font-weight: 500;
-  color: rgb(200, 185, 170);
-  white-space: nowrap;
-  transition: color 0.25s;
-  line-height: 1;
-}
-
-.um-stepper-label.active {
-  color: rgb(104, 68, 42);
-  font-weight: 700;
-}
-
-.um-stepper-label.done {
-  color: rgb(164, 132, 109);
-=======
   font-family: 'Times New Roman', Times, serif;
 }
 
@@ -200,43 +75,17 @@
 .um-close:hover {
   background: rgb(223, 205, 192);
   color: rgb(47, 28, 15);
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/uploadmodal.css
 }
 
 /* ===========================
    BODY
 =========================== */
 .um-body {
-<<<<<<< HEAD:web/my-app/src/uploadmodal.css
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 24px 28px;
-  scrollbar-width: thin;
-  scrollbar-color: rgb(185, 174, 167) transparent;
-}
-
-.um-body::-webkit-scrollbar { width: 5px; }
-.um-body::-webkit-scrollbar-track { background: transparent; }
-.um-body::-webkit-scrollbar-thumb { background: rgb(185, 174, 167); border-radius: 10px; }
-
-.um-step-content {
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-  animation: um-step-in 0.2s ease;
-}
-
-@keyframes um-step-in {
-  from { opacity: 0; transform: translateX(10px); }
-  to { opacity: 1; transform: translateX(0); }
-=======
   padding: 24px 28px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 20px;
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/uploadmodal.css
 }
 
 /* ===========================
@@ -245,17 +94,6 @@
 .um-field {
   display: flex;
   flex-direction: column;
-<<<<<<< HEAD:web/my-app/src/uploadmodal.css
-  gap: 8px;
-}
-
-.um-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: rgb(104, 68, 42);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-=======
   gap: 6px;
 }
 
@@ -263,22 +101,11 @@
   font-size: 13px;
   font-weight: 600;
   color: rgb(104, 68, 42);
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/uploadmodal.css
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-<<<<<<< HEAD:web/my-app/src/uploadmodal.css
-.um-icon {
-  font-size: 12px;
-  opacity: 0.8;
-}
-
-.um-req {
-  color: rgb(180, 80, 60);
-  font-weight: 700;
-=======
 .um-label-icon {
   font-size: 12px;
 }
@@ -295,25 +122,10 @@
   font-weight: 400;
   color: rgb(185, 174, 167);
   margin-left: 4px;
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/uploadmodal.css
 }
 
 .um-input,
 .um-textarea {
-<<<<<<< HEAD:web/my-app/src/uploadmodal.css
-  background: rgb(244, 238, 230);
-  border: 1.5px solid transparent;
-  border-radius: 12px;
-  padding: 11px 14px;
-  font-size: 14px;
-  color: rgb(47, 28, 15);
-  font-family: inherit;
-  outline: none;
-  transition: border-color 0.2s, background 0.2s;
-  resize: none;
-  width: 100%;
-  box-sizing: border-box;
-=======
   background: rgb(223, 205, 192);
   border: 1.5px solid transparent;
   border-radius: 10px;
@@ -325,68 +137,29 @@
   transition: border-color 0.2s;
   resize: none;
   width: 100%;
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/uploadmodal.css
 }
 
 .um-input::placeholder,
 .um-textarea::placeholder {
-<<<<<<< HEAD:web/my-app/src/uploadmodal.css
-  color: rgb(185, 164, 145);
-=======
   color: rgb(164, 132, 109);
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/uploadmodal.css
 }
 
 .um-input:focus,
 .um-textarea:focus {
   border-color: rgb(104, 68, 42);
-<<<<<<< HEAD:web/my-app/src/uploadmodal.css
-  background: rgb(250, 246, 240);
-}
-
-.um-input-error {
-  border-color: #b94040 !important;
-=======
 }
 
 .um-input-error {
   border-color: #c0392b !important;
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/uploadmodal.css
 }
 
 .um-error {
   font-size: 12px;
-<<<<<<< HEAD:web/my-app/src/uploadmodal.css
-  color: #b94040;
-  margin-top: 2px;
-=======
   color: #c0392b;
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/uploadmodal.css
 }
 
 .um-char-count {
   font-size: 11px;
-<<<<<<< HEAD:web/my-app/src/uploadmodal.css
-  color: rgb(185, 174, 167);
-  text-align: right;
-  margin-top: -4px;
-}
-
-/* ===========================
-   CHIPS
-=========================== */
-.um-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-}
-
-.um-chip {
-  background: rgb(237, 228, 218);
-  border: 1.5px solid transparent;
-  border-radius: 20px;
-  padding: 6px 14px;
-=======
   color: rgb(164, 132, 109);
   text-align: right;
 }
@@ -405,24 +178,10 @@
   border: 1.5px solid transparent;
   border-radius: 20px;
   padding: 6px 16px;
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/uploadmodal.css
   font-size: 13px;
   font-weight: 500;
   color: rgb(104, 68, 42);
   cursor: pointer;
-<<<<<<< HEAD:web/my-app/src/uploadmodal.css
-  transition: all 0.18s;
-  font-family: inherit;
-  line-height: 1;
-}
-
-.um-chip:hover {
-  border-color: rgb(140, 95, 60);
-  background: rgb(228, 215, 200);
-}
-
-.um-chip-active {
-=======
   transition: all 0.2s;
 }
 
@@ -431,54 +190,12 @@
 }
 
 .um-tag-selected {
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/uploadmodal.css
   background: rgb(104, 68, 42);
   color: rgb(254, 251, 245);
   border-color: rgb(104, 68, 42);
   font-weight: 600;
 }
 
-<<<<<<< HEAD:web/my-app/src/uploadmodal.css
-.um-chip-sm {
-  font-size: 12px;
-  padding: 5px 11px;
-}
-
-.um-count {
-  margin-left: auto;
-  font-size: 11px;
-  font-weight: 500;
-  color: rgb(164, 132, 109);
-  background: rgb(237, 228, 218);
-  padding: 2px 9px;
-  border-radius: 20px;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
-/* ===========================
-   DROPZONE
-=========================== */
-.um-dropzone {
-  border: 2px dashed rgb(200, 185, 170);
-  border-radius: 14px;
-  cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
-  overflow: hidden;
-  position: relative;
-  min-height: 160px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.um-dropzone:hover {
-  border-color: rgb(104, 68, 42);
-  background: rgb(244, 238, 230);
-}
-
-.um-dropzone-inner {
-=======
 /* ===========================
    IMAGE UPLOAD
 =========================== */
@@ -497,160 +214,10 @@
 }
 
 .um-image-placeholder {
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/uploadmodal.css
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-<<<<<<< HEAD:web/my-app/src/uploadmodal.css
-  padding: 28px;
-  color: rgb(164, 132, 109);
-}
-
-.um-dropzone-icon {
-  font-size: 28px;
-  opacity: 0.6;
-}
-
-.um-dropzone-text {
-  font-size: 14px;
-  font-weight: 600;
-  color: rgb(104, 68, 42);
-  margin: 0;
-}
-
-.um-dropzone-hint {
-  font-size: 12px;
-  color: rgb(185, 174, 167);
-}
-
-.um-preview-img {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  display: block;
-}
-
-.um-preview-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(47, 28, 15, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 600;
-  color: rgb(254, 251, 245);
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.um-dropzone:hover .um-preview-overlay {
-  opacity: 1;
-}
-
-/* ===========================
-   SUMMARY
-=========================== */
-.um-summary {
-  background: rgb(244, 238, 230);
-  border-radius: 14px;
-  padding: 16px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.um-summary-title {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: rgb(164, 132, 109);
-  margin: 0 0 4px;
-}
-
-.um-summary-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  font-size: 13px;
-}
-
-.um-summary-row > span:first-child {
-  color: rgb(164, 132, 109);
-  font-weight: 500;
-  flex-shrink: 0;
-  min-width: 70px;
-}
-
-.um-summary-row > span:last-child {
-  color: rgb(47, 28, 15);
-  font-weight: 500;
-  text-align: right;
-  word-break: break-word;
-}
-
-.um-summary-link {
-  font-size: 12px !important;
-  color: rgb(104, 68, 42) !important;
-}
-
-.um-submit-error {
-  font-size: 13px;
-  color: #b94040;
-  text-align: center;
-  margin: 0;
-}
-
-/* ===========================
-   SUCCESS
-=========================== */
-.um-success {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  min-height: 220px;
-  text-align: center;
-}
-
-.um-success-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: rgb(104, 68, 42);
-  color: rgb(254, 251, 245);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  font-weight: 700;
-  animation: um-pop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes um-pop {
-  from { transform: scale(0.5); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-.um-success-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: rgb(47, 28, 15);
-  font-family: 'Georgia', serif;
-  margin: 0;
-}
-
-.um-success-sub {
-  font-size: 13px;
-  color: rgb(164, 132, 109);
-  margin: 0;
-}
-
-=======
   color: rgb(164, 132, 109);
 }
 
@@ -677,77 +244,11 @@
   display: block;
 }
 
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/uploadmodal.css
 /* ===========================
    FOOTER
 =========================== */
 .um-footer {
   display: flex;
-<<<<<<< HEAD:web/my-app/src/uploadmodal.css
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 28px;
-  border-top: 1px solid rgb(220, 208, 198);
-  flex-shrink: 0;
-  gap: 12px;
-}
-
-.um-btn-cancel,
-.um-btn-back {
-  background: none;
-  border: 1.5px solid rgb(200, 185, 170);
-  border-radius: 20px;
-  padding: 9px 20px;
-  font-size: 13px;
-  font-weight: 600;
-  color: rgb(140, 100, 70);
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: inherit;
-}
-
-.um-btn-cancel:hover,
-.um-btn-back:hover {
-  background: rgb(237, 228, 218);
-  border-color: rgb(140, 95, 60);
-}
-
-.um-btn-next,
-.um-btn-submit {
-  background: rgb(104, 68, 42);
-  border: none;
-  border-radius: 20px;
-  padding: 9px 24px;
-  font-size: 13px;
-  font-weight: 700;
-  color: rgb(254, 251, 245);
-  cursor: pointer;
-  transition: background 0.2s, transform 0.15s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: inherit;
-  margin-left: auto;
-}
-
-.um-btn-next:hover,
-.um-btn-submit:hover {
-  background: rgb(75, 46, 24);
-}
-
-.um-btn-next:active,
-.um-btn-submit:active {
-  transform: scale(0.97);
-}
-
-.um-btn-submit:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  transform: none;
-=======
   justify-content: flex-end;
   gap: 12px;
   padding: 18px 28px;
@@ -790,5 +291,4 @@
 .um-btn-upload:disabled {
   opacity: 0.6;
   cursor: not-allowed;
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/uploadmodal.css
 }
