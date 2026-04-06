@@ -1,11 +1,14 @@
 import { auth, db } from "./firebase.js"
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged, GoogleAuthProvider, GithubAuthProvider, signInWithPopup } from "firebase/auth"
 import { doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore"
+import { createWelcomeNotif } from "./notifications.js"
 
 async function regUser(email, pass, name, role, year, techStack) {
   try {
     const u = await createUserWithEmailAndPassword(auth, email, pass)
     await setDoc(doc(db, "users", u.user.uid), { email, name, role, year, techStack, bookmarks: [] })
+    // Send welcome notification
+    await createWelcomeNotif(u.user.uid)
     return u.user
   } catch (err) {
     if (err.code === "auth/email-already-in-use") return "email-in-use"
@@ -29,7 +32,10 @@ async function logWithGoogle() {
     const p = new GoogleAuthProvider()
     const r = await signInWithPopup(auth, p)
     const u = r.user
+    const existing = await getDoc(doc(db, "users", u.uid))
+    const isNew = !existing.exists()
     await setDoc(doc(db, "users", u.uid), { email: u.email, name: u.displayName, role: "client" }, { merge: true })
+    if (isNew) await createWelcomeNotif(u.uid)
     return u
   } catch { return "google-fail" }
 }
@@ -39,7 +45,10 @@ async function logWithGithub() {
     const p = new GithubAuthProvider()
     const r = await signInWithPopup(auth, p)
     const u = r.user
+    const existing = await getDoc(doc(db, "users", u.uid))
+    const isNew = !existing.exists()
     await setDoc(doc(db, "users", u.uid), { email: u.email, name: u.displayName, role: "client" }, { merge: true })
+    if (isNew) await createWelcomeNotif(u.uid)
     return u
   } catch { return "github-fail" }
 }

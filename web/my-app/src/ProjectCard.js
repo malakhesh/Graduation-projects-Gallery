@@ -166,7 +166,6 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
   const [userRatings, setUserRatings] = useState(project.userRatings || {});
   const location = useLocation();
 
-  // Update URL when modal opens without triggering a route change
   useEffect(() => {
     const prevPath = location.pathname + location.search;
     window.history.replaceState(null, "", `/project/${project.id}`);
@@ -250,7 +249,7 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
       userId: user?.uid || "anonymous",
       userName,
     };
-    await addComment(project.id, newComment);
+    await addComment(project.id, newComment, user?.uid);
     setComments([...comments, newComment]);
     setComment("");
     setSubmittingComment(false);
@@ -346,7 +345,6 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
 
               <p className="hg-pm-description">{description}</p>
 
-              {/* Tech stack chips */}
               {Array.isArray(project.stack) && project.stack.length > 0 && (
                 <div className="hg-pm-stack">
                   {project.stack.map((tech) => (
@@ -363,7 +361,7 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
                 {(!project.status || project.status === "approved") && (
                   <button
                     className={`hg-pm-bookmark-btn${bookmarked ? " hg-pm-bookmark-active" : ""}`}
-                    onClick={(e) => { e.stopPropagation(); onToggleBookmark(); }}
+                    onClick={(e) => { e.stopPropagation(); onToggleBookmark(project.id); }}
                   >
                     {bookmarked ? <FaBookmark /> : <FaRegBookmark />}
                   </button>
