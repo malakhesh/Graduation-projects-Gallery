@@ -15,6 +15,7 @@ import Profile from './Profile';
 import Settings from './Settings';
 import MyProjects from './MyProjects.js';
 import AllProjects from './projectGarbage';
+import ProjectShare from './ProjectShare';
 
 const RoleContext = createContext(null);
 
@@ -73,6 +74,7 @@ function App() {
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/projects" element={<ProtectedRoute><MyProjects /></ProtectedRoute>} />
           <Route path="/all-projects" element={<ProtectedRoute><AllProjects /></ProtectedRoute>} />
+          <Route path="/project/:id" element={<ProtectedRoute><ProjectShare /></ProtectedRoute>} />
           <Route path="/dashboard" element={<AdminRoute><Dashboard /></AdminRoute>} />
         </Routes>
       </AppProviders>

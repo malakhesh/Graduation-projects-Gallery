@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useLocation } from "react-router-dom";
 import "./home.css";
 import { getUser, checkRole } from './auth.js';
 import { auth } from './firebase.js';
@@ -7,7 +8,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { addComment, addRate, removeRate, delProj, removeComment, getProj } from './projects.js';
 import {
   FaUser, FaBookmark, FaRegBookmark, FaGithub, FaStar, FaRegStar,
-  FaTimes, FaArrowLeft, FaEnvelope, FaLinkedin, FaGlobe, FaGraduationCap
+  FaTimes, FaArrowLeft, FaEnvelope, FaLinkedin, FaGlobe, FaGraduationCap, FaShare
 } from "react-icons/fa";
 
 // ===========================
@@ -158,10 +159,21 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
   const [submittingRating, setSubmittingRating] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [user] = useAuthState(auth);
   const [userRole, setUserRole] = useState(null);
   const [authorName, setAuthorName] = useState(null);
   const [userRatings, setUserRatings] = useState(project.userRatings || {});
+  const location = useLocation();
+
+  // Update URL when modal opens without triggering a route change
+  useEffect(() => {
+    const prevPath = location.pathname + location.search;
+    window.history.replaceState(null, "", `/project/${project.id}`);
+    return () => {
+      window.history.replaceState(null, "", prevPath);
+    };
+  }, [project.id]);
 
   useEffect(() => {
     if (user) checkRole(user.uid).then(setUserRole);
@@ -180,6 +192,14 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
   }, [project.id, user]);
 
   const userHasRated = user && !!userRatings[user.uid];
+
+  const handleShare = () => {
+    const url = `${window.location.origin}/project/${project.id}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   const handleRate = async () => {
     if (!user || rating === 0) return;
@@ -250,7 +270,45 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
   return createPortal(
     <div className="hg-pm-overlay" onClick={onClose}>
       <div className="hg-pm" onClick={(e) => e.stopPropagation()}>
-        <button className="hg-pm-close" onClick={onClose}><FaTimes /></button>
+        {/* Top right buttons */}
+        <div style={{ position: "absolute", top: 14, right: 14, display: "flex", gap: 8, zIndex: 10 }}>
+          {copied && (
+            <div style={{
+              background: "rgb(47, 28, 15)",
+              color: "rgb(254, 251, 245)",
+              borderRadius: 20,
+              padding: "6px 14px",
+              fontSize: 12,
+              fontWeight: 600,
+              fontFamily: "Arial, Helvetica, sans-serif",
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              animation: "hg-dropdown-in 0.18s cubic-bezier(0.22,1,0.36,1)",
+            }}>
+              🔗 link copied!
+            </div>
+          )}
+          <button
+            onClick={handleShare}
+            title="Share project"
+            style={{
+              background: "rgba(254, 251, 245, 0.85)",
+              border: "1.5px solid rgb(185, 174, 167)",
+              borderRadius: "50%",
+              width: 32,
+              height: 32,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              fontSize: 13,
+              color: "rgb(104, 68, 42)",
+              transition: "background 0.2s",
+            }}
+          ><FaShare /></button>
+          <button className="hg-pm-close" style={{ position: "static" }} onClick={onClose}><FaTimes /></button>
+        </div>
         {view === "author" ? (
           <AuthorCard project={{ ...project, author, avatar }} onBack={() => setView("project")} />
         ) : (
@@ -301,6 +359,7 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
                 <a href={github} target="_blank" rel="noreferrer" className="hg-pm-github-btn">
                   <FaGithub /> View on GitHub
                 </a>
+
                 {(!project.status || project.status === "approved") && (
                   <button
                     className={`hg-pm-bookmark-btn${bookmarked ? " hg-pm-bookmark-active" : ""}`}

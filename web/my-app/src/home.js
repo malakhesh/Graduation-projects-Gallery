@@ -290,7 +290,6 @@ function SearchResults({ search, bookmarkedIds, onToggleBookmark, filters, updat
 }
 
 function Home() {
-  const [search, setSearch] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [selectedTag, setSelectedTag] = useState(null);
   const [bookmarkedIds, setBookmarkedIds] = useState([]);
@@ -300,7 +299,7 @@ function Home() {
   const [selectedProject, setSelectedProject] = useState(null);
   const [user] = useAuthState(auth);
 
-  const { filters, updateFilter, toggleArrayFilter, clearFilters, hasActiveFilters, allStacks, filtered } = useFilters(allProjects);
+  const { search, setSearch, filters, updateFilter, toggleArrayFilter, clearFilters, hasActiveFilters, isSearchOrFilter, allStacks, filtered } = useFilters(allProjects);
 
   useEffect(() => {
     if (user) {
@@ -327,19 +326,7 @@ function Home() {
     }
   };
 
-  const isSearchOrFilter = search.trim() || hasActiveFilters;
-
-  const displayProjects = filtered.filter((p) => {
-    if (!search.trim()) return true;
-    const tag = p.tag || (p.tags && p.tags[0]) || "";
-    const author = p.author || "";
-    const s = search.toLowerCase();
-    return (
-      p.title?.toLowerCase().includes(s) ||
-      author.toLowerCase().includes(s) ||
-      tag.toLowerCase().includes(s)
-    );
-  });
+  const displayProjects = filtered;
 
   return (
     <div className="hg-page">

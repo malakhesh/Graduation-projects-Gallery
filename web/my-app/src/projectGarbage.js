@@ -58,7 +58,6 @@ function SearchBar({ search, setSearch, filtersOpen, setFiltersOpen, hasActiveFi
 }
 
 function AllProjects() {
-  const [search, setSearch] = useState("");
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [bookmarkedIds, setBookmarkedIds] = useState([]);
@@ -67,7 +66,7 @@ function AllProjects() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [user] = useAuthState(auth);
 
-  const { filters, updateFilter, toggleArrayFilter, clearFilters, hasActiveFilters, allStacks, filtered } = useFilters(projects);
+  const { search, setSearch, filters, updateFilter, toggleArrayFilter, clearFilters, hasActiveFilters, isSearchOrFilter, allStacks, filtered } = useFilters(projects);
 
   useEffect(() => {
     if (user) {
@@ -94,18 +93,7 @@ function AllProjects() {
     }
   };
 
-  // Apply search on top of filtered results
-  const displayProjects = filtered.filter((p) => {
-    if (!search.trim()) return true;
-    const tag = p.tag || (p.tags && p.tags[0]) || "";
-    const author = p.author || "";
-    const s = search.toLowerCase();
-    return (
-      p.title?.toLowerCase().includes(s) ||
-      author.toLowerCase().includes(s) ||
-      tag.toLowerCase().includes(s)
-    );
-  });
+  const displayProjects = filtered;
 
   return (
     <div className="hg-page">
