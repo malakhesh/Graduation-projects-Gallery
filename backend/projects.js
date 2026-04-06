@@ -210,8 +210,20 @@ async function updProj(id, data) {
   }
 }
 
+async function getRejected() {
+  try {
+    const q = query(collection(db, "projects"), where("status", "==", "rejected"))
+    const s = await getDocs(q)
+    let arr = []
+    s.forEach((d) => arr.push({ id: d.id, ...d.data() }))
+    return arr
+  } catch {
+    return "rejected-fail"
+  }
+}
+
 export { 
   addProj, getProj, getApproved, getPending, setStatus, 
   getUserProjs, getByTag, getByCategory, getByStack,
-  addComment, addRate, removeRate, delProj, updProj, removeComment 
+  addComment, addRate, removeRate, delProj, updProj, removeComment,getRejected
 }
