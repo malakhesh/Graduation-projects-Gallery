@@ -13,15 +13,9 @@ const firebaseConfig = {
   measurementId: "G-VEP0LGWWD4"
 }
 
-<<<<<<< HEAD:web/my-app/src/firebase.js
-const app = initializeApp(firebaseConfig)
-const auth = getAuth(app)
-const db = getFirestore(app)
-=======
 const app     = initializeApp(firebaseConfig)
 const auth    = getAuth(app)
 const db      = getFirestore(app)
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/firebase.js
 const storage = getStorage(app)
 
 export { auth, db, storage }
