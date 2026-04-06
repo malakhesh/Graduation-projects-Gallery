@@ -1,12 +1,4 @@
 import { 
-<<<<<<< HEAD:web/my-app/src/projects.js
-  collection, addDoc, doc, getDoc, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, query, where, serverTimestamp 
-} from "firebase/firestore"
-import { db } from "./firebase.js"
-
-async function addProj(title, desc, userId, year, stack, category, gitLink, imgUrl, tags) {
-  try {
-=======
   collection, addDoc, doc, getDoc, getDocs, updateDoc, arrayUnion, deleteDoc, query, where, serverTimestamp 
 } from "firebase/firestore"
 import { db, storage } from "./firebase.js"
@@ -20,17 +12,12 @@ async function addProj(title, desc, userId, year, stack, gitLink, imgFile, tags)
       await uploadBytes(sRef, imgFile)
       imgUrl = await getDownloadURL(sRef)
     }
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/projects.js
     const r = await addDoc(collection(db, "projects"), {
       title,
       desc,
       userId,
       year,
       stack,
-<<<<<<< HEAD:web/my-app/src/projects.js
-      category,
-=======
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/projects.js
       gitLink,
       imgUrl,
       tags,
@@ -48,11 +35,7 @@ async function addProj(title, desc, userId, year, stack, gitLink, imgFile, tags)
 async function getProj(id) {
   try {
     const d = await getDoc(doc(db, "projects", id))
-<<<<<<< HEAD:web/my-app/src/projects.js
-    if (d.exists()) return { id: d.id, ...d.data() }
-=======
     if (d.exists()) return d.data()
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/projects.js
     else return "no-proj"
   } catch {
     return "get-fail"
@@ -120,41 +103,6 @@ async function getByTag(tag) {
   }
 }
 
-<<<<<<< HEAD:web/my-app/src/projects.js
-async function getByCategory(category) {
-  try {
-    const q = query(
-      collection(db, "projects"),
-      where("status", "==", "approved"),
-      where("category", "==", category)
-    )
-    const s = await getDocs(q)
-    let arr = []
-    s.forEach((d) => arr.push({ id: d.id, ...d.data() }))
-    return arr
-  } catch {
-    return "category-fail"
-  }
-}
-
-async function getByStack(tech) {
-  try {
-    const q = query(
-      collection(db, "projects"),
-      where("status", "==", "approved"),
-      where("stack", "array-contains", tech)
-    )
-    const s = await getDocs(q)
-    let arr = []
-    s.forEach((d) => arr.push({ id: d.id, ...d.data() }))
-    return arr
-  } catch {
-    return "stack-fail"
-  }
-}
-
-=======
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/projects.js
 async function addComment(id, c) {
   try {
     await updateDoc(doc(db, "projects", id), { comments: arrayUnion(c) })
@@ -164,66 +112,12 @@ async function addComment(id, c) {
   }
 }
 
-<<<<<<< HEAD:web/my-app/src/projects.js
-async function addRate(id, r, uid) {
-  try {
-    const projectRef = doc(db, "projects", id);
-    const projectSnap = await getDoc(projectRef);
-    if (!projectSnap.exists()) return "rate-fail";
-
-    const data = projectSnap.data();
-    const userRatings = data.userRatings || {};
-    const oldRating = userRatings[uid] || null;
-    let ratings = Array.isArray(data.ratings) ? [...data.ratings] : [];
-
-    if (oldRating !== null) {
-      const idx = ratings.indexOf(oldRating);
-      if (idx > -1) ratings.splice(idx, 1);
-    }
-    ratings.push(r);
-
-    await updateDoc(projectRef, {
-      ratings,
-      [`userRatings.${uid}`]: r,
-    });
-    return "rate-ok";
-  } catch {
-    return "rate-fail";
-  }
-}
-
-async function removeRate(id, uid, oldRating) {
-  try {
-    const projectRef = doc(db, "projects", id);
-    const projectSnap = await getDoc(projectRef);
-    if (!projectSnap.exists()) return "rate-fail";
-    const data = projectSnap.data();
-    let ratings = Array.isArray(data.ratings) ? [...data.ratings] : [];
-    const idx = ratings.indexOf(oldRating);
-    if (idx > -1) ratings.splice(idx, 1);
-    const userRatings = { ...(data.userRatings || {}) };
-    delete userRatings[uid];
-    await updateDoc(projectRef, { ratings, userRatings });
-    return "rate-removed";
-  } catch {
-    return "rate-fail";
-  }
-}
-
-async function removeComment(id, comment) {
-  try {
-    await updateDoc(doc(db, "projects", id), { comments: arrayRemove(comment) })
-    return "comment-removed"
-  } catch {
-    return "comment-remove-fail"
-=======
 async function addRate(id, r) {
   try {
     await updateDoc(doc(db, "projects", id), { ratings: arrayUnion(r) })
     return "rate-ok"
   } catch {
     return "rate-fail"
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/projects.js
   }
 }
 
@@ -245,12 +139,4 @@ async function updProj(id, data) {
   }
 }
 
-<<<<<<< HEAD:web/my-app/src/projects.js
-export { 
-  addProj, getProj, getApproved, getPending, setStatus, 
-  getUserProjs, getByTag, getByCategory, getByStack,
-  addComment, addRate, removeRate, delProj, updProj, removeComment 
-}
-=======
 export { addProj, getProj, getApproved, getPending, setStatus, getUserProjs, getByTag, addComment, addRate, delProj, updProj }
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/projects.js
