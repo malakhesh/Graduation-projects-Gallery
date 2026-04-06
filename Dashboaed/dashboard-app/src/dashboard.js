@@ -2,11 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { logOut } from "./auth.js";
 import wreathImg from "./wreath.png";
-<<<<<<< HEAD:web/my-app/src/dashboard.js
-=======
 import Login from "./login.js";
 import Home from "./home.js";
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/dashboard.js
 import ReviewProjects from "./Reviewprojects.js";
 import Users from "./Users.js";
 import Projects from "./AllProjects.js";
@@ -63,19 +60,6 @@ function GoldenWreath() {
   );
 }
 
-<<<<<<< HEAD:web/my-app/src/dashboard.js
-function Dashboard() {
-  const navigate = useNavigate();
-  const [view, setView] = useState("main");
-  const [hoveredBox, setHoveredBox] = useState(null);
-  const [hoveredNav, setHoveredNav] = useState(null);
-  const [hoveredSignIn, setHoveredSignIn] = useState(false);
-  const [hoveredSlice, setHoveredSlice] = useState(null);
-
-  if (view === "review")   return <ReviewProjects onBack={() => setView("main")} />;
-  if (view === "users")    return <Users onBack={() => setView("main")} />;
-  if (view === "projects") return <Projects onBack={() => setView("main")} />;
-=======
 function AppLayout() {
   const navigate = useNavigate();
   const [showLogin,    setShowLogin]    = useState(false);
@@ -93,7 +77,6 @@ function AppLayout() {
   if (showReview)   return <ReviewProjects onBack={() => setShowReview(false)} />;
   if (showUsers)    return <Users onBack={() => setShowUsers(false)} />;
   if (showProjects) return <Projects onBack={() => setShowProjects(false)} />;
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/dashboard.js
 
   const lightenColor = (hex) => ({
     "#eddcc8": "#f5ece0",
@@ -103,24 +86,16 @@ function AppLayout() {
 
   const getBoxStyle = (id, baseColor) => ({
     flex: 1, minWidth: 0, maxWidth: "none",
-<<<<<<< HEAD:web/my-app/src/dashboard.js
-    backgroundColor: hoveredBox === id ? lightenColor(baseColor) + "ee" : baseColor + "cc",
-=======
     backgroundColor: hoveredBox === id
       ? lightenColor(baseColor) + "ee"
       : baseColor + "cc",
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/dashboard.js
     backdropFilter: "blur(10px)",
     WebkitBackdropFilter: "blur(10px)",
     borderRadius: "10px",
     border: "1px solid rgba(255,255,255,0.3)",
-<<<<<<< HEAD:web/my-app/src/dashboard.js
-    boxShadow: hoveredBox === id ? "0 12px 28px rgba(0,0,0,0.35)" : "0 4px 16px rgba(0,0,0,0.2)",
-=======
     boxShadow: hoveredBox === id
       ? "0 12px 28px rgba(0,0,0,0.35)"
       : "0 4px 16px rgba(0,0,0,0.2)",
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/dashboard.js
     height: "270px",
     display: "flex", flexDirection: "column",
     justifyContent: "space-between", alignItems: "stretch",
@@ -131,7 +106,6 @@ function AppLayout() {
   });
 
   const slices = [
-<<<<<<< HEAD:web/my-app/src/dashboard.js
     { id: "web", label: "Web Dev", percent: "50%", count: 10, color: "#6F4E37", path: "M70,70 L70,10 A60,60 0 0,1 122,100 Z", labelX: 92, labelY: 42, countX: 107, countY: 54 },
     { id: "ai",  label: "AI",      percent: "30%", count: 6,  color: "#a0714f", path: "M70,70 L122,100 A60,60 0 0,1 18,100 Z",  labelX: 70, labelY: 112, countX: 70, countY: 124 },
     { id: "mob", label: "Mobile",  percent: "20%", count: 4,  color: "#d2a679", path: "M70,70 L18,100 A60,60 0 0,1 70,10 Z",   labelX: 32, labelY: 42, countX: 32, countY: 54 },
@@ -150,35 +124,13 @@ function AppLayout() {
           <h2 style={{ marginBottom: "20px", color: "#3B2F2F" }}>DASHBOARD</h2>
           <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: "55px" }}>
             {["WEBSITE VIEW", "ALL PROJECTS", "USERS", "SETTINGS"].map((item) => (
-=======
-    { id:"web", label:"Web Dev", percent:"50%", count:10, color:"#6F4E37", path:"M70,70 L70,10 A60,60 0 0,1 122,100 Z", labelX:92, labelY:42, countX:107, countY:54 },
-    { id:"ai",  label:"AI",      percent:"30%", count:6,  color:"#a0714f", path:"M70,70 L122,100 A60,60 0 0,1 18,100 Z",  labelX:70, labelY:112, countX:70, countY:124 },
-    { id:"mob", label:"Mobile",  percent:"20%", count:4,  color:"#d2a679", path:"M70,70 L18,100 A60,60 0 0,1 70,10 Z",   labelX:32, labelY:42, countX:32, countY:54 },
-  ];
-
-  return (
-    <div style={{ display:"flex", height:"100vh", fontFamily:"'Poppins', sans-serif" }}>
-      <aside style={{
-        position:"fixed", left:0, top:0, bottom:0, width:"200px",
-        backgroundColor:"#f0e5d8", padding:"20px",
-        borderRight:"2px solid rgba(111,78,55,0.25)",
-        display:"flex", flexDirection:"column", justifyContent:"space-between",
-        zIndex: 10,
-      }}>
-        <div>
-          <h2 style={{ marginBottom:"20px", color:"#3B2F2F" }}>DASHBOARD</h2>
-          <ul style={{ listStyle:"none", padding:0, display:"flex", flexDirection:"column", gap:"55px" }}>
-            {["WEBSITE VIEW","ALL PROJECTS","USERS","SETTINGS"].map((item) => (
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/dashboard.js
               <li key={item}
                 onMouseEnter={() => setHoveredNav(item)}
                 onMouseLeave={() => setHoveredNav(null)}
                 onClick={() => {
-<<<<<<< HEAD:web/my-app/src/dashboard.js
-                  if (item === "WEBSITE VIEW") navigate("/home");
-                  if (item === "ALL PROJECTS") setView("projects");
-                  if (item === "USERS")        setView("users");
-                  if (item === "SETTINGS")     navigate("/settings");
+                  if (item === "WEBSITE VIEW") setShowHome(true);
+                  if (item === "ALL PROJECTS") setShowProjects(true);
+                  if (item === "USERS")        setShowUsers(true);
                 }}
                 style={{
                   padding: "8px 10px", borderBottom: "1px solid #ccc",
@@ -188,52 +140,24 @@ function AppLayout() {
                   boxShadow: hoveredNav === item ? "0 4px 12px rgba(0,0,0,0.15)" : "none",
                   transition: "all 0.3s ease",
                   fontWeight: hoveredNav === item ? "bold" : "normal",
-=======
-                  if (item === "WEBSITE VIEW")         setShowHome(true);
-                  if (item === "ALL PROJECTS") setShowProjects(true);
-                  if (item === "USERS")        setShowUsers(true);
-                }}
-                style={{
-                  padding:"8px 10px", borderBottom:"1px solid #ccc",
-                  cursor:"pointer", color:"#6F4E37", borderRadius:"8px",
-                  backgroundColor: hoveredNav===item ? "#e8d5bf" : "transparent",
-                  transform: hoveredNav===item ? "translateX(6px) scale(1.02)" : "translateX(0) scale(1)",
-                  boxShadow: hoveredNav===item ? "0 4px 12px rgba(0,0,0,0.15)" : "none",
-                  transition:"all 0.3s ease",
-                  fontWeight: hoveredNav===item ? "bold" : "normal",
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/dashboard.js
                 }}
               >{item}</li>
             ))}
           </ul>
         </div>
         <div>
-<<<<<<< HEAD:web/my-app/src/dashboard.js
           <div style={{ marginTop: "20px", textAlign: "center", color: "#5C4033" }}>
-            <span
-              onClick={async () => { await logOut(); navigate("/"); }}
-              onMouseEnter={() => setHoveredSignIn(true)}
-              onMouseLeave={() => setHoveredSignIn(false)}
-              style={{
-                cursor: "pointer", padding: "8px 16px", borderRadius: "8px", display: "inline-block",
-=======
-          <div style={{ marginTop:"20px", textAlign:"center", color:"#5C4033" }}>
             <span
               onClick={async () => { await logOut(); setShowLogin(true); }}
               onMouseEnter={() => setHoveredSignIn(true)}
               onMouseLeave={() => setHoveredSignIn(false)}
               style={{
-                cursor:"pointer", padding:"8px 16px", borderRadius:"8px", display:"inline-block",
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/dashboard.js
+                cursor: "pointer", padding: "8px 16px", borderRadius: "8px", display: "inline-block",
                 backgroundColor: hoveredSignIn ? "#e8d5bf" : "transparent",
                 transform: hoveredSignIn ? "translateX(6px) scale(1.02)" : "translateX(0) scale(1)",
                 boxShadow: hoveredSignIn ? "0 4px 12px rgba(0,0,0,0.15)" : "none",
                 fontWeight: hoveredSignIn ? "bold" : "normal",
-<<<<<<< HEAD:web/my-app/src/dashboard.js
                 color: "#5C4033", transition: "all 0.3s ease",
-=======
-                color:"#5C4033", transition:"all 0.3s ease",
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/dashboard.js
               }}
             >SIGN OUT</span>
           </div>
@@ -241,7 +165,6 @@ function AppLayout() {
       </aside>
 
       <main style={{
-<<<<<<< HEAD:web/my-app/src/dashboard.js
         display: "flex", flexDirection: "column",
         marginLeft: "200px",
         background: "linear-gradient(to top, #c9a882, #f0e5d8)",
@@ -256,7 +179,7 @@ function AppLayout() {
         }}>
           <div style={getBoxStyle(1, "#eddcc8")}
             onMouseEnter={() => setHoveredBox(1)} onMouseLeave={() => setHoveredBox(null)}
-            onClick={() => setView("review")}>
+            onClick={() => setShowReview(true)}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", overflow: "hidden" }}>
               <span style={{ fontSize: "22px", flexShrink: 0 }}>📋</span>
               <span style={{ fontSize: "22px", fontWeight: "700", letterSpacing: "0.5px", color: "#3B1F0F", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>PROJECTS TO REVIEW</span>
@@ -315,100 +238,16 @@ function AppLayout() {
                     fontSize: "12px", fontWeight: "bold",
                     pointerEvents: "none", whiteSpace: "nowrap",
                     boxShadow: "0 4px 12px rgba(0,0,0,0.3)", zIndex: 10,
-=======
-        display:"flex", flexDirection:"column",
-        marginLeft:"200px",
-        background:"linear-gradient(to top, #c9a882, #f0e5d8)",
-        height:"100vh", width:"calc(100vw - 200px)",
-        boxSizing:"border-box", overflow:"hidden",
-      }}>
-        <GoldenWreath />
-        <div style={{
-          display:"flex", flexDirection:"row",
-          padding:"0 60px 30px", gap:"30px",
-          flex:1, alignItems:"center",
-        }}>
-
-          <div style={getBoxStyle(1,"#eddcc8")}
-            onMouseEnter={()=>setHoveredBox(1)} onMouseLeave={()=>setHoveredBox(null)}
-            onClick={() => setShowReview(true)}>
-            <div style={{ display:"flex", alignItems:"center", gap:"8px", overflow:"hidden" }}>
-              <span style={{ fontSize:"22px", flexShrink:0 }}>📋</span>
-              <span style={{ fontSize:"22px", fontWeight:"700", letterSpacing:"0.5px", color:"#3B1F0F", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>PROJECTS TO REVIEW</span>
-            </div>
-            <div style={{ fontSize:"56px", fontWeight:"800", color:"#3B2F2F", lineHeight:1, textAlign:"center" }}>12</div>
-            <div>
-              <div style={{ width:"100%", backgroundColor:"#c8a882", borderRadius:"10px", height:"8px", overflow:"hidden" }}>
-                <div style={{ width:"60%", backgroundColor:"#6F4E37", height:"100%", borderRadius:"10px", transition:"width 0.5s ease" }}/>
-              </div>
-              <div style={{ fontSize:"12px", color:"#5C4033", marginTop:"4px" }}>60% reviewed</div>
-            </div>
-          </div>
-
-          <div style={getBoxStyle(2,"#e5ceb5")}
-            onMouseEnter={()=>setHoveredBox(2)} onMouseLeave={()=>setHoveredBox(null)}>
-            <div style={{ display:"flex", alignItems:"center", gap:"8px", overflow:"hidden" }}>
-              <span style={{ fontSize:"22px", flexShrink:0 }}>📝</span>
-              <span style={{ fontSize:"22px", fontWeight:"700", letterSpacing:"0.5px", color:"#3B1F0F", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>PROJECTS TO REPORT</span>
-            </div>
-            <div style={{ fontSize:"56px", fontWeight:"800", color:"#3B2F2F", lineHeight:1, textAlign:"center" }}>7</div>
-            <div>
-              <div style={{ width:"100%", backgroundColor:"#b89868", borderRadius:"10px", height:"8px", overflow:"hidden" }}>
-                <div style={{ width:"10%", backgroundColor:"#5C4033", height:"100%", borderRadius:"10px", transition:"width 0.5s ease" }}/>
-              </div>
-              <div style={{ fontSize:"12px", color:"#5C4033", marginTop:"4px" }}>10% reported</div>
-            </div>
-          </div>
-
-          <div style={getBoxStyle(3,"#dcc4a8")}
-            onMouseEnter={()=>setHoveredBox(3)} onMouseLeave={()=>setHoveredBox(null)}>
-            <p style={{ margin:"0", fontSize:"22px", fontWeight:"bold", color:"#3B1F0F" }}>Projects Distribution</p>
-            <div style={{ display:"flex", justifyContent:"center", alignItems:"center", flex:1, position:"relative" }}>
-              <svg width="170" height="170" viewBox="0 0 140 140">
-                {slices.map((slice) => (
-                  <g key={slice.id}
-                    onMouseEnter={()=>setHoveredSlice(slice.id)}
-                    onMouseLeave={()=>setHoveredSlice(null)}
-                    style={{ cursor:"pointer" }}>
-                    <path d={slice.path} fill={slice.color}
-                      opacity={hoveredSlice===slice.id ? 1 : 0.85}
-                      transform={hoveredSlice===slice.id ? `translate(${slice.id==="web"?4:slice.id==="ai"?0:-4},${slice.id==="web"?-4:slice.id==="ai"?4:-4})` : "translate(0,0)"}
-                      style={{ transition:"all 0.25s ease" }}/>
-                    <text x={slice.labelX} y={slice.labelY} textAnchor="middle" fill="white" fontSize="9" fontWeight="bold" style={{pointerEvents:"none"}}>{slice.percent}</text>
-                    <text x={slice.countX} y={slice.countY} textAnchor="middle" fill="white" fontSize="8" style={{pointerEvents:"none"}}>{slice.count} projects</text>
-                  </g>
-                ))}
-                <circle cx="70" cy="70" r="25" fill="#f0e5d8"/>
-              </svg>
-              {hoveredSlice && (() => {
-                const s = slices.find(sl=>sl.id===hoveredSlice);
-                return (
-                  <div style={{
-                    position:"absolute", top:"0px", right:"-10px",
-                    backgroundColor:"#3B2F2F", color:"white",
-                    padding:"6px 10px", borderRadius:"8px",
-                    fontSize:"12px", fontWeight:"bold",
-                    pointerEvents:"none", whiteSpace:"nowrap",
-                    boxShadow:"0 4px 12px rgba(0,0,0,0.3)", zIndex:10,
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/dashboard.js
                   }}>
                     {s.label}: {s.count} projects ({s.percent})
                   </div>
                 );
               })()}
             </div>
-<<<<<<< HEAD:web/my-app/src/dashboard.js
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "center" }}>
               {slices.map((slice) => (
                 <span key={slice.id} style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", fontWeight: "bold", opacity: hoveredSlice === slice.id ? 1 : 0.7, transition: "opacity 0.25s ease" }}>
                   <span style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: slice.color, display: "inline-block" }} />
-=======
-            <div style={{ display:"flex", gap:"10px", flexWrap:"wrap", justifyContent:"center" }}>
-              {slices.map((slice) => (
-                <span key={slice.id} style={{ display:"flex", alignItems:"center", gap:"4px", fontSize:"11px", fontWeight:"bold",
-                  opacity: hoveredSlice===slice.id ? 1 : 0.7, transition:"opacity 0.25s ease" }}>
-                  <span style={{ width:"10px", height:"10px", borderRadius:"50%", backgroundColor:slice.color, display:"inline-block" }}/>
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/dashboard.js
                   {slice.label}
                 </span>
               ))}
@@ -420,8 +259,4 @@ function AppLayout() {
   );
 }
 
-<<<<<<< HEAD:web/my-app/src/dashboard.js
-export default Dashboard;
-=======
 export default AppLayout;
->>>>>>> b557a96a2a06c3a456d3dc5eadf24ad13165192c:Dashboaed/dashboard-app/src/dashboard.js
