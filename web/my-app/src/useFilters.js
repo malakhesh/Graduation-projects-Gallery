@@ -1,14 +1,37 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import Fuse from "fuse.js";
 
 export function useFilters(projects) {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Read initial state from URL
   const [filters, setFilters] = useState({
-    tags: [],
-    categories: [],
-    stack: [],
-    minRating: 0,
-    sortByRating: false,
-    dateSort: null, // "latest" | "oldest"
+    tags: searchParams.getAll("tags"),
+    categories: searchParams.getAll("categories"),
+    stack: searchParams.getAll("stack"),
+    minRating: Number(searchParams.get("minRating")) || 0,
+    sortByRating: searchParams.get("sortByRating") === "true",
+    dateSort: searchParams.get("dateSort") || null,
   });
+
+  const [search, setSearchState] = useState(searchParams.get("search") || "");
+
+  // Sync filters + search to URL
+  useEffect(() => {
+    const params = {};
+    if (search) params.search = search;
+    if (filters.tags.length > 0) params.tags = filters.tags;
+    if (filters.categories.length > 0) params.categories = filters.categories;
+    if (filters.stack.length > 0) params.stack = filters.stack;
+    if (filters.minRating > 0) params.minRating = filters.minRating;
+    if (filters.sortByRating) params.sortByRating = "true";
+    if (filters.dateSort) params.dateSort = filters.dateSort;
+
+    setSearchParams(params, { replace: true });
+  }, [filters, search]);
+
+  const setSearch = (val) => setSearchState(val);
 
   const updateFilter = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -24,6 +47,11 @@ export function useFilters(projects) {
     });
   };
 
+  const clearAll = () => {
+    setFilters({ tags: [], categories: [], stack: [], minRating: 0, sortByRating: false, dateSort: null });
+    setSearchState("");
+  };
+
   const clearFilters = () => {
     setFilters({ tags: [], categories: [], stack: [], minRating: 0, sortByRating: false, dateSort: null });
   };
@@ -36,6 +64,8 @@ export function useFilters(projects) {
     filters.sortByRating ||
     filters.dateSort !== null;
 
+  const isSearchOrFilter = search.trim() !== "" || hasActiveFilters;
+
   // All unique tech stacks used at least once
   const allStacks = useMemo(() => {
     const set = new Set();
@@ -45,9 +75,31 @@ export function useFilters(projects) {
     return Array.from(set).sort();
   }, [projects]);
 
+  // Fuse.js smart search
+  const fuse = useMemo(() => new Fuse(projects, {
+    keys: [
+      { name: "title", weight: 0.4 },
+      { name: "author", weight: 0.2 },
+      { name: "desc", weight: 0.15 },
+      { name: "description", weight: 0.15 },
+      { name: "tags", weight: 0.1 },
+      { name: "tag", weight: 0.1 },
+      { name: "stack", weight: 0.1 },
+    ],
+    threshold: 0.4,
+    includeScore: true,
+  }), [projects]);
+
   const filtered = useMemo(() => {
     let result = [...projects];
 
+    // Smart fuzzy search
+    if (search.trim()) {
+      const fuseResults = fuse.search(search.trim());
+      result = fuseResults.map((r) => r.item);
+    }
+
+    // Filter by tags
     if (filters.tags.length > 0) {
       result = result.filter((p) => {
         const tag = p.tag || (p.tags && p.tags[0]) || "";
@@ -55,16 +107,19 @@ export function useFilters(projects) {
       });
     }
 
+    // Filter by category
     if (filters.categories.length > 0) {
       result = result.filter((p) => filters.categories.includes(p.category));
     }
 
+    // Filter by stack
     if (filters.stack.length > 0) {
       result = result.filter((p) =>
         Array.isArray(p.stack) && filters.stack.some((s) => p.stack.includes(s))
       );
     }
 
+    // Filter by min rating
     if (filters.minRating > 0) {
       result = result.filter((p) => {
         const ratings = p.ratings || [];
@@ -74,30 +129,36 @@ export function useFilters(projects) {
       });
     }
 
+    // Sort by rating
     if (filters.sortByRating) {
-      result = result.sort((a, b) => {
+      result = [...result].sort((a, b) => {
         const avgA = a.ratings?.length ? a.ratings.reduce((x, y) => x + y, 0) / a.ratings.length : 0;
         const avgB = b.ratings?.length ? b.ratings.reduce((x, y) => x + y, 0) / b.ratings.length : 0;
         return avgB - avgA;
       });
     }
 
+    // Sort by grad year
     if (filters.dateSort === "latest") {
-      result = result.sort((a, b) => {
-        const ya = parseInt(a.year) || 0;
-        const yb = parseInt(b.year) || 0;
-        return yb - ya;
-      });
+      result = [...result].sort((a, b) => (parseInt(b.year) || 0) - (parseInt(a.year) || 0));
     } else if (filters.dateSort === "oldest") {
-      result = result.sort((a, b) => {
-        const ya = parseInt(a.year) || 0;
-        const yb = parseInt(b.year) || 0;
-        return ya - yb;
-      });
+      result = [...result].sort((a, b) => (parseInt(a.year) || 0) - (parseInt(b.year) || 0));
     }
 
     return result;
-  }, [projects, filters]);
+  }, [projects, search, filters, fuse]);
 
-  return { filters, updateFilter, toggleArrayFilter, clearFilters, hasActiveFilters, allStacks, filtered };
+  return {
+    search,
+    setSearch,
+    filters,
+    updateFilter,
+    toggleArrayFilter,
+    clearFilters,
+    clearAll,
+    hasActiveFilters,
+    isSearchOrFilter,
+    allStacks,
+    filtered,
+  };
 }
