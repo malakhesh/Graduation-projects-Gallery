@@ -2,6 +2,8 @@ import {
   collection, addDoc, doc, getDoc, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, query, where, serverTimestamp 
 } from "firebase/firestore"
 import { db } from "./firebase.js"
+import { sendNotif } from "./notifications.js"
+import { getUser } from "./auth.js"
 
 async function addProj(title, desc, userId, year, stack, category, gitLink, imgUrl, tags) {
   try {
@@ -67,6 +69,30 @@ async function setStatus(id, status, role) {
       status,
       statusAt: serverTimestamp()
     })
+
+    const project = await getProj(id)
+    if (project && project !== "no-proj" && project !== "get-fail") {
+      const ownerUid = project.userId
+      const title = project.title || "your project"
+      if (ownerUid) {
+        if (status === "approved") {
+          await sendNotif(ownerUid, {
+            type: "approved",
+            message: `Your project "${title}" has been approved and is now live.`,
+            projectId: id,
+            clickable: true,
+          })
+        } else if (status === "rejected") {
+          await sendNotif(ownerUid, {
+            type: "rejected",
+            message: `Your project "${title}" was not approved. Please review and resubmit.`,
+            projectId: id,
+            clickable: true,
+          })
+        }
+      }
+    }
+
     return "status-ok"
   } catch {
     return "status-fail"
@@ -129,9 +155,26 @@ async function getByStack(tech) {
   }
 }
 
-async function addComment(id, c) {
+async function addComment(id, c, commenterUid) {
   try {
     await updateDoc(doc(db, "projects", id), { comments: arrayUnion(c) })
+
+    const project = await getProj(id)
+    if (project && project !== "no-proj" && project !== "get-fail") {
+      const ownerUid = project.userId
+      if (ownerUid && ownerUid !== commenterUid) {
+        const commenterData = commenterUid ? await getUser(commenterUid) : null
+        const commenterName = commenterData?.name || "Someone"
+        const preview = c.text?.length > 40 ? c.text.slice(0, 40) + "..." : c.text
+        await sendNotif(ownerUid, {
+          type: "comment",
+          message: `${commenterName} commented: "${preview}"`,
+          projectId: id,
+          clickable: true,
+        })
+      }
+    }
+
     return "comment-ok"
   } catch {
     return "comment-fail"
@@ -159,6 +202,19 @@ async function addRate(id, r, uid) {
       ratings,
       [`userRatings.${uid}`]: r,
     });
+
+    const ownerUid = data.userId
+    if (ownerUid && ownerUid !== uid) {
+      const raterData = await getUser(uid)
+      const raterName = raterData?.name || "Someone"
+      await sendNotif(ownerUid, {
+        type: "rating",
+        message: `${raterName} rated your project ${r}/5`,
+        projectId: id,
+        clickable: true,
+      })
+    }
+
     return "rate-ok";
   } catch {
     return "rate-fail";
@@ -210,8 +266,27 @@ async function updProj(id, data) {
   }
 }
 
+async function notifyBookmark(projectId, bookmarkerUid) {
+  try {
+    const project = await getProj(projectId)
+    if (!project || project === "no-proj" || project === "get-fail") return
+    const ownerUid = project.userId
+    if (!ownerUid || ownerUid === bookmarkerUid) return
+    const bookmarkerData = await getUser(bookmarkerUid)
+    const bookmarkerName = bookmarkerData?.name || "Someone"
+    const title = project.title || "your project"
+    await sendNotif(ownerUid, {
+      type: "bookmark",
+      message: `${bookmarkerName} bookmarked "${title}"`,
+      projectId: null,
+      clickable: false,
+    })
+  } catch {}
+}
+
 export { 
   addProj, getProj, getApproved, getPending, setStatus, 
   getUserProjs, getByTag, getByCategory, getByStack,
-  addComment, addRate, removeRate, delProj, updProj, removeComment 
+  addComment, addRate, removeRate, delProj, updProj, removeComment,
+  notifyBookmark
 }

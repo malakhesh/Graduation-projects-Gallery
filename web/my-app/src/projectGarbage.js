@@ -7,7 +7,7 @@ import { Navbar } from './home.js';
 import { ProjectCard, ProjectModal } from './ProjectCard.js';
 import { FilterPanel } from './FilterPanel.js';
 import { useFilters } from './useFilters.js';
-import { getApproved } from './projects.js';
+import { getApproved, notifyBookmark } from './projects.js';
 import { FaSearch, FaFilter } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -90,10 +90,9 @@ function AllProjects() {
     } else {
       await addBookmark(user.uid, id);
       setBookmarkedIds((prev) => [...prev, id]);
+      await notifyBookmark(id, user.uid);
     }
   };
-
-  const displayProjects = filtered;
 
   return (
     <div className="hg-page">
@@ -121,9 +120,9 @@ function AllProjects() {
           </h2>
           {loading ? (
             <div className="hg-spinner-wrapper"><div className="hg-spinner" /></div>
-          ) : displayProjects.length > 0 ? (
+          ) : filtered.length > 0 ? (
             <div className="hg-projects-grid">
-              {displayProjects.map((p) => (
+              {filtered.map((p) => (
                 <ProjectCard
                   key={p.id}
                   project={p}
