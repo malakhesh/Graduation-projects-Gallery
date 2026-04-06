@@ -627,3 +627,27 @@
 .pf-avatar-edit-btn:hover {
   background: rgb(47, 28, 15);
 }
+
+.hg-dashboard-btn {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(104, 68, 42);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid rgb(104, 68, 42);
+  transition: background 0.2s, color 0.2s;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+.hg-dashboard-btn:hover {
+  background: rgb(104, 68, 42);
+  color: rgb(254, 251, 245);
+}
+
+.hg-dashboard-btn-active {
+  background: rgb(104, 68, 42);
+  color: rgb(254, 251, 245) !important;
+}

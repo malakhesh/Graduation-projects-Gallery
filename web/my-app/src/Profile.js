@@ -7,32 +7,13 @@ import { auth } from './firebase.js';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import UploadModal from './UploadModal';
 import {
-  FaGraduationCap, FaUser, FaCog, FaFolderOpen, FaBars,
+  FaGraduationCap, FaUser, FaCog, FaFolderOpen,
   FaEnvelope, FaProjectDiagram, FaGithub, FaLinkedin,
   FaGlobe, FaQuoteLeft, FaPen, FaCheck, FaTimes, FaChevronDown, FaCamera
 } from "react-icons/fa";
 
-function AdminSidebar({ open, onClose }) {
-  const navigate = useNavigate();
-  return (
-    <>
-      {open && <div className="pf-sidebar-overlay" onClick={onClose} />}
-      <aside className={`pf-admin-sidebar ${open ? 'pf-sidebar-open' : ''}`}>
-        <div className="pf-sidebar-header">
-          <h2 className="pf-sidebar-title" onClick={() => navigate('/dashboard')}>DASHBOARD</h2>
-        </div>
-        <ul className="pf-sidebar-links">
-          {["HOME", "PROFILE", "TEAM", "SETTINGS"].map((item) => (
-            <li key={item} onClick={() => { if (item === "HOME") onClose(); }} className="pf-sidebar-item">{item}</li>
-          ))}
-        </ul>
-      </aside>
-    </>
-  );
-}
 
 function Navbar({ isAdmin }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const dropdownRef = useRef(null);
@@ -53,12 +34,16 @@ function Navbar({ isAdmin }) {
   return (
     <>
       <nav className="pf-navbar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isAdmin && <button className="pf-hamburger" onClick={() => setSidebarOpen(true)}><FaBars /></button>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <Link to="/home" className="pf-navbar-logo">
             <FaGraduationCap className="pf-logo-icon" />
             <span className="pf-logo-text"><strong>Graduation</strong> Gallery</span>
           </Link>
+          {isAdmin && (
+            <Link to="/dashboard" className={`hg-dashboard-btn${location.pathname === '/dashboard' ? ' hg-dashboard-btn-active' : ''}`}>
+              Dashboard
+            </Link>
+          )}
         </div>
         <div className="pf-navbar-links">
           <Link to="/projects" className={`pf-nav-link${location.pathname === '/projects' ? ' pf-nav-link-active' : ''}`}>
@@ -89,7 +74,6 @@ function Navbar({ isAdmin }) {
           </div>
         </div>
       </nav>
-      <AdminSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       {showUpload && <UploadModal onClose={() => setShowUpload(false)} />}
     </>
   );
