@@ -1,6 +1,7 @@
 import { auth, db } from "./firebase.js"
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged, GoogleAuthProvider, GithubAuthProvider, signInWithPopup } from "firebase/auth"
-import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc } from "firebase/firestore"
+import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc,arrayUnion, arrayRemove } from "firebase/firestore"
+ 
 
 async function regUser(email, pass, name, role, year, techStack) {
   try {
@@ -140,4 +141,26 @@ async function updateRole(uid, role, currentRole) {
   }
 }
 
-export { regUser, logUser, logWithGoogle, logWithGithub, resetPass, logOut, getUser, checkRole, watchUser, getUsersByYear, getUsersByTechStack, updateRole }
+async function addBookmark(uid, projectId) {
+  try {
+    await updateDoc(doc(db, "users", uid), { bookmarks: arrayUnion(projectId) })
+    return "bookmark-added"
+  } catch { return "bookmark-fail" }
+}
+
+async function removeBookmark(uid, projectId) {
+  try {
+    await updateDoc(doc(db, "users", uid), { bookmarks: arrayRemove(projectId) })
+    return "bookmark-removed"
+  } catch { return "bookmark-fail" }
+}
+
+async function getBookmarks(uid) {
+  try {
+    const d = await getDoc(doc(db, "users", uid))
+    if (d.exists()) return d.data().bookmarks || []
+    return []
+  } catch { return "bookmarks-fail" }
+}
+
+export { regUser, logUser, logWithGoogle, logWithGithub, resetPass, logOut, getUser, checkRole, watchUser, getUsersByYear, getUsersByTechStack, updateRole ,addBookmark, removeBookmark, getBookmarks }
