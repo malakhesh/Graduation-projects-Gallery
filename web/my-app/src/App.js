@@ -1,15 +1,83 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { auth } from './firebase.js';
+import { checkRole } from './auth.js';
+import React, { useState, useEffect, createContext, useContext } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import Landing from './landing'; 
 import Login from './login';
 import Register from './register';
+import Home from './home';
+import ForgotPassword from './ForgotPassword';
+import ResetPassword from './ResetPassword';
+import Dashboard from './dashboard.js';
+import Bookmarks from './Bookmarks';
+import Profile from './Profile';
+import Settings from './Settings';
+import MyProjects from './MyProjects.js';
+import AllProjects from './projectGarbage';
+import ProjectShare from './ProjectShare';
+
+const RoleContext = createContext(null);
+
+function AppProviders({ children }) {
+  const [user, loading] = useAuthState(auth);
+  const [role, setRole] = useState(null);
+
+  useEffect(() => {
+    if (user) {
+      checkRole(user.uid).then(setRole);
+    } else {
+      setRole(null);
+    }
+  }, [user]);
+
+  if (loading) return null;
+
+  return (
+    <RoleContext.Provider value={role}>
+      {children}
+    </RoleContext.Provider>
+  );
+}
+
+function ProtectedRoute({ children }) {
+  const [user, loading] = useAuthState(auth);
+  if (loading) return null;
+  if (!user) return <Navigate to="/" />;
+  return children;
+}
+
+function AdminRoute({ children }) {
+  const [user, loading] = useAuthState(auth);
+  const role = useContext(RoleContext);
+
+  if (loading) return null;
+  if (!user) return <Navigate to="/" />;
+  if (role === null) return null;
+  if (role !== "admin") return <Navigate to="/home" />;
+  return children;
+}
 
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/signup" element={<Register />} />
-      </Routes>
+      <AppProviders>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+          <Route path="/bookmarks" element={<ProtectedRoute><Bookmarks /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/projects" element={<ProtectedRoute><MyProjects /></ProtectedRoute>} />
+          <Route path="/all-projects" element={<ProtectedRoute><AllProjects /></ProtectedRoute>} />
+          <Route path="/project/:id" element={<ProtectedRoute><ProjectShare /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<AdminRoute><Dashboard /></AdminRoute>} />
+        </Routes>
+      </AppProviders>
     </Router>
   );
 }

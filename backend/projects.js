@@ -1,23 +1,17 @@
 import { 
-  collection, addDoc, doc, getDoc, getDocs, updateDoc, arrayUnion, deleteDoc, query, where, serverTimestamp 
+  collection, addDoc, doc, getDoc, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, query, where, serverTimestamp 
 } from "firebase/firestore"
-import { db, storage } from "./firebase.js"
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
+import { db } from "./firebase.js"
 
-async function addProj(title, desc, userId, year, stack, gitLink, imgFile, tags) {
+async function addProj(title, desc, userId, year, stack, category, gitLink, imgUrl, tags) {
   try {
-    let imgUrl = null
-    if (imgFile) {
-      const sRef = ref(storage, `projects/${userId}/${imgFile.name}`)
-      await uploadBytes(sRef, imgFile)
-      imgUrl = await getDownloadURL(sRef)
-    }
     const r = await addDoc(collection(db, "projects"), {
       title,
       desc,
       userId,
       year,
       stack,
+      category,
       gitLink,
       imgUrl,
       tags,
@@ -35,7 +29,7 @@ async function addProj(title, desc, userId, year, stack, gitLink, imgFile, tags)
 async function getProj(id) {
   try {
     const d = await getDoc(doc(db, "projects", id))
-    if (d.exists()) return d.data()
+    if (d.exists()) return { id: d.id, ...d.data() }
     else return "no-proj"
   } catch {
     return "get-fail"
@@ -103,6 +97,38 @@ async function getByTag(tag) {
   }
 }
 
+async function getByCategory(category) {
+  try {
+    const q = query(
+      collection(db, "projects"),
+      where("status", "==", "approved"),
+      where("category", "==", category)
+    )
+    const s = await getDocs(q)
+    let arr = []
+    s.forEach((d) => arr.push({ id: d.id, ...d.data() }))
+    return arr
+  } catch {
+    return "category-fail"
+  }
+}
+
+async function getByStack(tech) {
+  try {
+    const q = query(
+      collection(db, "projects"),
+      where("status", "==", "approved"),
+      where("stack", "array-contains", tech)
+    )
+    const s = await getDocs(q)
+    let arr = []
+    s.forEach((d) => arr.push({ id: d.id, ...d.data() }))
+    return arr
+  } catch {
+    return "stack-fail"
+  }
+}
+
 async function addComment(id, c) {
   try {
     await updateDoc(doc(db, "projects", id), { comments: arrayUnion(c) })
@@ -112,12 +138,57 @@ async function addComment(id, c) {
   }
 }
 
-async function addRate(id, r) {
+async function addRate(id, r, uid) {
   try {
-    await updateDoc(doc(db, "projects", id), { ratings: arrayUnion(r) })
-    return "rate-ok"
+    const projectRef = doc(db, "projects", id);
+    const projectSnap = await getDoc(projectRef);
+    if (!projectSnap.exists()) return "rate-fail";
+
+    const data = projectSnap.data();
+    const userRatings = data.userRatings || {};
+    const oldRating = userRatings[uid] || null;
+    let ratings = Array.isArray(data.ratings) ? [...data.ratings] : [];
+
+    if (oldRating !== null) {
+      const idx = ratings.indexOf(oldRating);
+      if (idx > -1) ratings.splice(idx, 1);
+    }
+    ratings.push(r);
+
+    await updateDoc(projectRef, {
+      ratings,
+      [`userRatings.${uid}`]: r,
+    });
+    return "rate-ok";
   } catch {
-    return "rate-fail"
+    return "rate-fail";
+  }
+}
+
+async function removeRate(id, uid, oldRating) {
+  try {
+    const projectRef = doc(db, "projects", id);
+    const projectSnap = await getDoc(projectRef);
+    if (!projectSnap.exists()) return "rate-fail";
+    const data = projectSnap.data();
+    let ratings = Array.isArray(data.ratings) ? [...data.ratings] : [];
+    const idx = ratings.indexOf(oldRating);
+    if (idx > -1) ratings.splice(idx, 1);
+    const userRatings = { ...(data.userRatings || {}) };
+    delete userRatings[uid];
+    await updateDoc(projectRef, { ratings, userRatings });
+    return "rate-removed";
+  } catch {
+    return "rate-fail";
+  }
+}
+
+async function removeComment(id, comment) {
+  try {
+    await updateDoc(doc(db, "projects", id), { comments: arrayRemove(comment) })
+    return "comment-removed"
+  } catch {
+    return "comment-remove-fail"
   }
 }
 
@@ -139,4 +210,20 @@ async function updProj(id, data) {
   }
 }
 
-export { addProj, getProj, getApproved, getPending, setStatus, getUserProjs, getByTag, addComment, addRate, delProj, updProj }
+async function getRejected() {
+  try {
+    const q = query(collection(db, "projects"), where("status", "==", "rejected"))
+    const s = await getDocs(q)
+    let arr = []
+    s.forEach((d) => arr.push({ id: d.id, ...d.data() }))
+    return arr
+  } catch {
+    return "rejected-fail"
+  }
+}
+
+export { 
+  addProj, getProj, getApproved, getPending, setStatus, 
+  getUserProjs, getByTag, getByCategory, getByStack,
+  addComment, addRate, removeRate, delProj, updProj, removeComment,getRejected
+}
