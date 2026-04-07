@@ -7,7 +7,6 @@ async function regUser(email, pass, name, role, year, techStack) {
   try {
     const u = await createUserWithEmailAndPassword(auth, email, pass)
     await setDoc(doc(db, "users", u.user.uid), { email, name, role, year, techStack, bookmarks: [] })
-    // Send welcome notification
     await createWelcomeNotif(u.user.uid)
     return u.user
   } catch (err) {
@@ -77,7 +76,7 @@ async function getUser(uid) {
 
 async function updateUser(uid, data) {
   try {
-    await updateDoc(doc(db, "users", uid), data)
+    await setDoc(doc(db, "users", uid), data, { merge: true })
     return "update-ok"
   } catch { return "update-fail" }
 }
