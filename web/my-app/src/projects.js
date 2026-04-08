@@ -62,6 +62,18 @@ async function getPending() {
   }
 }
 
+async function getRejected() {
+  try {
+    const q = query(collection(db, "projects"), where("status", "==", "rejected"))
+    const s = await getDocs(q)
+    let arr = []
+    s.forEach((d) => arr.push({ id: d.id, ...d.data() }))
+    return arr
+  } catch {
+    return "rejected-fail"
+  }
+}
+
 async function setStatus(id, status, role) {
   try {
     if (role !== "admin") return "unauth"
@@ -285,7 +297,7 @@ async function notifyBookmark(projectId, bookmarkerUid) {
 }
 
 export { 
-  addProj, getProj, getApproved, getPending, setStatus, 
+  addProj, getProj, getApproved, getPending, getRejected, setStatus, 
   getUserProjs, getByTag, getByCategory, getByStack,
   addComment, addRate, removeRate, delProj, updProj, removeComment,
   notifyBookmark
