@@ -6,10 +6,37 @@ import { getUser, checkRole } from './auth.js';
 import { auth } from './firebase.js';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { addComment, addRate, removeRate, delProj, removeComment, getProj } from './projects.js';
+import { addReport } from './reports.js'; // adjust path if needed
 import {
   FaUser, FaBookmark, FaRegBookmark, FaGithub, FaStar, FaRegStar,
-  FaTimes, FaArrowLeft, FaEnvelope, FaLinkedin, FaGlobe, FaGraduationCap, FaShare
+  FaTimes, FaArrowLeft, FaEnvelope, FaLinkedin, FaGlobe, FaGraduationCap,
+  FaShare, FaFlag, FaTrash
 } from "react-icons/fa";
+
+// ===========================
+// SHARED CIRCLE BUTTON STYLE
+// ===========================
+const circleBtn = {
+  background: "rgba(254, 251, 245, 0.85)",
+  border: "1.5px solid rgb(185, 174, 167)",
+  borderRadius: "50%",
+  width: 32,
+  height: 32,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  fontSize: 13,
+  color: "rgb(104, 68, 42)",
+  transition: "background 0.2s",
+};
+
+const smallCircleBtn = {
+  ...circleBtn,
+  width: 26,
+  height: 26,
+  fontSize: 11,
+};
 
 // ===========================
 // STATUS BADGE
@@ -54,6 +81,76 @@ export function StarRating({ value, onChange }) {
         </span>
       ))}
     </div>
+  );
+}
+
+// ===========================
+// REPORT MODAL
+// ===========================
+function ReportModal({ target, onClose, onSubmit, submitting }) {
+  const [reason, setReason] = useState("");
+
+  return createPortal(
+    <div
+      style={{
+        position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
+        zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center",
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: "rgb(254, 251, 245)", borderRadius: 20, padding: "28px 32px",
+          width: 360, display: "flex", flexDirection: "column", gap: 16,
+          border: "1px solid rgb(185, 174, 167)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h4 style={{ margin: 0, fontFamily: "'Times New Roman', serif", fontSize: 20, color: "rgb(47, 28, 15)" }}>
+          Report {target === "project" ? "Project" : "Comment"}
+        </h4>
+        <p style={{ margin: 0, fontSize: 13, color: "rgb(104, 68, 42)", fontFamily: "Arial, sans-serif" }}>
+          Describe the issue and an admin will review it.
+        </p>
+        <textarea
+          rows={4}
+          placeholder="What's wrong with this?"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          style={{
+            width: "100%", borderRadius: 12, border: "1.5px solid rgb(185, 174, 167)",
+            padding: "10px 14px", fontSize: 14, fontFamily: "Arial, sans-serif",
+            color: "rgb(47, 28, 15)", background: "rgb(243, 236, 229)",
+            resize: "none", outline: "none", boxSizing: "border-box",
+          }}
+        />
+        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+          <button
+            onClick={onClose}
+            style={{
+              background: "none", border: "1.5px solid rgb(185, 174, 167)", borderRadius: 20,
+              padding: "8px 18px", fontSize: 13, fontWeight: 600, color: "rgb(104, 68, 42)",
+              cursor: "pointer", fontFamily: "Arial, sans-serif",
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => onSubmit(reason)}
+            disabled={submitting || !reason.trim()}
+            style={{
+              background: "rgb(180, 60, 40)", border: "none", borderRadius: 20,
+              padding: "8px 18px", fontSize: 13, fontWeight: 600, color: "white",
+              cursor: reason.trim() && !submitting ? "pointer" : "default",
+              fontFamily: "Arial, sans-serif", opacity: reason.trim() ? 1 : 0.5,
+            }}
+          >
+            {submitting ? "Sending..." : "Submit Report"}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -164,6 +261,12 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
   const [userRole, setUserRole] = useState(null);
   const [authorName, setAuthorName] = useState(null);
   const [userRatings, setUserRatings] = useState(project.userRatings || {});
+
+  // Report state
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportTarget, setReportTarget] = useState(null); // { type: "project" | "comment", commentIndex: null | number }
+  const [submittingReport, setSubmittingReport] = useState(false);
+
   const location = useLocation();
 
   useEffect(() => {
@@ -255,6 +358,18 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
     setSubmittingComment(false);
   };
 
+  const handleReportSubmit = async (reason) => {
+    if (!reason.trim() || !user) return;
+    setSubmittingReport(true);
+    const targetId = reportTarget?.type === "comment"
+      ? `${project.id}_comment_${reportTarget.commentIndex}`
+      : project.id;
+    await addReport(targetId, user.uid, reason);
+    setSubmittingReport(false);
+    setReportOpen(false);
+    setReportTarget(null);
+  };
+
   const title = project.title;
   const tag = project.tag || (project.tags && project.tags[0]) || "";
   const image = project.image || project.imgUrl;
@@ -267,240 +382,235 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
   const avgRating = ratings.length > 0 ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : null;
 
   return createPortal(
-    <div className="hg-pm-overlay" onClick={onClose}>
-      <div className="hg-pm" onClick={(e) => e.stopPropagation()}>
-        {/* Top right buttons */}
-        <div style={{ position: "absolute", top: 14, right: 14, display: "flex", gap: 8, zIndex: 10 }}>
-          {copied && (
-            <div style={{
-              background: "rgb(47, 28, 15)",
-              color: "rgb(254, 251, 245)",
-              borderRadius: 20,
-              padding: "6px 14px",
-              fontSize: 12,
-              fontWeight: 600,
-              fontFamily: "Arial, Helvetica, sans-serif",
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-              animation: "hg-dropdown-in 0.18s cubic-bezier(0.22,1,0.36,1)",
-            }}>
-              🔗 link copied!
-            </div>
-          )}
-          <button
-            onClick={handleShare}
-            title="Share project"
-            style={{
-              background: "rgba(254, 251, 245, 0.85)",
-              border: "1.5px solid rgb(185, 174, 167)",
-              borderRadius: "50%",
-              width: 32,
-              height: 32,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              fontSize: 13,
-              color: "rgb(104, 68, 42)",
-              transition: "background 0.2s",
-            }}
-          ><FaShare /></button>
-          <button className="hg-pm-close" style={{ position: "static" }} onClick={onClose}><FaTimes /></button>
-        </div>
-        {view === "author" ? (
-          <AuthorCard project={{ ...project, author, avatar }} onBack={() => setView("project")} />
-        ) : (
-          <>
-            <div className="hg-pm-image-wrap">
-              <img src={image} alt={title} className="hg-pm-image" />
-              <div className="hg-pm-image-overlay">
-                <h2 className="hg-pm-title">{title}</h2>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  {tag && <span className="hg-pm-tag">{tag}</span>}
-                  {project.category && (
-                    <span className="hg-pm-tag hg-pm-tag-category">{project.category}</span>
-                  )}
-                  {avgRating && (
-                    <span className="hg-pm-tag">
-                      ⭐ {avgRating} ({ratings.length} {ratings.length === 1 ? "rating" : "ratings"})
-                    </span>
-                  )}
+    <>
+      <div className="hg-pm-overlay" onClick={onClose}>
+        <div className="hg-pm" onClick={(e) => e.stopPropagation()}>
+
+          {/* Top right buttons */}
+          <div style={{ position: "absolute", top: 14, right: 14, display: "flex", gap: 8, zIndex: 10 }}>
+            {copied && (
+              <div style={{
+                background: "rgb(47, 28, 15)", color: "rgb(254, 251, 245)",
+                borderRadius: 20, padding: "6px 14px", fontSize: 12, fontWeight: 600,
+                fontFamily: "Arial, Helvetica, sans-serif", display: "flex", alignItems: "center", gap: 5,
+                animation: "hg-dropdown-in 0.18s cubic-bezier(0.22,1,0.36,1)",
+              }}>
+                🔗 link copied!
+              </div>
+            )}
+            <button onClick={handleShare} title="Share project" style={circleBtn}>
+              <FaShare />
+            </button>
+            {/* Report project button — hidden from owner and admin */}
+            {user && !isOwner && !isAdmin && (
+              <button
+                onClick={() => { setReportTarget({ type: "project" }); setReportOpen(true); }}
+                title="Report project"
+                style={{ ...circleBtn, color: "rgb(180, 60, 40)", borderColor: "rgb(245, 198, 203)" }}
+              >
+                <FaFlag />
+              </button>
+            )}
+            <button className="hg-pm-close" style={{ position: "static" }} onClick={onClose}><FaTimes /></button>
+          </div>
+
+          {view === "author" ? (
+            <AuthorCard project={{ ...project, author, avatar }} onBack={() => setView("project")} />
+          ) : (
+            <>
+              <div className="hg-pm-image-wrap">
+                <img src={image} alt={title} className="hg-pm-image" />
+                <div className="hg-pm-image-overlay">
+                  <h2 className="hg-pm-title">{title}</h2>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    {tag && <span className="hg-pm-tag">{tag}</span>}
+                    {project.category && (
+                      <span className="hg-pm-tag hg-pm-tag-category">{project.category}</span>
+                    )}
+                    {avgRating && (
+                      <span className="hg-pm-tag">
+                        ⭐ {avgRating} ({ratings.length} {ratings.length === 1 ? "rating" : "ratings"})
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="hg-pm-body">
-              <div className="hg-pm-author-row" onClick={() => setView("author")}>
-                {avatar
-                  ? <img src={avatar} alt={author} className="hg-pm-author-avatar" />
-                  : <div className="hg-user-avatar-placeholder"><FaUser className="hg-user-avatar-icon" /></div>
-                }
-                <div>
-                  <p className="hg-pm-author-name">{author}</p>
-                  <p className="hg-pm-author-date">{date}</p>
+              <div className="hg-pm-body">
+                <div className="hg-pm-author-row" onClick={() => setView("author")}>
+                  {avatar
+                    ? <img src={avatar} alt={author} className="hg-pm-author-avatar" />
+                    : <div className="hg-user-avatar-placeholder"><FaUser className="hg-user-avatar-icon" /></div>
+                  }
+                  <div>
+                    <p className="hg-pm-author-name">{author}</p>
+                    <p className="hg-pm-author-date">{date}</p>
+                  </div>
+                  <span className="hg-pm-author-hint">View profile →</span>
                 </div>
-                <span className="hg-pm-author-hint">View profile →</span>
-              </div>
 
-              <p className="hg-pm-description">{description}</p>
+                <p className="hg-pm-description">{description}</p>
 
-              {Array.isArray(project.stack) && project.stack.length > 0 && (
-                <div className="hg-pm-stack">
-                  {project.stack.map((tech) => (
-                    <span key={tech} className="hg-pm-stack-chip">{tech}</span>
-                  ))}
-                </div>
-              )}
-
-              <div className="hg-pm-actions">
-                <a href={github} target="_blank" rel="noreferrer" className="hg-pm-github-btn">
-                  <FaGithub /> View on GitHub
-                </a>
-
-                {(!project.status || project.status === "approved") && (
-                  <button
-                    className={`hg-pm-bookmark-btn${bookmarked ? " hg-pm-bookmark-active" : ""}`}
-                    onClick={(e) => { e.stopPropagation(); onToggleBookmark(project.id); }}
-                  >
-                    {bookmarked ? <FaBookmark /> : <FaRegBookmark />}
-                  </button>
+                {Array.isArray(project.stack) && project.stack.length > 0 && (
+                  <div className="hg-pm-stack">
+                    {project.stack.map((tech) => (
+                      <span key={tech} className="hg-pm-stack-chip">{tech}</span>
+                    ))}
+                  </div>
                 )}
-                {canDelete && (
-                  <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
+
+                <div className="hg-pm-actions">
+                  <a href={github} target="_blank" rel="noreferrer" className="hg-pm-github-btn">
+                    <FaGithub /> View on GitHub
+                  </a>
+
+                  {(!project.status || project.status === "approved") && (
                     <button
-                      onClick={handleDelete}
-                      disabled={deleting}
-                      style={{
-                        background: confirming ? "rgb(180, 60, 40)" : "none",
-                        border: `1.5px solid ${confirming ? "rgb(180, 60, 40)" : "rgb(185, 174, 167)"}`,
-                        borderRadius: 20, padding: "8px 16px", fontSize: 13, fontWeight: 600,
-                        color: confirming ? "white" : "rgb(180, 60, 40)",
-                        cursor: "pointer", transition: "all 0.2s", fontFamily: "Arial, Helvetica, sans-serif",
-                      }}
+                      className={`hg-pm-bookmark-btn${bookmarked ? " hg-pm-bookmark-active" : ""}`}
+                      onClick={(e) => { e.stopPropagation(); onToggleBookmark(project.id); }}
                     >
-                      {deleting ? "Deleting..." : confirming ? "Confirm delete?" : "Delete"}
+                      {bookmarked ? <FaBookmark /> : <FaRegBookmark />}
                     </button>
-                    {confirming && !deleting && (
+                  )}
+                  {canDelete && (
+                    <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
                       <button
-                        onClick={() => setConfirming(false)}
+                        onClick={handleDelete}
+                        disabled={deleting}
                         style={{
-                          background: "none", border: "1.5px solid rgb(185, 174, 167)",
+                          background: confirming ? "rgb(180, 60, 40)" : "none",
+                          border: `1.5px solid ${confirming ? "rgb(180, 60, 40)" : "rgb(185, 174, 167)"}`,
                           borderRadius: 20, padding: "8px 16px", fontSize: 13, fontWeight: 600,
-                          color: "rgb(104, 68, 42)", cursor: "pointer", fontFamily: "Arial, Helvetica, sans-serif",
+                          color: confirming ? "white" : "rgb(180, 60, 40)",
+                          cursor: "pointer", transition: "all 0.2s", fontFamily: "Arial, Helvetica, sans-serif",
                         }}
                       >
-                        Cancel
+                        {deleting ? "Deleting..." : confirming ? "Confirm delete?" : "Delete"}
                       </button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {(!project.status || project.status === "approved") && (
-                <>
-                  <div className="hg-pm-comment-section">
-                    <h4 className="hg-pm-comment-title">Rate this project</h4>
-                    {userHasRated ? (
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <StarRating value={userRatings[user.uid]} onChange={() => {}} />
+                      {confirming && !deleting && (
                         <button
-                          onClick={handleRemoveRate}
-                          disabled={submittingRating}
+                          onClick={() => setConfirming(false)}
                           style={{
-                            background: "none",
-                            border: "1.5px solid rgb(185, 174, 167)",
-                            borderRadius: 20,
-                            padding: "5px 12px",
-                            fontSize: 12,
-                            fontWeight: 600,
-                            color: "rgb(180, 60, 40)",
-                            cursor: "pointer",
-                            fontFamily: "Arial, Helvetica, sans-serif",
+                            background: "none", border: "1.5px solid rgb(185, 174, 167)",
+                            borderRadius: 20, padding: "8px 16px", fontSize: 13, fontWeight: 600,
+                            color: "rgb(104, 68, 42)", cursor: "pointer", fontFamily: "Arial, Helvetica, sans-serif",
                           }}
-                        >{submittingRating ? "..." : "Remove"}</button>
-                      </div>
-                    ) : (
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <StarRating value={rating} onChange={setRating} />
-                        <button
-                          onClick={handleRate}
-                          disabled={submittingRating || rating === 0}
-                          style={{
-                            background: rating > 0 ? "rgb(164, 132, 109)" : "rgb(223, 205, 192)",
-                            border: "none",
-                            borderRadius: 20,
-                            padding: "5px 14px",
-                            fontSize: 12,
-                            fontWeight: 600,
-                            color: rating > 0 ? "rgb(254, 251, 245)" : "rgb(164, 132, 109)",
-                            cursor: rating > 0 ? "pointer" : "default",
-                            fontFamily: "Arial, Helvetica, sans-serif",
-                            transition: "all 0.2s",
-                          }}
-                        >{submittingRating ? "..." : "Submit"}</button>
-                      </div>
-                    )}
-
-                    <div className="hg-pm-divider" />
-
-                    <h4 className="hg-pm-comment-title">Comments</h4>
-                    <textarea
-                      className="hg-pm-textarea"
-                      placeholder="Share your thoughts on this project..."
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                      rows={3}
-                    />
-                    <button className="hg-pm-submit-btn" onClick={handleComment} disabled={submittingComment}>
-                      {submittingComment ? "Posting..." : "Post Comment"}
-                    </button>
-                  </div>
-
-                  {comments.length > 0 && (
-                    <div className="hg-pm-comments-list">
-                      {comments.map((c, i) => (
-                        <div key={i} className="hg-pm-comment">
-                          <div className="hg-pm-comment-header">
-                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                              <span style={{ fontSize: 13, fontWeight: 600, color: "rgb(47, 28, 15)" }}>{c.userName || "Anonymous"}</span>
-                            </div>
-                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                              <span className="hg-pm-comment-date">{c.date}</span>
-                              {(isAdmin || (user && c.userId === user.uid)) && (
-                                <button
-                                  onClick={async () => {
-                                    await removeComment(project.id, c);
-                                    setComments(prev => prev.filter((_, idx) => idx !== i));
-                                  }}
-                                  style={{
-                                    background: "none",
-                                    border: "none",
-                                    cursor: "pointer",
-                                    color: "rgb(180, 60, 40)",
-                                    fontSize: 11,
-                                    fontWeight: 600,
-                                    padding: "2px 6px",
-                                    borderRadius: 10,
-                                    fontFamily: "Arial, Helvetica, sans-serif",
-                                  }}
-                                >Delete</button>
-                              )}
-                            </div>
-                          </div>
-                          <p className="hg-pm-comment-text">{c.text}</p>
-                        </div>
-                      ))}
+                        >
+                          Cancel
+                        </button>
+                      )}
                     </div>
                   )}
-                </>
-              )}
-            </div>
-          </>
-        )}
+                </div>
+
+                {(!project.status || project.status === "approved") && (
+                  <>
+                    <div className="hg-pm-comment-section">
+                      <h4 className="hg-pm-comment-title">Rate this project</h4>
+                      {userHasRated ? (
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <StarRating value={userRatings[user.uid]} onChange={() => {}} />
+                          <button
+                            onClick={handleRemoveRate}
+                            disabled={submittingRating}
+                            style={{
+                              background: "none", border: "1.5px solid rgb(185, 174, 167)",
+                              borderRadius: 20, padding: "5px 12px", fontSize: 12, fontWeight: 600,
+                              color: "rgb(180, 60, 40)", cursor: "pointer", fontFamily: "Arial, Helvetica, sans-serif",
+                            }}
+                          >{submittingRating ? "..." : "Remove"}</button>
+                        </div>
+                      ) : (
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <StarRating value={rating} onChange={setRating} />
+                          <button
+                            onClick={handleRate}
+                            disabled={submittingRating || rating === 0}
+                            style={{
+                              background: rating > 0 ? "rgb(164, 132, 109)" : "rgb(223, 205, 192)",
+                              border: "none", borderRadius: 20, padding: "5px 14px", fontSize: 12, fontWeight: 600,
+                              color: rating > 0 ? "rgb(254, 251, 245)" : "rgb(164, 132, 109)",
+                              cursor: rating > 0 ? "pointer" : "default", fontFamily: "Arial, Helvetica, sans-serif", transition: "all 0.2s",
+                            }}
+                          >{submittingRating ? "..." : "Submit"}</button>
+                        </div>
+                      )}
+
+                      <div className="hg-pm-divider" />
+
+                      <h4 className="hg-pm-comment-title">Comments</h4>
+                      <textarea
+                        className="hg-pm-textarea"
+                        placeholder="Share your thoughts on this project..."
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        rows={3}
+                      />
+                      <button className="hg-pm-submit-btn" onClick={handleComment} disabled={submittingComment}>
+                        {submittingComment ? "Posting..." : "Post Comment"}
+                      </button>
+                    </div>
+
+                    {comments.length > 0 && (
+                      <div className="hg-pm-comments-list">
+                        {comments.map((c, i) => (
+                          <div key={i} className="hg-pm-comment">
+                            <div className="hg-pm-comment-header">
+                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                <span style={{ fontSize: 13, fontWeight: 600, color: "rgb(47, 28, 15)" }}>{c.userName || "Anonymous"}</span>
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                <span className="hg-pm-comment-date">{c.date}</span>
+                                {/* Trash icon — only for comment owner or admin */}
+                                {(isAdmin || (user && c.userId === user.uid)) && (
+                                  <button
+                                    onClick={async () => {
+                                      await removeComment(project.id, c);
+                                      setComments(prev => prev.filter((_, idx) => idx !== i));
+                                    }}
+                                    title="Delete comment"
+                                    style={{ ...smallCircleBtn, color: "rgb(180, 60, 40)", borderColor: "rgb(245, 198, 203)" }}
+                                  >
+                                    <FaTrash />
+                                  </button>
+                                )}
+                                {/* Report comment — only for other users */}
+                                {user && c.userId !== user.uid && !isAdmin && (
+                                  <button
+                                    onClick={() => { setReportTarget({ type: "comment", commentIndex: i }); setReportOpen(true); }}
+                                    title="Report comment"
+                                    style={{ ...smallCircleBtn, color: "rgb(164, 132, 109)", borderColor: "rgb(185, 174, 167)" }}
+                                  >
+                                    <FaFlag />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                            <p className="hg-pm-comment-text">{c.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </div>
-  , document.body);
+
+      {/* Report Modal */}
+      {reportOpen && (
+        <ReportModal
+          target={reportTarget?.type}
+          onClose={() => { setReportOpen(false); setReportTarget(null); }}
+          onSubmit={handleReportSubmit}
+          submitting={submittingReport}
+        />
+      )}
+    </>,
+    document.body
+  );
 }
 
 // ===========================
