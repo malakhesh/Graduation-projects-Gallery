@@ -1,12 +1,22 @@
 import { auth, db } from "./firebase.js"
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged, GoogleAuthProvider, GithubAuthProvider, signInWithPopup } from "firebase/auth"
 import { doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore"
-import { createWelcomeNotif } from "./notifications.js"
+import { createWelcomeNotif, sendNotif } from "./notifications.js"
 
 async function regUser(email, pass, name, role, year, techStack) {
   try {
     const u = await createUserWithEmailAndPassword(auth, email, pass)
-    await setDoc(doc(db, "users", u.user.uid), { email, name, role, year, techStack, bookmarks: [] })
+    await setDoc(doc(db, "users", u.user.uid), {
+      email,
+      name,
+      role,
+      year,
+      techStack,
+      bookmarks:      [],
+      status:         "active",
+      violations:     0,
+      suspendReasons: [],
+    })
     await createWelcomeNotif(u.user.uid)
     return u.user
   } catch (err) {
@@ -33,7 +43,14 @@ async function logWithGoogle() {
     const u = r.user
     const existing = await getDoc(doc(db, "users", u.uid))
     const isNew = !existing.exists()
-    await setDoc(doc(db, "users", u.uid), { email: u.email, name: u.displayName, role: "client" }, { merge: true })
+    await setDoc(doc(db, "users", u.uid), {
+      email:          u.email,
+      name:           u.displayName,
+      role:           "client",
+      status:         "active",
+      violations:     0,
+      suspendReasons: [],
+    }, { merge: true })
     if (isNew) await createWelcomeNotif(u.uid)
     return u
   } catch { return "google-fail" }
@@ -46,7 +63,14 @@ async function logWithGithub() {
     const u = r.user
     const existing = await getDoc(doc(db, "users", u.uid))
     const isNew = !existing.exists()
-    await setDoc(doc(db, "users", u.uid), { email: u.email, name: u.displayName, role: "client" }, { merge: true })
+    await setDoc(doc(db, "users", u.uid), {
+      email:          u.email,
+      name:           u.displayName,
+      role:           "client",
+      status:         "active",
+      violations:     0,
+      suspendReasons: [],
+    }, { merge: true })
     if (isNew) await createWelcomeNotif(u.uid)
     return u
   } catch { return "github-fail" }
@@ -76,7 +100,7 @@ async function getUser(uid) {
 
 async function updateUser(uid, data) {
   try {
-    await setDoc(doc(db, "users", uid), data, { merge: true })
+    await updateDoc(doc(db, "users", uid), data)
     return "update-ok"
   } catch { return "update-fail" }
 }
@@ -145,4 +169,109 @@ async function getBookmarks(uid) {
   } catch { return "bookmarks-fail" }
 }
 
-export { regUser, logUser, logWithGoogle, logWithGithub, resetPass, logOut, getUser, updateUser, checkRole, watchUser, getUsersByYear, getUsersByTechStack, updateRole, addBookmark, removeBookmark, getBookmarks }
+// ── Violations & Status ───────────────────────────────────────────────────────
+
+async function checkStatus(uid) {
+  try {
+    const d = await getDoc(doc(db, "users", uid))
+    if (!d.exists()) return "no-user"
+    const data = d.data()
+    return {
+      status:         data.status         || "active",
+      violations:     data.violations     || 0,
+      suspendReasons: data.suspendReasons || [],
+    }
+  } catch { return "status-fail" }
+}
+
+async function addViolation(targetUid, reason, adminRole) {
+  try {
+    if (adminRole !== "admin") return "unauth"
+
+    const userRef  = doc(db, "users", targetUid)
+    const userSnap = await getDoc(userRef)
+    if (!userSnap.exists()) return "no-user"
+
+    const data           = userSnap.data()
+    const violations     = (data.violations || 0) + 1
+    const suspendReasons = [...(data.suspendReasons || []), reason]
+    const status         = violations >= 3 ? "suspended" : (data.status || "active")
+
+    await updateDoc(userRef, { violations, suspendReasons, status })
+
+    if (violations === 1) {
+      await sendNotif(targetUid, {
+        type: "warning",
+        message: `⚠️ تحذير: تم تسجيل مخالفة بسببك "${reason}". انتبه إن التكرار هيأثر على حسابك.`,
+        clickable: false,
+      })
+    } else if (violations === 2) {
+      await sendNotif(targetUid, {
+        type: "danger",
+        message: `🚨 تحذير أخير: حسابك في خطر بسبب "${reason}". مخالفة واحدة أخرى وهيتعلق فوراً.`,
+        clickable: false,
+      })
+    } else if (violations >= 3) {
+      await sendNotif(targetUid, {
+        type: "suspended",
+        message: `🔒 تم تعليق حسابك بسبب تكرار المخالفات. تواصل مع الأدمن لو في سوء فهم.`,
+        clickable: false,
+      })
+    }
+
+    return { result: "violation-added", violations, status, suspendReasons }
+  } catch { return "violation-fail" }
+}
+
+async function removeViolation(targetUid, violationIndex, adminRole) {
+  try {
+    if (adminRole !== "admin") return "unauth"
+
+    const userRef  = doc(db, "users", targetUid)
+    const userSnap = await getDoc(userRef)
+    if (!userSnap.exists()) return "no-user"
+
+    const data           = userSnap.data()
+    const suspendReasons = [...(data.suspendReasons || [])]
+    suspendReasons.splice(violationIndex, 1)
+
+    const violations = Math.max(0, suspendReasons.length)
+    const status     = data.status === "suspended" && violations < 3 ? "active" : data.status
+
+    await updateDoc(userRef, { violations, suspendReasons, status })
+
+    if (status === "active" && data.status === "suspended") {
+      await sendNotif(targetUid, {
+        type: "info",
+        message: `✅ تم حذف إحدى المخالفات المسجلة ضدك، حسابك نشط مجدداً.`,
+        clickable: false,
+      })
+    }
+
+    return { violations, status, suspendReasons }
+  } catch { return "violation-fail" }
+}
+
+async function unsuspendUser(targetUid, adminRole) {
+  try {
+    if (adminRole !== "admin") return "unauth"
+    await updateDoc(doc(db, "users", targetUid), {
+      status:         "active",
+      violations:     0,
+      suspendReasons: [],
+    })
+    await sendNotif(targetUid, {
+      type: "info",
+      message: `✅ تم رفع التعليق عن حسابك، يمكنك استخدام المنصة مجدداً.`,
+      clickable: false,
+    })
+    return "unsuspend-ok"
+  } catch { return "unsuspend-fail" }
+}
+
+export {
+  regUser, logUser, logWithGoogle, logWithGithub, resetPass, logOut,
+  getUser, updateUser, checkRole, watchUser, getUsersByYear, getUsersByTechStack,
+  updateRole, addBookmark, removeBookmark, getBookmarks,
+  checkStatus, addViolation, removeViolation, unsuspendUser,
+}
