@@ -1,62 +1,98 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { logOut } from "./auth.js";
 import wreathImg from "./wreath.png";
 import ReviewProjects from "./Reviewprojects.js";
 import Users from "./Users.js";
 import Projects from "./AllProjects.js";
+import AdminReports from "./Adminreports.js";
+import DashboardSettings from "./Dashboardsettings.js";
+import { getApproved, getPending, getRejected } from "./projects.js";
+
+// ── Pie helpers ──────────────────────────────────────────────────────────────
+
+const SLICE_COLORS = [
+  "#6F4E37", "#a0714f", "#d2a679", "#8B5E3C",
+  "#c49a6c", "#5a3825", "#b07d50", "#e8c49a",
+];
+
+function polarToCartesian(cx, cy, r, angleDeg) {
+  const rad = ((angleDeg - 90) * Math.PI) / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+
+function buildSlicePath(cx, cy, r, startAngle, endAngle) {
+  const s = polarToCartesian(cx, cy, r, startAngle);
+  const e = polarToCartesian(cx, cy, r, endAngle);
+  const large = endAngle - startAngle > 180 ? 1 : 0;
+  return `M${cx},${cy} L${s.x},${s.y} A${r},${r} 0 ${large},1 ${e.x},${e.y} Z`;
+}
+
+function buildSlices(categoryMap, total, cx, cy, r) {
+  const slices = [];
+  let startAngle = 0;
+  const entries = Object.entries(categoryMap);
+
+  entries.forEach(([label, count], i) => {
+    const pct = total > 0 ? count / total : 0;
+    const sweep = pct * 360;
+    const endAngle = startAngle + sweep;
+    const midAngle = startAngle + sweep / 2;
+    const midPoint = polarToCartesian(cx, cy, r * 0.68, midAngle);
+
+    slices.push({
+      id: label,
+      label,
+      count,
+      percent: Math.round(pct * 100) + "%",
+      color: SLICE_COLORS[i % SLICE_COLORS.length],
+      path: buildSlicePath(cx, cy, r, startAngle, endAngle),
+      midAngle,
+      labelX: midPoint.x,
+      labelY: midPoint.y,
+      startAngle,
+      endAngle,
+    });
+
+    startAngle = endAngle;
+  });
+
+  return slices;
+}
+
+// ── GoldenWreath ─────────────────────────────────────────────────────────────
 
 function GoldenWreath() {
   return (
     <div style={{
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "flex-start",
-      width: "100%",
-      flexShrink: 0,
-      position: "relative",
+      display: "flex", justifyContent: "center",
+      alignItems: "flex-start", width: "100%",
+      flexShrink: 0, position: "relative",
     }}>
       <div style={{ position: "relative", width: "460px", height: "220px" }}>
-        <img
-          src={wreathImg}
-          alt="wreath"
-          style={{
-            width: "460px",
-            height: "460px",
-            objectFit: "contain",
-            transform: "scaleX(1.4)",
-            position: "absolute",
-            top: "-140px",
-            left: "0",
-            pointerEvents: "none",
-          }}
-        />
+        <img src={wreathImg} alt="wreath" style={{
+          width: "460px", height: "460px", objectFit: "contain",
+          transform: "scaleX(1.4)", position: "absolute",
+          top: "-140px", left: "0", pointerEvents: "none",
+        }} />
         <div style={{
-          position: "absolute",
-          top: "20px",
-          left: "50%",
-          transform: "translateX(-50%)",
-          textAlign: "center",
-          pointerEvents: "none",
-          whiteSpace: "nowrap",
-          zIndex: 2,
+          position: "absolute", top: "20px", left: "50%",
+          transform: "translateX(-50%)", textAlign: "center",
+          pointerEvents: "none", whiteSpace: "nowrap", zIndex: 2,
         }}>
           <span style={{
-            fontFamily: "'Georgia', serif",
-            fontSize: "48px",
-            fontWeight: "bold",
-            color: "#3d1f00",
-            letterSpacing: "8px",
+            fontFamily: "'Georgia', serif", fontSize: "48px",
+            fontWeight: "bold", color: "#3d1f00", letterSpacing: "8px",
             textTransform: "uppercase",
             textShadow: "0 0 14px rgba(255,215,0,0.6), 0 1px 3px rgba(100,60,0,0.4)",
-          }}>
-            Welcome
-          </span>
+          }}>Welcome</span>
         </div>
       </div>
     </div>
   );
 }
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -66,9 +102,41 @@ function Dashboard() {
   const [hoveredSignIn, setHoveredSignIn] = useState(false);
   const [hoveredSlice, setHoveredSlice] = useState(null);
 
+  const [slices, setSlices] = useState([]);
+  const [totalProjects, setTotalProjects] = useState(0);
+  const [loadingChart, setLoadingChart] = useState(true);
+
+  useEffect(() => {
+    const fetchDistribution = async () => {
+      const [approved, pending, rejected] = await Promise.all([
+        getApproved(), getPending(), getRejected(),
+      ]);
+      const approvedArr = Array.isArray(approved) ? approved : [];
+      const pendingArr  = Array.isArray(pending)  ? pending  : [];
+      const rejectedArr = Array.isArray(rejected) ? rejected : [];
+      const all = [...approvedArr, ...pendingArr, ...rejectedArr];
+
+      const categoryMap = {};
+      all.forEach((p) => {
+        const cat = p.category?.trim();
+        if (!cat) return;
+        categoryMap[cat] = (categoryMap[cat] || 0) + 1;
+      });
+
+      const total = Object.values(categoryMap).reduce((s, n) => s + n, 0);
+      setTotalProjects(total);
+      setSlices(buildSlices(categoryMap, total, 70, 70, 60));
+      setLoadingChart(false);
+    };
+    fetchDistribution();
+  }, []);
+
+  // ── view routing ──────────────────────────────────────────────────────────
   if (view === "review")   return <ReviewProjects onBack={() => setView("main")} />;
   if (view === "users")    return <Users onBack={() => setView("main")} />;
   if (view === "projects") return <Projects onBack={() => setView("main")} />;
+  if (view === "reports")  return <AdminReports onBack={() => setView("main")} />;
+  if (view === "settings") return <DashboardSettings onBack={() => setView("main")} />;
 
   const lightenColor = (hex) => ({
     "#eddcc8": "#f5ece0",
@@ -79,28 +147,21 @@ function Dashboard() {
   const getBoxStyle = (id, baseColor) => ({
     flex: 1, minWidth: 0, maxWidth: "none",
     backgroundColor: hoveredBox === id ? lightenColor(baseColor) + "ee" : baseColor + "cc",
-    backdropFilter: "blur(10px)",
-    WebkitBackdropFilter: "blur(10px)",
-    borderRadius: "10px",
-    border: "1px solid rgba(255,255,255,0.3)",
+    backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
+    borderRadius: "10px", border: "1px solid rgba(255,255,255,0.3)",
     boxShadow: hoveredBox === id ? "0 12px 28px rgba(0,0,0,0.35)" : "0 4px 16px rgba(0,0,0,0.2)",
-    height: "270px",
-    display: "flex", flexDirection: "column",
+    height: "270px", display: "flex", flexDirection: "column",
     justifyContent: "space-between", alignItems: "stretch",
     padding: "18px 20px",
     transform: hoveredBox === id ? "translateY(-8px) scale(1.03)" : "translateY(0) scale(1)",
-    transition: "all 0.3s ease",
-    cursor: "pointer", boxSizing: "border-box", position: "relative", zIndex: 1,
+    transition: "all 0.3s ease", cursor: "pointer",
+    boxSizing: "border-box", position: "relative", zIndex: 1,
   });
-
-  const slices = [
-    { id: "web", label: "Web Dev", percent: "50%", count: 10, color: "#6F4E37", path: "M70,70 L70,10 A60,60 0 0,1 122,100 Z", labelX: 92, labelY: 42, countX: 107, countY: 54 },
-    { id: "ai",  label: "AI",      percent: "30%", count: 6,  color: "#a0714f", path: "M70,70 L122,100 A60,60 0 0,1 18,100 Z",  labelX: 70, labelY: 112, countX: 70, countY: 124 },
-    { id: "mob", label: "Mobile",  percent: "20%", count: 4,  color: "#d2a679", path: "M70,70 L18,100 A60,60 0 0,1 70,10 Z",   labelX: 32, labelY: 42, countX: 32, countY: 54 },
-  ];
 
   return (
     <div style={{ display: "flex", height: "100vh", fontFamily: "'Poppins', sans-serif" }}>
+
+      {/* Sidebar */}
       <aside style={{
         position: "fixed", left: 0, top: 0, bottom: 0, width: "200px",
         backgroundColor: "#f0e5d8", padding: "20px",
@@ -119,7 +180,7 @@ function Dashboard() {
                   if (item === "WEBSITE VIEW") navigate("/home");
                   if (item === "ALL PROJECTS") setView("projects");
                   if (item === "USERS")        setView("users");
-                  if (item === "SETTINGS")     navigate("/settings");
+                  if (item === "SETTINGS")     setView("settings");
                 }}
                 style={{
                   padding: "8px 10px", borderBottom: "1px solid #ccc",
@@ -134,25 +195,24 @@ function Dashboard() {
             ))}
           </ul>
         </div>
-        <div>
-          <div style={{ marginTop: "20px", textAlign: "center", color: "#5C4033" }}>
-            <span
-              onClick={async () => { await logOut(); navigate("/"); }}
-              onMouseEnter={() => setHoveredSignIn(true)}
-              onMouseLeave={() => setHoveredSignIn(false)}
-              style={{
-                cursor: "pointer", padding: "8px 16px", borderRadius: "8px", display: "inline-block",
-                backgroundColor: hoveredSignIn ? "#e8d5bf" : "transparent",
-                transform: hoveredSignIn ? "translateX(6px) scale(1.02)" : "translateX(0) scale(1)",
-                boxShadow: hoveredSignIn ? "0 4px 12px rgba(0,0,0,0.15)" : "none",
-                fontWeight: hoveredSignIn ? "bold" : "normal",
-                color: "#5C4033", transition: "all 0.3s ease",
-              }}
-            >SIGN OUT</span>
-          </div>
+        <div style={{ marginTop: "20px", textAlign: "center", color: "#5C4033" }}>
+          <span
+            onClick={async () => { await logOut(); navigate("/"); }}
+            onMouseEnter={() => setHoveredSignIn(true)}
+            onMouseLeave={() => setHoveredSignIn(false)}
+            style={{
+              cursor: "pointer", padding: "8px 16px", borderRadius: "8px", display: "inline-block",
+              backgroundColor: hoveredSignIn ? "#e8d5bf" : "transparent",
+              transform: hoveredSignIn ? "translateX(6px) scale(1.02)" : "translateX(0) scale(1)",
+              boxShadow: hoveredSignIn ? "0 4px 12px rgba(0,0,0,0.15)" : "none",
+              fontWeight: hoveredSignIn ? "bold" : "normal",
+              color: "#5C4033", transition: "all 0.3s ease",
+            }}
+          >SIGN OUT</span>
         </div>
       </aside>
 
+      {/* Main */}
       <main style={{
         display: "flex", flexDirection: "column",
         marginLeft: "200px",
@@ -161,11 +221,14 @@ function Dashboard() {
         boxSizing: "border-box", overflow: "hidden",
       }}>
         <GoldenWreath />
+
         <div style={{
           display: "flex", flexDirection: "row",
           padding: "0 60px 30px", gap: "30px",
           flex: 1, alignItems: "center",
         }}>
+
+          {/* Box 1 — Review */}
           <div style={getBoxStyle(1, "#eddcc8")}
             onMouseEnter={() => setHoveredBox(1)} onMouseLeave={() => setHoveredBox(null)}
             onClick={() => setView("review")}>
@@ -182,8 +245,10 @@ function Dashboard() {
             </div>
           </div>
 
+          {/* Box 2 — Reports */}
           <div style={getBoxStyle(2, "#e5ceb5")}
-            onMouseEnter={() => setHoveredBox(2)} onMouseLeave={() => setHoveredBox(null)}>
+            onMouseEnter={() => setHoveredBox(2)} onMouseLeave={() => setHoveredBox(null)}
+            onClick={() => setView("reports")}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", overflow: "hidden" }}>
               <span style={{ fontSize: "22px", flexShrink: 0 }}>📝</span>
               <span style={{ fontSize: "22px", fontWeight: "700", letterSpacing: "0.5px", color: "#3B1F0F", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>PROJECTS TO REPORT</span>
@@ -197,51 +262,110 @@ function Dashboard() {
             </div>
           </div>
 
+          {/* Box 3 — Distribution */}
           <div style={getBoxStyle(3, "#dcc4a8")}
             onMouseEnter={() => setHoveredBox(3)} onMouseLeave={() => setHoveredBox(null)}>
-            <p style={{ margin: "0", fontSize: "22px", fontWeight: "bold", color: "#3B1F0F" }}>Projects Distribution</p>
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flex: 1, position: "relative" }}>
-              <svg width="170" height="170" viewBox="0 0 140 140">
-                {slices.map((slice) => (
-                  <g key={slice.id}
-                    onMouseEnter={() => setHoveredSlice(slice.id)}
-                    onMouseLeave={() => setHoveredSlice(null)}
-                    style={{ cursor: "pointer" }}>
-                    <path d={slice.path} fill={slice.color}
-                      opacity={hoveredSlice === slice.id ? 1 : 0.85}
-                      transform={hoveredSlice === slice.id ? `translate(${slice.id === "web" ? 4 : slice.id === "ai" ? 0 : -4},${slice.id === "web" ? -4 : slice.id === "ai" ? 4 : -4})` : "translate(0,0)"}
-                      style={{ transition: "all 0.25s ease" }} />
-                    <text x={slice.labelX} y={slice.labelY} textAnchor="middle" fill="white" fontSize="9" fontWeight="bold" style={{ pointerEvents: "none" }}>{slice.percent}</text>
-                    <text x={slice.countX} y={slice.countY} textAnchor="middle" fill="white" fontSize="8" style={{ pointerEvents: "none" }}>{slice.count} projects</text>
-                  </g>
-                ))}
-                <circle cx="70" cy="70" r="25" fill="#f0e5d8" />
-              </svg>
-              {hoveredSlice && (() => {
-                const s = slices.find(sl => sl.id === hoveredSlice);
-                return (
-                  <div style={{
-                    position: "absolute", top: "0px", right: "-10px",
-                    backgroundColor: "#3B2F2F", color: "white",
-                    padding: "6px 10px", borderRadius: "8px",
-                    fontSize: "12px", fontWeight: "bold",
-                    pointerEvents: "none", whiteSpace: "nowrap",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.3)", zIndex: 10,
-                  }}>
-                    {s.label}: {s.count} projects ({s.percent})
-                  </div>
-                );
-              })()}
-            </div>
-            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "center" }}>
-              {slices.map((slice) => (
-                <span key={slice.id} style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", fontWeight: "bold", opacity: hoveredSlice === slice.id ? 1 : 0.7, transition: "opacity 0.25s ease" }}>
-                  <span style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: slice.color, display: "inline-block" }} />
-                  {slice.label}
-                </span>
-              ))}
-            </div>
+            <p style={{ margin: "0", fontSize: "22px", fontWeight: "bold", color: "#3B1F0F" }}>
+              Projects Distribution
+            </p>
+
+            {loadingChart ? (
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flex: 1 }}>
+                <div style={{
+                  width: "32px", height: "32px",
+                  border: "4px solid #c8a882",
+                  borderTopColor: "#6F4E37",
+                  borderRadius: "50%",
+                  animation: "spin 0.8s linear infinite",
+                }} />
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+              </div>
+            ) : slices.length === 0 ? (
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flex: 1, color: "#6F4E37", fontSize: "13px" }}>
+                No data yet
+              </div>
+            ) : (
+              <>
+                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flex: 1, position: "relative" }}>
+                  <svg width="170" height="170" viewBox="0 0 140 140">
+                    {slices.map((slice) => {
+                      const isHovered = hoveredSlice === slice.id;
+                      const midRad = ((slice.midAngle - 90) * Math.PI) / 180;
+                      const offset = isHovered ? 6 : 0;
+                      const tx = offset * Math.cos(midRad);
+                      const ty = offset * Math.sin(midRad);
+                      const pctNum = parseInt(slice.percent);
+                      return (
+                        <g key={slice.id}
+                          onMouseEnter={() => setHoveredSlice(slice.id)}
+                          onMouseLeave={() => setHoveredSlice(null)}
+                          style={{ cursor: "pointer" }}>
+                          <path
+                            d={slice.path}
+                            fill={slice.color}
+                            opacity={isHovered ? 1 : 0.85}
+                            transform={`translate(${tx},${ty})`}
+                            style={{ transition: "all 0.25s ease" }}
+                          />
+                          {pctNum >= 8 && (
+                            <text
+                              x={slice.labelX + tx}
+                              y={slice.labelY + ty}
+                              textAnchor="middle"
+                              fill="white"
+                              fontSize="8"
+                              fontWeight="bold"
+                              style={{ pointerEvents: "none" }}
+                            >
+                              {slice.percent}
+                            </text>
+                          )}
+                        </g>
+                      );
+                    })}
+                    <circle cx="70" cy="70" r="25" fill="#f0e5d8" />
+                    <text x="70" y="67" textAnchor="middle" fill="#3B1F0F" fontSize="11" fontWeight="bold">{totalProjects}</text>
+                    <text x="70" y="78" textAnchor="middle" fill="#6F4E37" fontSize="7">projects</text>
+                  </svg>
+
+                  {hoveredSlice && (() => {
+                    const s = slices.find((sl) => sl.id === hoveredSlice);
+                    return s ? (
+                      <div style={{
+                        position: "absolute", top: "0px", right: "-10px",
+                        backgroundColor: "#3B2F2F", color: "white",
+                        padding: "6px 10px", borderRadius: "8px",
+                        fontSize: "12px", fontWeight: "bold",
+                        pointerEvents: "none", whiteSpace: "nowrap",
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.3)", zIndex: 10,
+                      }}>
+                        {s.label}: {s.count} projects ({s.percent})
+                      </div>
+                    ) : null;
+                  })()}
+                </div>
+
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center", maxHeight: "52px", overflowY: "auto" }}>
+                  {slices.map((slice) => (
+                    <span key={slice.id} style={{
+                      display: "flex", alignItems: "center", gap: "4px",
+                      fontSize: "10px", fontWeight: "bold",
+                      opacity: hoveredSlice === slice.id ? 1 : 0.7,
+                      transition: "opacity 0.25s ease",
+                      cursor: "default",
+                    }}>
+                      <span style={{
+                        width: "10px", height: "10px", borderRadius: "50%",
+                        backgroundColor: slice.color, display: "inline-block", flexShrink: 0,
+                      }} />
+                      {slice.label}
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
+
         </div>
       </main>
     </div>

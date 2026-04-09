@@ -64,6 +64,64 @@
 .pr-stat-rejected { background: rgb(248, 215, 218); color: rgb(130, 30, 30);  }
 
 /* ===========================
+   SEARCH BAR
+=========================== */
+.pr-search-wrapper {
+  display: flex;
+  align-items: center;
+  background: rgb(254, 251, 245);
+  border: 1.5px solid rgb(185, 174, 167);
+  border-radius: 24px;
+  padding: 10px 18px;
+  gap: 10px;
+  max-width: 520px;
+  margin-bottom: 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.pr-search-wrapper:focus-within {
+  border-color: rgb(104, 68, 42);
+  box-shadow: 0 0 0 3px rgba(104, 68, 42, 0.1);
+}
+
+.pr-search-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.pr-search-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: rgb(47, 28, 15);
+  flex: 1;
+  min-width: 0;
+  font-family: inherit;
+}
+
+.pr-search-input::placeholder {
+  color: rgb(185, 174, 167);
+}
+
+.pr-search-clear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: rgb(150, 120, 90);
+  padding: 0;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.pr-search-clear:hover {
+  color: rgb(104, 68, 42);
+}
+
+/* ===========================
    FILTER BUTTONS
 =========================== */
 .pr-filter-row {
