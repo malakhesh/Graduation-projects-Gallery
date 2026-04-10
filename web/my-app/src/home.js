@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import UploadModal from './UploadModal';
+import WelcomeModal from './Welcomenotify.js';
 import "./home.css";
 import { logOut, checkRole, addBookmark, removeBookmark, getBookmarks } from './auth.js';
 import { auth } from './firebase.js';
+import { addReport } from './reports.js'; 
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { getApproved, notifyBookmark } from './projects.js';
 import { listenNotifs, markAllSeen, markRead } from './notifications.js';
@@ -23,7 +25,7 @@ const exploreTags = [
   { label: "Blog", icon: <FaNewspaper /> },
 ];
 
-function NotifItem({ notif, uid, onProjectOpen }) {
+function NotifItem({ notif, uid, onProjectOpen, onWelcomeOpen }) {
   const isUnread = !notif.read;
   const isUnseen = !notif.seen;
   const bg = isUnseen ? "rgb(243, 232, 220)" : "transparent";
@@ -31,6 +33,7 @@ function NotifItem({ notif, uid, onProjectOpen }) {
   const handleClick = async () => {
     if (!notif.clickable) return;
     await markRead(uid, notif.id);
+    if (notif.type === "welcome") { onWelcomeOpen(); return; }
     if (notif.projectId && onProjectOpen) onProjectOpen(notif.projectId);
   };
 
@@ -81,6 +84,7 @@ function NotifItem({ notif, uid, onProjectOpen }) {
 
 export function Navbar({ isAdmin }) {
   const [showUpload, setShowUpload] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifs, setNotifs] = useState([]);
@@ -101,12 +105,20 @@ export function Navbar({ isAdmin }) {
   const handleBellClick = async () => {
     const opening = !notifOpen;
     setNotifOpen(opening);
-    if (opening && user && hasUnseen) await markAllSeen(user.uid);
+    if (opening && user && hasUnseen) {
+      const unseenIds = notifs.filter((n) => !n.seen).map((n) => n.id);
+      await markAllSeen(user.uid, unseenIds);
+    }
   };
 
   const handleProjectOpen = (projectId) => {
     setNotifOpen(false);
     navigate(`/project/${projectId}`);
+  };
+
+  const handleWelcomeOpen = () => {
+    setNotifOpen(false);
+    setShowWelcome(true);
   };
 
   useEffect(() => {
@@ -161,7 +173,13 @@ export function Navbar({ isAdmin }) {
                 ) : (
                   <div style={{ maxHeight: 380, overflowY: "auto", scrollbarWidth: "thin", scrollbarColor: "rgb(164,132,109) rgb(223,205,192)" }}>
                     {notifs.map((n) => (
-                      <NotifItem key={n.id} notif={n} uid={user.uid} onProjectOpen={handleProjectOpen} />
+                      <NotifItem
+                        key={n.id}
+                        notif={n}
+                        uid={user.uid}
+                        onProjectOpen={handleProjectOpen}
+                        onWelcomeOpen={handleWelcomeOpen}
+                      />
                     ))}
                   </div>
                 )}
@@ -188,6 +206,7 @@ export function Navbar({ isAdmin }) {
         </div>
       </nav>
       {showUpload && <UploadModal onClose={() => setShowUpload(false)} />}
+      {showWelcome && <WelcomeModal onClose={() => setShowWelcome(false)} />}
     </>
   );
 }
