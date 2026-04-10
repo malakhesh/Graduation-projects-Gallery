@@ -57,8 +57,9 @@ function Register() {
       return;
     }
 
-    const user = await regUser(email, password, fullName, "client");
-    if (user === "email-used") {
+    // ✅ Pass empty defaults for year and techStack
+    const user = await regUser(email, password, fullName, "client", "", []);
+    if (user === "email-in-use") {
       setError("This email is already registered. Please use a different email.");
     } else if (user) {
       console.log("Register successful");

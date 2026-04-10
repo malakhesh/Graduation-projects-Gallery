@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./profile.css";
-import { checkRole, getUser, updateUser, logOut } from './auth.js';
+import { checkRole, getUser, updateUser, logOut, checkStatus } from './auth.js';
 import { getUserProjs } from './projects.js';
 import { auth } from './firebase.js';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -9,7 +9,7 @@ import UploadModal from './UploadModal';
 import {
   FaGraduationCap, FaUser, FaCog, FaFolderOpen,
   FaEnvelope, FaProjectDiagram, FaGithub, FaLinkedin,
-  FaGlobe, FaQuoteLeft, FaPen, FaCheck, FaTimes, FaChevronDown, FaCamera
+  FaGlobe, FaQuoteLeft, FaPen, FaCheck, FaTimes, FaChevronDown, FaCamera, FaExclamationCircle
 } from "react-icons/fa";
 
 
@@ -88,6 +88,7 @@ function Profile() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [projectCount, setProjectCount] = useState(0);
+  const [violations, setViolations] = useState(0);
   const [photoPreview, setPhotoPreview] = useState(null);
   const photoRef = useRef();
 
@@ -119,6 +120,9 @@ function Profile() {
       });
       getUserProjs(user.uid).then((data) => {
         if (Array.isArray(data)) setProjectCount(data.length);
+      });
+      checkStatus(user.uid).then((res) => {
+        if (res?.violations) setViolations(res.violations);
       });
     }
   }, [user]);
@@ -210,6 +214,14 @@ function Profile() {
                   <FaProjectDiagram className="pf-detail-icon" />
                   <span>{projectCount} project{projectCount !== 1 ? 's' : ''} uploaded</span>
                 </div>
+                {violations > 0 && (
+                  <div className="pf-detail">
+                    <FaExclamationCircle className="pf-detail-icon" />
+                    <span style={{ color: "rgb(164, 132, 109)", fontSize: "13px" }}>
+                      {violations} violation{violations !== 1 ? 's' : ''} recorded
+                    </span>
+                  </div>
+                )}
               </div>
 
               {editing ? (
