@@ -214,7 +214,7 @@ function AdminReports({ onBack }) {
   // ── fetch ─────────────────────────────────────────────────────────────────
   const fetchAll = useCallback(async () => {
     setLoading(true)
-    const data = await getReports()
+    const data = await getReports(ADMIN_ROLE) // fixed: pass ADMIN_ROLE
     setReports(Array.isArray(data) ? data : [])
     setLoading(false)
   }, [])
@@ -236,7 +236,7 @@ function AdminReports({ onBack }) {
 
     let result
     if (type === "dismiss") {
-      result = await deleteReport(reportId)
+      result = await deleteReport(reportId, ADMIN_ROLE) // fixed: pass ADMIN_ROLE
       showToast(
         result === "dismiss-ok" ? "Report dismissed successfully." : "Failed to dismiss report.",
         result === "dismiss-ok"

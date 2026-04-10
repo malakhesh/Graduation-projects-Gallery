@@ -32,7 +32,7 @@ async function deleteReport(reportId, currentRole) {
   try {
     if (currentRole !== "admin") return "unauthorized";
     await deleteDoc(doc(db, "reports", reportId));
-    return "report-deleted";
+    return "dismiss-ok"; // fixed: was "report-deleted"
   } catch {
     return "delete-report-fail";
   }
@@ -42,7 +42,6 @@ async function resolveReport(reportId, projectId, currentRole) {
   try {
     if (currentRole !== "admin") return "unauthorized";
 
-    // جيب الـ project عشان تعرف مين صاحبه
     const projectSnap = await getDoc(doc(db, "projects", projectId));
     if (projectSnap.exists()) {
       const ownerUid = projectSnap.data().userId;
@@ -52,7 +51,7 @@ async function resolveReport(reportId, projectId, currentRole) {
 
     await deleteDoc(doc(db, "projects", projectId));
     await deleteDoc(doc(db, "reports", reportId));
-    return "report-resolved";
+    return "resolve-ok"; // fixed: was "report-resolved"
   } catch {
     return "resolve-fail";
   }
@@ -78,7 +77,6 @@ async function resolveCommentReport(reportId, encodedProjectId, currentRole) {
     const comments = Array.isArray(data.comments) ? [...data.comments] : [];
     if (commentIndex < 0 || commentIndex >= comments.length) return "bad-index";
 
-    // جيب صاحب الكومنت وضيفله مخالفة
     const comment      = comments[commentIndex];
     const commenterUid = comment?.userId || comment?.uid || null;
     if (commenterUid) {

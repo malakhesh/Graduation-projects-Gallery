@@ -169,6 +169,17 @@ async function getBookmarks(uid) {
   } catch { return "bookmarks-fail" }
 }
 
+// ── Timed Suspension ──────────────────────────────────────────────────────────
+
+async function suspendUser(uid) {
+  try {
+    const suspendedAt    = new Date()
+    const suspendedUntil = new Date(suspendedAt.getTime() + 2 * 60 * 1000) // 2 minutes for testing — change to 7 * 24 * 60 * 60 * 1000 for 7 days
+    await updateDoc(doc(db, "users", uid), { suspendedAt, suspendedUntil })
+    return "suspend-ok"
+  } catch { return "suspend-fail" }
+}
+
 // ── Violations & Status ───────────────────────────────────────────────────────
 
 async function checkStatus(uid) {
@@ -176,10 +187,44 @@ async function checkStatus(uid) {
     const d = await getDoc(doc(db, "users", uid))
     if (!d.exists()) return "no-user"
     const data = d.data()
+
+    if (data.status === "suspended") {
+
+      // fix: suspended but no suspendedUntil — set it now
+      if (!data.suspendedUntil) {
+        await suspendUser(uid)
+        const suspendedUntil = new Date(Date.now() + 2 * 60 * 1000) // 2 minutes for testing — change to 7 * 24 * 60 * 60 * 1000 for 7 days
+        return {
+          status:         "suspended",
+          violations:     data.violations     || 0,
+          suspendReasons: data.suspendReasons || [],
+          suspendedUntil,
+        }
+      }
+
+      // auto-unsuspend if time is up
+      const now   = new Date()
+      const until = data.suspendedUntil.toDate
+        ? data.suspendedUntil.toDate()
+        : new Date(data.suspendedUntil)
+
+      if (now >= until) {
+        await updateDoc(doc(db, "users", uid), {
+          status:         "active",
+          violations:     0,
+          suspendReasons: [],
+          suspendedAt:    null,
+          suspendedUntil: null,
+        })
+        return { status: "active", violations: 0, suspendReasons: [], suspendedUntil: null }
+      }
+    }
+
     return {
       status:         data.status         || "active",
       violations:     data.violations     || 0,
       suspendReasons: data.suspendReasons || [],
+      suspendedUntil: data.suspendedUntil || null,
     }
   } catch { return "status-fail" }
 }
@@ -199,22 +244,27 @@ async function addViolation(targetUid, reason, adminRole) {
 
     await updateDoc(userRef, { violations, suspendReasons, status })
 
+    // fix: call suspendUser when violations hit 3 so suspendedUntil is always set
+    if (violations >= 3) {
+      await suspendUser(targetUid)
+    }
+
     if (violations === 1) {
       await sendNotif(targetUid, {
         type: "warning",
-        message: `⚠️ تحذير: تم تسجيل مخالفة بسببك "${reason}". انتبه إن التكرار هيأثر على حسابك.`,
+        message: `⚠️ First warning: a violation has been recorded on your account for "${reason}". Please review our community guidelines to avoid further action.`,
         clickable: false,
       })
     } else if (violations === 2) {
       await sendNotif(targetUid, {
         type: "danger",
-        message: `🚨 تحذير أخير: حسابك في خطر بسبب "${reason}". مخالفة واحدة أخرى وهيتعلق فوراً.`,
+        message: `🚨 Final warning: your account is at risk due to "${reason}". One more violation will result in an immediate suspension.`,
         clickable: false,
       })
     } else if (violations >= 3) {
       await sendNotif(targetUid, {
         type: "suspended",
-        message: `🔒 تم تعليق حسابك بسبب تكرار المخالفات. تواصل مع الأدمن لو في سوء فهم.`,
+        message: `🔒 Your account has been suspended due to repeated violations. If you believe this is a mistake, please reach out to an admin.`,
         clickable: false,
       })
     }
@@ -243,7 +293,7 @@ async function removeViolation(targetUid, violationIndex, adminRole) {
     if (status === "active" && data.status === "suspended") {
       await sendNotif(targetUid, {
         type: "info",
-        message: `✅ تم حذف إحدى المخالفات المسجلة ضدك، حسابك نشط مجدداً.`,
+        message: `✅ A violation has been removed from your account and your access has been restored. Welcome back to Graduation Gallery!`,
         clickable: false,
       })
     }
@@ -259,10 +309,12 @@ async function unsuspendUser(targetUid, adminRole) {
       status:         "active",
       violations:     0,
       suspendReasons: [],
+      suspendedAt:    null,
+      suspendedUntil: null,
     })
     await sendNotif(targetUid, {
       type: "info",
-      message: `✅ تم رفع التعليق عن حسابك، يمكنك استخدام المنصة مجدداً.`,
+      message: `✅ Your suspension has been lifted and your account is now fully active. Welcome back to Graduation Gallery!`,
       clickable: false,
     })
     return "unsuspend-ok"
@@ -273,5 +325,5 @@ export {
   regUser, logUser, logWithGoogle, logWithGithub, resetPass, logOut,
   getUser, updateUser, checkRole, watchUser, getUsersByYear, getUsersByTechStack,
   updateRole, addBookmark, removeBookmark, getBookmarks,
-  checkStatus, addViolation, removeViolation, unsuspendUser,
+  checkStatus, addViolation, removeViolation, unsuspendUser, suspendUser
 }

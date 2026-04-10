@@ -1,5 +1,5 @@
 import { auth } from './firebase.js';
-import { checkRole } from './auth.js';
+import { checkRole, checkStatus, suspendUser } from './auth.js';
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -16,6 +16,7 @@ import Settings from './Settings';
 import MyProjects from './MyProjects.js';
 import AllProjects from './projectGarbage';
 import ProjectShare from './ProjectShare';
+import Suspended from './suspended.js';
 
 const RoleContext = createContext(null);
 
@@ -42,8 +43,39 @@ function AppProviders({ children }) {
 
 function ProtectedRoute({ children }) {
   const [user, loading] = useAuthState(auth);
-  if (loading) return null;
+  const [statusData, setStatusData] = useState(null)
+  const [statusLoading, setStatusLoading] = useState(true)
+
+  useEffect(() => {
+    if (!user) { setStatusLoading(false); return; }
+    checkStatus(user.uid).then((res) => {
+      setStatusData(res)
+      setStatusLoading(false)
+    })
+  }, [user])
+
+  if (loading || statusLoading) return null;
   if (!user) return <Navigate to="/" />;
+
+  if (statusData?.status === "suspended") {
+    const now = new Date()
+    const until = statusData.suspendedUntil?.toDate
+      ? statusData.suspendedUntil.toDate()
+      : statusData.suspendedUntil
+        ? new Date(statusData.suspendedUntil)
+        : null
+
+    // suspension expired — let them through, auto-unsuspend handled by checkStatus
+    if (until && now >= until) return children;
+
+    return (
+      <Suspended
+        suspendedUntil={statusData.suspendedUntil}
+        suspendReasons={statusData.suspendReasons}
+      />
+    )
+  }
+
   return children;
 }
 
