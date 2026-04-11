@@ -2,47 +2,56 @@ import { View, Text, Image, ScrollView, TouchableOpacity, Linking, StyleSheet } 
 import { useLocalSearchParams } from "expo-router";
 
 const C = {
-  bg: 'rgb(223, 205, 192)',        // Main background color
-  white: 'rgb(254, 251, 245)',     // White color
-  black: 'rgb(47, 28, 15)',        // Black color
-  link: 'rgb(164, 132, 109)',      // Link color
-  linkHover: 'rgb(75, 48, 28)',    // Link hover color
-  button: 'rgb(104, 68, 42)',      // Button color
-  buttonHover: 'rgb(75, 48, 28)',  // Button hover color
-  buttonClick: 'rgb(50, 30, 15)',  // Button click color
-  input: 'rgb(185, 174, 167)',     // Input fields background
+  bg: 'rgb(223, 205, 192)',
+  white: 'rgb(254, 251, 245)',
+  black: 'rgb(47, 28, 15)',
+  link: 'rgb(164, 132, 109)',
+  linkHover: 'rgb(75, 48, 28)',
+  button: 'rgb(104, 68, 42)',
+  buttonHover: 'rgb(75, 48, 28)',
+  buttonClick: 'rgb(50, 30, 15)',
+  input: 'rgb(185, 174, 167)',
 };
 
 export default function ProjectDetails() {
   const params = useLocalSearchParams();
 
+  const techStack =
+    typeof params.techStack === "string"
+      ? JSON.parse(params.techStack)
+      : ["React", "Node.js", "TensorFlow"];
+
   const project = {
-    title: params.title || "AI Health App",
-    year: params.year || "2024",
-    description: params.description || "This project is about AI health monitoring system...",
-    image: params.image || "https://via.placeholder.com/300",
-    github: "https://github.com",
-    pdf: "https://example.com",
-    techStack: ["React", "Node.js", "TensorFlow"]
+    title: typeof params.title === "string" ? params.title : "AI Health App",
+    year: typeof params.year === "string" ? params.year : "2024",
+    description:
+      typeof params.description === "string"
+        ? params.description
+        : "This project is about AI health monitoring system...",
+    image:
+      typeof params.image === "string"
+        ? params.image
+        : "https://via.placeholder.com/300",
+    github:
+      typeof params.github === "string"
+        ? params.github
+        : "https://github.com",
+    pdf:
+      typeof params.pdf === "string"
+        ? params.pdf
+        : "https://example.com",
+    techStack,
   };
 
   return (
     <ScrollView style={styles.container}>
-
-      <Image
-        source={{
-          uri: typeof project.image === "string" ? project.image : "https://via.placeholder.com/300"
-        }}
-        style={styles.image}
-      />
+      <Image source={{ uri: project.image }} style={styles.image} />
 
       <Text style={styles.title}>{project.title}</Text>
-
       <Text style={styles.year}>{project.year}</Text>
 
-      {/* Tech Stack */}
       <View style={styles.techStack}>
-        {project.techStack.map((tech, index) => (
+        {project.techStack.map((tech: string, index: number) => (
           <View key={index} style={styles.techChip}>
             <Text style={styles.techText}>{tech}</Text>
           </View>
@@ -51,7 +60,6 @@ export default function ProjectDetails() {
 
       <Text style={styles.description}>{project.description}</Text>
 
-      {/* Buttons */}
       <TouchableOpacity
         onPress={() => Linking.openURL(project.github)}
         style={styles.button}
@@ -66,10 +74,8 @@ export default function ProjectDetails() {
         <Text style={styles.buttonText}>Open PDF</Text>
       </TouchableOpacity>
 
-      {/* Rating */}
       <Text style={styles.rating}>⭐⭐⭐⭐☆</Text>
 
-      {/* Comments */}
       <View style={styles.commentsSection}>
         <Text style={styles.commentsTitle}>Comments:</Text>
 
@@ -81,7 +87,6 @@ export default function ProjectDetails() {
           <Text>Very useful idea 💡</Text>
         </View>
       </View>
-
     </ScrollView>
   );
 }
