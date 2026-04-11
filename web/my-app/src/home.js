@@ -14,7 +14,8 @@ import { FilterPanel } from './FilterPanel.js';
 import { useFilters } from './useFilters.js';
 import {
   FaGraduationCap, FaUser, FaBell, FaSearch, FaFilter, FaChevronDown,
-  FaBookOpen, FaBookmark, FaFolderOpen, FaBriefcase, FaShoppingCart, FaFilm, FaNewspaper
+  FaBookOpen, FaBookmark, FaFolderOpen, FaBriefcase, FaShoppingCart, FaFilm, FaNewspaper,
+  FaBars, FaTimes
 } from "react-icons/fa";
 
 const exploreTags = [
@@ -88,10 +89,12 @@ export function Navbar({ isAdmin }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifs, setNotifs] = useState([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const dropdownRef = useRef(null);
   const notifRef = useRef(null);
+  const mobileNotifRef = useRef(null);
   const [user] = useAuthState(auth);
 
   useEffect(() => {
@@ -99,6 +102,21 @@ export function Navbar({ isAdmin }) {
     const unsub = listenNotifs(user.uid, (data) => setNotifs(data));
     return () => unsub();
   }, [user]);
+
+  // Close sidebar on route change
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
+  // Lock body scroll when sidebar is open
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [sidebarOpen]);
 
   const hasUnseen = notifs.some((n) => !n.seen);
 
@@ -124,7 +142,9 @@ export function Navbar({ isAdmin }) {
   useEffect(() => {
     function handleClickOutside(e) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setDropdownOpen(false);
-      if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false);
+      const inDesktop = notifRef.current && notifRef.current.contains(e.target);
+      const inMobile = mobileNotifRef.current && mobileNotifRef.current.contains(e.target);
+      if (!inDesktop && !inMobile) setNotifOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -132,10 +152,16 @@ export function Navbar({ isAdmin }) {
 
   const handleLogout = async () => { await logOut(); navigate("/"); };
 
+  const closeSidebar = () => setSidebarOpen(false);
+
   return (
     <>
       <nav className="hg-navbar">
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+        {/* Left: hamburger (mobile) + logo + dashboard */}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <button className="hg-hamburger" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
+            <FaBars />
+          </button>
           <Link to="/home" className="hg-navbar-logo">
             <FaGraduationCap className="hg-logo-icon" />
             <span className="hg-logo-text"><strong>Graduation</strong> Gallery</span>
@@ -146,6 +172,8 @@ export function Navbar({ isAdmin }) {
             </Link>
           )}
         </div>
+
+        {/* Center: desktop nav links */}
         <div className="hg-navbar-links">
           <Link to="/projects" className={`hg-nav-link${location.pathname === "/projects" ? " hg-nav-link-active" : ""}`}>
             <FaFolderOpen className="hg-nav-icon" /> My Projects
@@ -187,7 +215,42 @@ export function Navbar({ isAdmin }) {
             )}
           </div>
         </div>
+
+        {/* Right: mobile bell + upload + avatar */}
         <div className="hg-navbar-right">
+          {/* Bell icon — only visible on mobile */}
+          <div ref={mobileNotifRef} className="hg-mobile-bell-wrapper">
+            <button className={`hg-mobile-bell${notifOpen ? " hg-mobile-bell-active" : ""}`} onClick={handleBellClick} aria-label="Notifications">
+              <span className="hg-notif-wrapper">
+                <FaBell />
+                {hasUnseen && <span className="hg-notif-dot" />}
+              </span>
+            </button>
+            {notifOpen && (
+              <div className="hg-notif-dropdown">
+                <div className="hg-notif-dropdown-header">Notifications</div>
+                {notifs.length === 0 ? (
+                  <div className="hg-notif-empty">
+                    <FaBell className="hg-notif-empty-icon" />
+                    <p className="hg-notif-empty-text">No notifications yet</p>
+                    <p className="hg-notif-empty-sub">When someone interacts with<br />your projects, you'll see it here.</p>
+                  </div>
+                ) : (
+                  <div style={{ maxHeight: 380, overflowY: "auto", scrollbarWidth: "thin", scrollbarColor: "rgb(164,132,109) rgb(223,205,192)" }}>
+                    {notifs.map((n) => (
+                      <NotifItem
+                        key={n.id}
+                        notif={n}
+                        uid={user.uid}
+                        onProjectOpen={handleProjectOpen}
+                        onWelcomeOpen={handleWelcomeOpen}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           <button className="hg-upload-btn" onClick={() => setShowUpload(true)}>Upload Project</button>
           <div className="hg-avatar-wrapper" ref={dropdownRef} onClick={() => setDropdownOpen(!dropdownOpen)}>
             {user?.photoURL
@@ -205,6 +268,94 @@ export function Navbar({ isAdmin }) {
           </div>
         </div>
       </nav>
+
+      {/* =====================
+          MOBILE SIDEBAR
+      ===================== */}
+      {sidebarOpen && (
+        <div className="hg-sidebar-overlay" onClick={closeSidebar} />
+      )}
+      <div className={`hg-admin-sidebar${sidebarOpen ? " hg-sidebar-open" : ""}`}>
+        {/* Sidebar header */}
+        <div className="hg-sidebar-header">
+          <Link to="/home" className="hg-sidebar-title" onClick={closeSidebar}>
+            Graduation Gallery
+          </Link>
+          <button
+            onClick={closeSidebar}
+            style={{
+              marginLeft: "auto",
+              background: "none",
+              border: "none",
+              fontSize: 18,
+              color: "rgb(104, 68, 42)",
+              cursor: "pointer",
+              padding: "4px 6px",
+              borderRadius: 8,
+            }}
+          >
+            <FaTimes />
+          </button>
+        </div>
+
+        {/* Sidebar nav links */}
+        <ul className="hg-sidebar-links">
+          <li
+            className={`hg-sidebar-item${location.pathname === "/projects" ? " hg-sidebar-item-active" : ""}`}
+            onClick={() => { closeSidebar(); navigate("/projects"); }}
+          >
+            <FaFolderOpen style={{ marginRight: 10 }} /> My Projects
+          </li>
+          <li
+            className={`hg-sidebar-item${location.pathname === "/bookmarks" ? " hg-sidebar-item-active" : ""}`}
+            onClick={() => { closeSidebar(); navigate("/bookmarks"); }}
+          >
+            <FaBookmark style={{ marginRight: 10 }} /> Bookmarks
+          </li>
+          {/* Divider */}
+          <li style={{ height: 1, background: "rgb(185, 174, 167)", margin: "8px 0", listStyle: "none" }} />
+
+          <li
+            className="hg-sidebar-item"
+            onClick={() => { closeSidebar(); setShowUpload(true); }}
+          >
+            <span style={{ marginRight: 10, fontSize: 15 }}>＋</span> Upload Project
+          </li>
+          <li
+            className={`hg-sidebar-item${location.pathname === "/all-projects" ? " hg-sidebar-item-active" : ""}`}
+            onClick={() => { closeSidebar(); navigate("/all-projects"); }}
+          >
+            <FaFolderOpen style={{ marginRight: 10 }} /> All Projects
+          </li>
+          <li
+            className={`hg-sidebar-item${location.pathname === "/profile" ? " hg-sidebar-item-active" : ""}`}
+            onClick={() => { closeSidebar(); navigate("/profile"); }}
+          >
+            <FaUser style={{ marginRight: 10 }} /> My Profile
+          </li>
+
+          {isAdmin && (
+            <li
+              className={`hg-sidebar-item${location.pathname === "/dashboard" ? " hg-sidebar-item-active" : ""}`}
+              onClick={() => { closeSidebar(); navigate("/dashboard"); }}
+            >
+              Dashboard
+            </li>
+          )}
+
+          {/* Divider */}
+          <li style={{ height: 1, background: "rgb(185, 174, 167)", margin: "8px 0", listStyle: "none" }} />
+
+          <li
+            className="hg-sidebar-item"
+            style={{ color: "rgb(180, 60, 60)" }}
+            onClick={async () => { closeSidebar(); await logOut(); navigate("/"); }}
+          >
+            Log Out
+          </li>
+        </ul>
+      </div>
+
       {showUpload && <UploadModal onClose={() => setShowUpload(false)} />}
       {showWelcome && <WelcomeModal onClose={() => setShowWelcome(false)} />}
     </>
@@ -217,31 +368,41 @@ function SearchBar({ search, setSearch, filtersOpen, setFiltersOpen, hasActiveFi
   const isAllProjects = location.pathname === "/all-projects";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 36 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <div className="hg-search-bar">
-          <FaSearch className="hg-search-icon" />
-          <input type="text" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} className="hg-search-input" />
-          <div className="hg-search-divider" />
-          <button
-            className="hg-filter-btn"
-            onClick={() => setFiltersOpen((o) => !o)}
-            style={{
-              color: filtersOpen ? "rgb(104, 68, 42)" : hasActiveFilters ? "rgb(104, 68, 42)" : undefined,
-              fontWeight: hasActiveFilters || filtersOpen ? 700 : undefined,
-              background: filtersOpen ? "rgb(223, 205, 192)" : undefined,
-              padding: "6px 14px", borderRadius: 50,
-              border: `1.5px solid ${filtersOpen ? "rgb(164, 132, 109)" : "transparent"}`,
-              transition: "all 0.2s",
-            }}
-          >
-            <FaFilter className="hg-filter-icon" />
-            Filters{hasActiveFilters ? " ●" : ""}
-          </button>
-        </div>
-        <div className="hg-buttons-row">
-          <button className={`hg-btn-outline${isAllProjects ? " hg-btn-outline-active" : ""}`} onClick={() => navigate("/all-projects")}>All Projects</button>
-        </div>
+    <div className="hg-search-wrapper">
+      <div className="hg-search-bar">
+        <FaSearch className="hg-search-icon" />
+        <input
+          type="text"
+          placeholder="Search..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="hg-search-input"
+        />
+        <div className="hg-search-divider" />
+        <button
+          className="hg-filter-btn"
+          onClick={() => setFiltersOpen((o) => !o)}
+          style={{
+            color: filtersOpen || hasActiveFilters ? "rgb(104, 68, 42)" : undefined,
+            fontWeight: hasActiveFilters || filtersOpen ? 700 : undefined,
+            background: filtersOpen ? "rgb(223, 205, 192)" : undefined,
+            padding: "6px 14px",
+            borderRadius: 50,
+            border: `1.5px solid ${filtersOpen ? "rgb(164, 132, 109)" : "transparent"}`,
+            transition: "all 0.2s",
+          }}
+        >
+          <FaFilter className="hg-filter-icon" />
+          Filters{hasActiveFilters ? " ●" : ""}
+        </button>
+      </div>
+      <div className="hg-buttons-row">
+        <button
+          className={`hg-btn-outline${isAllProjects ? " hg-btn-outline-active" : ""}`}
+          onClick={() => navigate("/all-projects")}
+        >
+          All Projects
+        </button>
       </div>
     </div>
   );
@@ -262,7 +423,11 @@ function ExploreTags({ selectedTag, onSelectTag }) {
       <h2 className="hg-section-title">Explore by Tags</h2>
       <div className="hg-tags-grid">
         {exploreTags.map((tag) => (
-          <div key={tag.label} className={`hg-tag-card${selectedTag === tag.label ? " hg-tag-card-active" : ""}`} onClick={() => onSelectTag(selectedTag === tag.label ? null : tag.label)}>
+          <div
+            key={tag.label}
+            className={`hg-tag-card${selectedTag === tag.label ? " hg-tag-card-active" : ""}`}
+            onClick={() => onSelectTag(selectedTag === tag.label ? null : tag.label)}
+          >
             <span className="hg-tag-icon">{tag.icon}</span>
             <span className="hg-tag-label">{tag.label}</span>
           </div>
@@ -290,15 +455,32 @@ function TagProjects({ tag, bookmarkedIds, onToggleBookmark }) {
   return (
     <section className="hg-section">
       <h2 className="hg-section-title">{tag} Projects</h2>
-      {loading ? <div className="hg-spinner-wrapper"><div className="hg-spinner" /></div>
-        : projects.length === 0 ? <p className="hg-no-results">No projects found for "{tag}"</p>
-        : (
-          <div className="hg-projects-grid">
-            {projects.map((p) => <ProjectCard key={p.id} project={p} onOpen={setSelectedProject} bookmarked={bookmarkedIds.includes(p.id)} onToggleBookmark={onToggleBookmark} />)}
-          </div>
-        )}
+      {loading
+        ? <div className="hg-spinner-wrapper"><div className="hg-spinner" /></div>
+        : projects.length === 0
+          ? <p className="hg-no-results">No projects found for "{tag}"</p>
+          : (
+            <div className="hg-projects-grid">
+              {projects.map((p) => (
+                <ProjectCard
+                  key={p.id}
+                  project={p}
+                  onOpen={setSelectedProject}
+                  bookmarked={bookmarkedIds.includes(p.id)}
+                  onToggleBookmark={onToggleBookmark}
+                />
+              ))}
+            </div>
+          )
+      }
       {selectedProject && (
-        <ProjectModal project={selectedProject} bookmarked={bookmarkedIds.includes(selectedProject.id)} onToggleBookmark={() => onToggleBookmark(selectedProject.id)} onClose={() => setSelectedProject(null)} onDelete={(id) => setProjects((prev) => prev.filter(p => p.id !== id))} />
+        <ProjectModal
+          project={selectedProject}
+          bookmarked={bookmarkedIds.includes(selectedProject.id)}
+          onToggleBookmark={() => onToggleBookmark(selectedProject.id)}
+          onClose={() => setSelectedProject(null)}
+          onDelete={(id) => setProjects((prev) => prev.filter(p => p.id !== id))}
+        />
       )}
     </section>
   );
@@ -314,7 +496,10 @@ function Home() {
   const [selectedProject, setSelectedProject] = useState(null);
   const [user] = useAuthState(auth);
 
-  const { search, setSearch, filters, updateFilter, toggleArrayFilter, clearFilters, hasActiveFilters, isSearchOrFilter, allStacks, filtered } = useFilters(allProjects);
+  const {
+    search, setSearch, filters, updateFilter, toggleArrayFilter,
+    clearFilters, hasActiveFilters, isSearchOrFilter, allStacks, filtered,
+  } = useFilters(allProjects);
 
   useEffect(() => {
     if (user) {
@@ -324,7 +509,10 @@ function Home() {
   }, [user]);
 
   useEffect(() => {
-    getApproved().then((data) => { if (Array.isArray(data)) setAllProjects(data); setLoadingProjects(false); });
+    getApproved().then((data) => {
+      if (Array.isArray(data)) setAllProjects(data);
+      setLoadingProjects(false);
+    });
   }, []);
 
   const toggleBookmark = async (id) => {
@@ -343,27 +531,59 @@ function Home() {
     <div className="hg-page">
       <Navbar isAdmin={isAdmin} />
       <main className="hg-main-content">
-        <SearchBar search={search} setSearch={setSearch} filtersOpen={filtersOpen} setFiltersOpen={setFiltersOpen} hasActiveFilters={hasActiveFilters} />
-        <FilterPanel open={filtersOpen} filters={filters} updateFilter={updateFilter} toggleArrayFilter={toggleArrayFilter} clearFilters={clearFilters} hasActiveFilters={hasActiveFilters} allStacks={allStacks} />
+        <SearchBar
+          search={search}
+          setSearch={setSearch}
+          filtersOpen={filtersOpen}
+          setFiltersOpen={setFiltersOpen}
+          hasActiveFilters={hasActiveFilters}
+        />
+        <FilterPanel
+          open={filtersOpen}
+          filters={filters}
+          updateFilter={updateFilter}
+          toggleArrayFilter={toggleArrayFilter}
+          clearFilters={clearFilters}
+          hasActiveFilters={hasActiveFilters}
+          allStacks={allStacks}
+        />
 
         {isSearchOrFilter ? (
           <section className="hg-section">
-            <h2 className="hg-section-title">{search.trim() ? `Results for "${search}"` : "Filtered Projects"}</h2>
+            <h2 className="hg-section-title">
+              {search.trim() ? `Results for "${search}"` : "Filtered Projects"}
+            </h2>
             {loadingProjects ? (
               <div className="hg-spinner-wrapper"><div className="hg-spinner" /></div>
             ) : filtered.length > 0 ? (
               <div className="hg-projects-grid">
-                {filtered.map((p) => <ProjectCard key={p.id} project={p} onOpen={setSelectedProject} bookmarked={bookmarkedIds.includes(p.id)} onToggleBookmark={toggleBookmark} />)}
+                {filtered.map((p) => (
+                  <ProjectCard
+                    key={p.id}
+                    project={p}
+                    onOpen={setSelectedProject}
+                    bookmarked={bookmarkedIds.includes(p.id)}
+                    onToggleBookmark={toggleBookmark}
+                  />
+                ))}
               </div>
             ) : (
-              <p className="hg-no-results">No projects found{search.trim() ? ` for "${search}"` : ""}</p>
+              <p className="hg-no-results">
+                No projects found{search.trim() ? ` for "${search}"` : ""}
+              </p>
             )}
           </section>
         ) : (
           <>
             <RecentProjects />
             <ExploreTags selectedTag={selectedTag} onSelectTag={setSelectedTag} />
-            {selectedTag && <TagProjects tag={selectedTag} bookmarkedIds={bookmarkedIds} onToggleBookmark={toggleBookmark} />}
+            {selectedTag && (
+              <TagProjects
+                tag={selectedTag}
+                bookmarkedIds={bookmarkedIds}
+                onToggleBookmark={toggleBookmark}
+              />
+            )}
           </>
         )}
       </main>
@@ -374,7 +594,10 @@ function Home() {
           bookmarked={bookmarkedIds.includes(selectedProject.id)}
           onToggleBookmark={() => toggleBookmark(selectedProject.id)}
           onClose={() => setSelectedProject(null)}
-          onDelete={(id) => { setAllProjects((prev) => prev.filter(p => p.id !== id)); setSelectedProject(null); }}
+          onDelete={(id) => {
+            setAllProjects((prev) => prev.filter(p => p.id !== id));
+            setSelectedProject(null);
+          }}
         />
       )}
     </div>
