@@ -45,8 +45,6 @@
   background: rgb(104, 68, 42);
 }
 
-
-
 .hg-main-content {
   max-width: 1100px;
   margin: 0 auto;
@@ -320,18 +318,6 @@
   margin-bottom: 24px;
 }
 
-@media (max-width: 900px) {
-  .hg-projects-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 580px) {
-  .hg-projects-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
 /* ===========================
    PROJECT CARD
 =========================== */
@@ -397,7 +383,6 @@
   color: rgb(47, 28, 15);
 }
 
-/* Image with padding so it doesn't touch the border */
 .hg-card-image-wrapper {
   padding: 0 10px;
 }
@@ -410,7 +395,6 @@
   display: block;
 }
 
-/* Footer with single tag */
 .hg-card-footer {
   padding: 6px 14px 10px;
   display: flex;
@@ -509,13 +493,8 @@
   border-color: rgb(164, 132, 109);
 }
 
-.hg-tag-card:hover .hg-tag-icon {
-  color: rgb(254, 251, 245);
-}
-
-.hg-tag-card:hover .hg-tag-label {
-  color: rgb(254, 251, 245);
-}
+.hg-tag-card:hover .hg-tag-icon { color: rgb(254, 251, 245); }
+.hg-tag-card:hover .hg-tag-label { color: rgb(254, 251, 245); }
 
 .hg-tag-card-active {
   background: rgb(104, 68, 42);
@@ -638,18 +617,52 @@
 }
 
 /* ===========================
-   HAMBURGER BUTTON
+   MOBILE BELL (navbar right, mobile only)
 =========================== */
-.hg-hamburger {
+.hg-mobile-bell-wrapper {
+  display: none;
+  position: relative;
+}
+
+.hg-mobile-bell {
   background: none;
   border: none;
-  font-size: 20px;
+  font-size: 18px;
+  color: rgb(104, 68, 42);
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.hg-mobile-bell:hover {
+  background: rgb(223, 205, 192);
+}
+
+.hg-mobile-bell-active {
+  background: rgb(223, 205, 192);
+}
+
+/* ===========================
+   HAMBURGER BUTTON
+   Hidden on desktop, shown on mobile
+=========================== */
+.hg-hamburger {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 18px;
   color: rgb(104, 68, 42);
   cursor: pointer;
   padding: 6px 8px;
   border-radius: 8px;
   transition: background 0.2s;
-  margin-right: 0;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .hg-hamburger:hover {
@@ -657,15 +670,18 @@
 }
 
 /* ===========================
-   ADMIN SIDEBAR
+   SIDEBAR OVERLAY
 =========================== */
 .hg-sidebar-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.35);
   z-index: 200;
 }
 
+/* ===========================
+   MOBILE SIDEBAR
+=========================== */
 .hg-admin-sidebar {
   position: fixed;
   top: 0;
@@ -674,13 +690,14 @@
   height: 100vh;
   background-color: rgb(254, 251, 245);
   border-right: 1px solid rgb(185, 174, 167);
-  border-radius: 0 10px 10px 0;
-  padding: 80px 20px;
+  border-radius: 0 14px 14px 0;
+  padding: 24px 16px 32px;
   display: flex;
   flex-direction: column;
   z-index: 300;
   transition: left 0.3s ease;
-  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.12);
+  overflow-y: auto;
 }
 
 .hg-sidebar-open {
@@ -689,14 +706,16 @@
 
 .hg-sidebar-header {
   display: flex;
-  justify-content: flex-start;
   align-items: center;
-  margin-bottom: 30px;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgb(185, 174, 167);
 }
 
 .hg-sidebar-title {
   color: rgb(47, 28, 15);
-  font-size: clamp(18px, 8%, 28px);
+  font-size: 17px;
   font-family: 'Times New Roman', Times, serif;
   font-weight: 700;
   cursor: pointer;
@@ -713,26 +732,39 @@
 .hg-sidebar-links {
   list-style: none;
   padding: 0;
+  margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 4px;
 }
 
 .hg-sidebar-item {
-  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  padding: 11px 14px;
   cursor: pointer;
-  color: rgb(104, 68, 42);
-  border-radius: 15px;
+  color: rgb(47, 28, 15);
+  border-radius: 12px;
   font-size: 14px;
-  font-family: Arial, Helvetica, sans-serif;
-  font-weight: 550;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 500;
   transition: background 0.2s, color 0.2s;
 }
 
 .hg-sidebar-item:hover {
-  background-color: rgb(164, 132, 109);
-  color: rgb(254, 251, 245);
+  background-color: rgb(223, 205, 192);
+  color: rgb(47, 28, 15);
   font-weight: 600;
+}
+
+.hg-sidebar-item-active {
+  background-color: rgb(164, 132, 109);
+  color: rgb(254, 251, 245) !important;
+  font-weight: 600;
+}
+
+.hg-sidebar-item-active:hover {
+  background-color: rgb(104, 68, 42);
 }
 
 /* ===========================
@@ -892,23 +924,10 @@
   scrollbar-color: rgb(164, 132, 109) rgb(223, 205, 192);
 }
 
-.hg-pm::-webkit-scrollbar {
-  width: 6px;
-}
-
-.hg-pm::-webkit-scrollbar-track {
-  background: rgb(223, 205, 192);
-  border-radius: 10px;
-}
-
-.hg-pm::-webkit-scrollbar-thumb {
-  background: rgb(164, 132, 109);
-  border-radius: 10px;
-}
-
-.hg-pm::-webkit-scrollbar-thumb:hover {
-  background: rgb(104, 68, 42);
-}
+.hg-pm::-webkit-scrollbar { width: 6px; }
+.hg-pm::-webkit-scrollbar-track { background: rgb(223, 205, 192); border-radius: 10px; }
+.hg-pm::-webkit-scrollbar-thumb { background: rgb(164, 132, 109); border-radius: 10px; }
+.hg-pm::-webkit-scrollbar-thumb:hover { background: rgb(104, 68, 42); }
 
 @keyframes hg-pm-up {
   from { opacity: 0; transform: translateY(24px); }
@@ -936,7 +955,6 @@
 
 .hg-pm-close:hover { background: rgb(223, 205, 192); }
 
-/* Image section */
 .hg-pm-image-wrap {
   position: relative;
   width: 100%;
@@ -980,7 +998,6 @@
   width: fit-content;
 }
 
-/* Body */
 .hg-pm-body {
   padding: 20px 24px 28px;
   display: flex;
@@ -988,7 +1005,6 @@
   gap: 16px;
 }
 
-/* Author row */
 .hg-pm-author-row {
   display: flex;
   align-items: center;
@@ -1028,7 +1044,6 @@
   white-space: nowrap;
 }
 
-/* Description */
 .hg-pm-description {
   font-size: 14px;
   color: rgb(104, 68, 42);
@@ -1036,9 +1051,6 @@
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* ===========================
-   TECH STACK CHIPS (modal)
-=========================== */
 .hg-pm-stack {
   display: flex;
   flex-wrap: wrap;
@@ -1057,7 +1069,6 @@
   white-space: nowrap;
 }
 
-/* Actions */
 .hg-pm-actions {
   display: flex;
   gap: 10px;
@@ -1109,7 +1120,6 @@
   border-top: 1px solid rgb(185, 174, 167);
 }
 
-/* Comments */
 .hg-pm-comment-section {
   display: flex;
   flex-direction: column;
@@ -1123,10 +1133,7 @@
   font-family: 'Times New Roman', Times, serif;
 }
 
-.hg-stars {
-  display: flex;
-  gap: 4px;
-}
+.hg-stars { display: flex; gap: 4px; }
 
 .hg-star {
   font-size: 20px;
@@ -1190,10 +1197,7 @@
   justify-content: space-between;
 }
 
-.hg-pm-comment-stars {
-  display: flex;
-  gap: 3px;
-}
+.hg-pm-comment-stars { display: flex; gap: 3px; }
 
 .hg-comment-star {
   font-size: 13px;
@@ -1299,28 +1303,6 @@
 }
 
 /* ===========================
-   TAG CARD ACTIVE STATE
-=========================== */
-.hg-tag-card-active {
-  background: rgb(104, 68, 42);
-  border-color: rgb(104, 68, 42);
-}
-
-.hg-tag-card-active .hg-tag-icon,
-.hg-tag-card-active .hg-tag-label {
-  color: rgb(254, 251, 245);
-}
-
-/* ===========================
-   ALL PROJECTS BUTTON ACTIVE
-=========================== */
-.hg-btn-outline-active {
-  background: rgb(104, 68, 42);
-  border-color: rgb(104, 68, 42);
-  color: rgb(254, 251, 245) !important;
-}
-
-/* ===========================
    DASHBOARD BUTTON
 =========================== */
 .hg-dashboard-btn {
@@ -1345,4 +1327,196 @@
 .hg-dashboard-btn-active {
   background: rgb(104, 68, 42);
   color: rgb(254, 251, 245) !important;
+}
+
+
+/* =============================================
+   RESPONSIVE — TABLET  (≤ 900px)
+============================================= */
+@media (max-width: 900px) {
+  .hg-navbar {
+    padding: 0 16px;
+  }
+
+  /* Show hamburger, hide desktop nav links */
+  .hg-hamburger {
+    display: flex;
+  }
+
+  /* Show mobile bell */
+  .hg-mobile-bell-wrapper {
+    display: block;
+  }
+
+  .hg-navbar-links {
+    display: none;
+  }
+
+  /* Hide upload button — it's in the sidebar */
+  .hg-upload-btn {
+    display: none;
+  }
+
+  /* Hide dashboard button from navbar — it's in the sidebar */
+  .hg-dashboard-btn {
+    display: none;
+  }
+
+  .hg-main-content {
+    padding: 24px 16px;
+  }
+
+  /* 2-column grid */
+  .hg-projects-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  /* Search wrapper: stack on two lines */
+  .hg-search-wrapper {
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .hg-search-bar {
+    flex: 1 1 100%;
+  }
+
+  .hg-buttons-row {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  /* Notification dropdown repositioned */
+  .hg-notif-dropdown {
+    right: -60px;
+    width: 300px;
+  }
+}
+
+
+/* =============================================
+   RESPONSIVE — MOBILE  (≤ 580px)
+============================================= */
+@media (max-width: 580px) {
+  .hg-navbar {
+    padding: 0 12px;
+    height: 56px;
+  }
+
+  .hg-navbar-logo {
+    font-size: 15px;
+  }
+
+  .hg-logo-icon {
+    font-size: 18px;
+  }
+
+  .hg-main-content {
+    padding: 16px 12px;
+  }
+
+  /* Single column cards */
+  .hg-projects-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  /* Shorter card images */
+  .hg-card-image {
+    height: 180px;
+  }
+
+  /* Search takes full width, All Projects button below */
+  .hg-search-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .hg-buttons-row {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .hg-buttons-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hg-btn-outline {
+    padding: 8px 16px;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .hg-section-title {
+    font-size: 17px;
+    margin-bottom: 14px;
+  }
+
+  .hg-section {
+    margin-bottom: 32px;
+  }
+
+  .hg-tags-grid {
+    gap: 8px;
+  }
+
+  .hg-tag-card {
+    padding: 8px 14px;
+  }
+
+  .hg-tag-label {
+    font-size: 13px;
+  }
+
+  /* Notification dropdown: fixed at top of screen on mobile */
+  .hg-notif-dropdown {
+    position: fixed;
+    top: 56px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    animation: hg-dropdown-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Modal: slides up from bottom */
+  .hg-pm-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .hg-pm {
+    border-radius: 20px 20px 0 0;
+    max-height: 92vh;
+    max-width: 100%;
+  }
+
+  .hg-pm-image-wrap {
+    height: 180px;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .hg-pm-body {
+    padding: 16px 16px 24px;
+  }
+
+  .hg-pm-title {
+    font-size: 18px;
+  }
+
+  .hg-pm-actions {
+    flex-direction: column;
+  }
+
+  .hg-pm-github-btn,
+  .hg-pm-bookmark-btn {
+    justify-content: center;
+    width: 100%;
+  }
 }

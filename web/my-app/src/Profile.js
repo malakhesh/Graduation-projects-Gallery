@@ -6,35 +6,77 @@ import { getUserProjs } from './projects.js';
 import { auth } from './firebase.js';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import UploadModal from './UploadModal';
+import { listenNotifs, markAllSeen, markRead } from './notifications.js';
 import {
   FaGraduationCap, FaUser, FaCog, FaFolderOpen,
   FaEnvelope, FaProjectDiagram, FaGithub, FaLinkedin,
-  FaGlobe, FaQuoteLeft, FaPen, FaCheck, FaTimes, FaChevronDown, FaCamera, FaExclamationCircle
+  FaGlobe, FaQuoteLeft, FaPen, FaCheck, FaTimes, FaChevronDown, FaCamera, FaExclamationCircle,
+  FaBars, FaBell, FaBookmark
 } from "react-icons/fa";
 
 
 function Navbar({ isAdmin }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifs, setNotifs] = useState([]);
   const dropdownRef = useRef(null);
+  const mobileNotifRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const [user] = useAuthState(auth);
 
   useEffect(() => {
+    if (!user) return;
+    const unsub = listenNotifs(user.uid, (data) => setNotifs(data));
+    return () => unsub();
+  }, [user]);
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [sidebarOpen]);
+
+  const hasUnseen = notifs.some((n) => !n.seen);
+
+  const handleBellClick = async () => {
+    const opening = !notifOpen;
+    setNotifOpen(opening);
+    if (opening && user && hasUnseen) {
+      const unseenIds = notifs.filter((n) => !n.seen).map((n) => n.id);
+      await markAllSeen(user.uid, unseenIds);
+    }
+  };
+
+  useEffect(() => {
     function handleClickOutside(e) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setDropdownOpen(false);
+      const inMobile = mobileNotifRef.current && mobileNotifRef.current.contains(e.target);
+      if (!inMobile) setNotifOpen(false);
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const handleLogout = async () => { await logOut(); navigate('/'); };
+  const closeSidebar = () => setSidebarOpen(false);
 
   return (
     <>
       <nav className="pf-navbar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button className="pf-hamburger" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
+            <FaBars />
+          </button>
           <Link to="/home" className="pf-navbar-logo">
             <FaGraduationCap className="pf-logo-icon" />
             <span className="pf-logo-text"><strong>Graduation</strong> Gallery</span>
@@ -57,6 +99,34 @@ function Navbar({ isAdmin }) {
           </Link>
         </div>
         <div className="pf-navbar-right">
+          {/* Bell — mobile only */}
+          <div ref={mobileNotifRef} className="pf-mobile-bell-wrapper">
+            <button className={`pf-mobile-bell${notifOpen ? " pf-mobile-bell-active" : ""}`} onClick={handleBellClick} aria-label="Notifications">
+              <span className="pf-notif-wrapper">
+                <FaBell />
+                {hasUnseen && <span className="pf-notif-dot" />}
+              </span>
+            </button>
+            {notifOpen && (
+              <div className="pf-notif-dropdown">
+                <div className="pf-notif-dropdown-header">Notifications</div>
+                {notifs.length === 0 ? (
+                  <div className="pf-notif-empty">
+                    <FaBell style={{ fontSize: 36, color: "rgb(185,174,167)" }} />
+                    <p style={{ fontSize: 14, fontWeight: 600, color: "rgb(104,68,42)" }}>No notifications yet</p>
+                  </div>
+                ) : (
+                  <div style={{ maxHeight: 340, overflowY: "auto" }}>
+                    {notifs.map((n) => (
+                      <div key={n.id} style={{ padding: "12px 18px", borderBottom: "1px solid rgb(235,225,215)", fontSize: 13, color: "rgb(47,28,15)", background: n.seen ? "transparent" : "rgb(243,232,220)" }}>
+                        {n.message}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           <button className="pf-upload-btn" onClick={() => setShowUpload(true)}>Upload Project</button>
           <div className="pf-avatar-pill" ref={dropdownRef} onClick={() => setDropdownOpen(!dropdownOpen)}>
             {user?.photoURL
@@ -74,6 +144,45 @@ function Navbar({ isAdmin }) {
           </div>
         </div>
       </nav>
+
+      {/* Sidebar overlay */}
+      {sidebarOpen && <div className="pf-sidebar-overlay" onClick={closeSidebar} />}
+      <div className={`pf-admin-sidebar${sidebarOpen ? " pf-sidebar-open" : ""}`}>
+        <div className="pf-sidebar-header">
+          <Link to="/home" className="pf-sidebar-title" onClick={closeSidebar}>Graduation Gallery</Link>
+          <button onClick={closeSidebar} style={{ marginLeft: "auto", background: "none", border: "none", fontSize: 18, color: "rgb(104,68,42)", cursor: "pointer", padding: "4px 6px", borderRadius: 8 }}>
+            <FaTimes />
+          </button>
+        </div>
+        <ul className="pf-sidebar-links">
+          <li className={`pf-sidebar-item${location.pathname === '/projects' ? ' pf-sidebar-item-active' : ''}`} onClick={() => { closeSidebar(); navigate('/projects'); }}>
+            <FaFolderOpen style={{ marginRight: 10 }} /> My Projects
+          </li>
+          <li className={`pf-sidebar-item${location.pathname === '/bookmarks' ? ' pf-sidebar-item-active' : ''}`} onClick={() => { closeSidebar(); navigate('/bookmarks'); }}>
+            <FaBookmark style={{ marginRight: 10 }} /> Bookmarks
+          </li>
+          <li className={`pf-sidebar-item${location.pathname === '/profile' ? ' pf-sidebar-item-active' : ''}`} onClick={() => { closeSidebar(); navigate('/profile'); }}>
+            <FaUser style={{ marginRight: 10 }} /> My Profile
+          </li>
+          <li className={`pf-sidebar-item${location.pathname === '/settings' ? ' pf-sidebar-item-active' : ''}`} onClick={() => { closeSidebar(); navigate('/settings'); }}>
+            <FaCog style={{ marginRight: 10 }} /> Settings
+          </li>
+          <li style={{ height: 1, background: "rgb(185,174,167)", margin: "8px 0", listStyle: "none" }} />
+          <li className="pf-sidebar-item" onClick={() => { closeSidebar(); setShowUpload(true); }}>
+            <span style={{ marginRight: 10 }}>＋</span> Upload Project
+          </li>
+          {isAdmin && (
+            <li className={`pf-sidebar-item${location.pathname === '/dashboard' ? ' pf-sidebar-item-active' : ''}`} onClick={() => { closeSidebar(); navigate('/dashboard'); }}>
+              Dashboard
+            </li>
+          )}
+          <li style={{ height: 1, background: "rgb(185,174,167)", margin: "8px 0", listStyle: "none" }} />
+          <li className="pf-sidebar-item" style={{ color: "rgb(180,60,60)" }} onClick={async () => { closeSidebar(); await logOut(); navigate('/'); }}>
+            Log Out
+          </li>
+        </ul>
+      </div>
+
       {showUpload && <UploadModal onClose={() => setShowUpload(false)} />}
     </>
   );
