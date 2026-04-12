@@ -45,8 +45,6 @@
   background: rgb(104, 68, 42);
 }
 
-
-
 .hg-main-content {
   max-width: 1100px;
   margin: 0 auto;
@@ -322,7 +320,7 @@
 
 @media (max-width: 900px) {
   .hg-projects-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -1345,4 +1343,133 @@
 .hg-dashboard-btn-active {
   background: rgb(104, 68, 42);
   color: rgb(254, 251, 245) !important;
+}
+
+/* =====================================================
+   RESPONSIVE — MOBILE (max-width: 768px)
+   كل التعديلات دي بتشتغل أوتوماتيك على الموبايل
+===================================================== */
+@media (max-width: 768px) {
+
+  /* --- Navbar --- */
+  .hg-navbar {
+    padding: 0 12px;
+    height: 56px;
+  }
+
+  /* إخفاء الـ nav links على الموبايل — بيظهروا في الـ sidebar بدل كده */
+  .hg-navbar-links {
+    display: none;
+  }
+
+  /* إخفاء الـ upload button على الموبايل — متاح من الـ sidebar */
+  .hg-upload-btn {
+    display: none;
+  }
+
+  /* إخفاء الـ dashboard button على الموبايل */
+  .hg-dashboard-btn {
+    display: none;
+  }
+
+  /* --- Main content padding --- */
+  .hg-main-content {
+    padding: 16px 12px;
+  }
+
+  /* --- Search wrapper: يبقى column على الموبايل --- */
+  .hg-search-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .hg-buttons-row {
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    /* منع الأزرار من الـ wrap عشان تبقى scrollable */
+    flex-wrap: nowrap;
+  }
+
+  .hg-btn-outline {
+    padding: 8px 14px;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  /* --- Project cards: عمود واحد على الموبايل الصغير --- */
+  .hg-projects-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  /* --- Card image أصغر شوية على الموبايل --- */
+  .hg-card-image {
+    height: 180px;
+  }
+
+  /* --- Section title --- */
+  .hg-section-title {
+    font-size: 17px;
+  }
+
+  /* --- Notifications dropdown: تاخد عرض الشاشة --- */
+  .hg-notif-dropdown {
+    right: -60px;
+    width: calc(100vw - 24px);
+    max-width: 340px;
+  }
+
+  /* --- Modal: يبقى full screen تقريباً --- */
+  .hg-pm-overlay {
+    padding: 10px;
+    align-items: flex-end;
+  }
+
+  .hg-pm {
+    max-height: 92vh;
+    border-radius: 20px 20px 14px 14px;
+  }
+
+  .hg-pm-body {
+    padding: 16px 16px 24px;
+  }
+
+  /* --- Tags grid: تبقى scrollable أفقياً --- */
+  .hg-tags-grid {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 6px;
+  }
+
+  .hg-tag-card {
+    flex-shrink: 0;
+    padding: 8px 16px;
+  }
+}
+
+/* =====================================================
+   RESPONSIVE — TABLET (768px → 900px)
+===================================================== */
+@media (min-width: 581px) and (max-width: 900px) {
+  .hg-projects-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .hg-navbar-links {
+    gap: 10px;
+  }
+
+  .hg-nav-link {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+
+  .hg-upload-btn {
+    padding: 7px 12px;
+    font-size: 12px;
+  }
 }
