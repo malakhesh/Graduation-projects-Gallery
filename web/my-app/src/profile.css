@@ -651,3 +651,205 @@
   background: rgb(104, 68, 42);
   color: rgb(254, 251, 245) !important;
 }
+/* ===========================
+   HAMBURGER (mobile only)
+=========================== */
+.pf-hamburger {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: rgb(104, 68, 42);
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.pf-hamburger:hover { background: rgb(223, 205, 192); }
+
+/* ===========================
+   MOBILE BELL (mobile only)
+=========================== */
+.pf-mobile-bell-wrapper {
+  display: none;
+  position: relative;
+}
+.pf-mobile-bell {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: rgb(104, 68, 42);
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.pf-mobile-bell:hover, .pf-mobile-bell-active { background: rgb(223, 205, 192); }
+.pf-notif-wrapper { position: relative; display: inline-flex; align-items: center; }
+.pf-notif-dot {
+  position: absolute;
+  top: -3px; right: -4px;
+  width: 7px; height: 7px;
+  background: rgb(180, 60, 40);
+  border-radius: 50%;
+  border: 1.5px solid rgb(254, 251, 245);
+}
+
+/* ===========================
+   SIDEBAR OVERLAY
+=========================== */
+.pf-sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 200;
+}
+
+/* ===========================
+   MOBILE SIDEBAR
+=========================== */
+.pf-admin-sidebar {
+  position: fixed;
+  top: 0;
+  left: -280px;
+  width: 260px;
+  height: 100vh;
+  background-color: rgb(254, 251, 245);
+  border-right: 1px solid rgb(185, 174, 167);
+  border-radius: 0 14px 14px 0;
+  padding: 24px 16px 32px;
+  display: flex;
+  flex-direction: column;
+  z-index: 300;
+  transition: left 0.3s ease;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.12);
+  overflow-y: auto;
+}
+.pf-sidebar-open { left: 0; }
+
+.pf-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgb(185, 174, 167);
+}
+.pf-sidebar-title {
+  color: rgb(47, 28, 15);
+  font-size: 17px;
+  font-family: 'Times New Roman', Times, serif;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pf-sidebar-title:hover { color: rgb(104, 68, 42); }
+
+.pf-sidebar-links {
+  list-style: none;
+  padding: 0; margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pf-sidebar-item {
+  display: flex;
+  align-items: center;
+  padding: 11px 14px;
+  cursor: pointer;
+  color: rgb(47, 28, 15);
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 500;
+  transition: background 0.2s, color 0.2s;
+}
+.pf-sidebar-item:hover { background-color: rgb(223, 205, 192); font-weight: 600; }
+.pf-sidebar-item-active { background-color: rgb(164, 132, 109); color: rgb(254, 251, 245) !important; font-weight: 600; }
+.pf-sidebar-item-active:hover { background-color: rgb(104, 68, 42); }
+
+/* ===========================
+   NOTIFICATION DROPDOWN
+=========================== */
+.pf-notif-dropdown {
+  position: fixed;
+  top: 56px;
+  left: 12px;
+  right: 12px;
+  width: auto;
+  background: rgb(254, 251, 245);
+  border: 1px solid rgb(185, 174, 167);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(47, 28, 15, 0.12);
+  z-index: 200;
+  overflow: hidden;
+  animation: pf-dropdown-in 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes pf-dropdown-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.pf-notif-dropdown-header {
+  padding: 14px 18px 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgb(47, 28, 15);
+  font-family: 'Times New Roman', Times, serif;
+  border-bottom: 1px solid rgb(185, 174, 167);
+}
+.pf-notif-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 10px;
+}
+
+/* ===========================
+   RESPONSIVE — TABLET (≤ 900px)
+=========================== */
+@media (max-width: 900px) {
+  .pf-navbar { padding: 0 16px; }
+  .pf-hamburger { display: flex; }
+  .pf-mobile-bell-wrapper { display: block; }
+  .pf-navbar-links { display: none; }
+  .pf-upload-btn { display: none; }
+  .hg-dashboard-btn { display: none; }
+
+  .pf-main-content { padding: 24px 16px; }
+
+  .pf-card {
+    flex-direction: column;
+    align-items: center;
+    padding: 36px 24px 28px;
+    gap: 24px;
+  }
+  .pf-card-right { align-items: center; text-align: center; width: 100%; }
+  .pf-detail { justify-content: center; }
+  .pf-social-links { justify-content: center; }
+  .pf-social-inputs { width: 100%; }
+  .pf-card-actions { top: 12px; right: 12px; }
+}
+
+/* ===========================
+   RESPONSIVE — MOBILE (≤ 580px)
+=========================== */
+@media (max-width: 580px) {
+  .pf-navbar { padding: 0 12px; height: 56px; }
+  .pf-navbar-logo { font-size: 15px; }
+  .pf-logo-icon { font-size: 18px; }
+  .pf-main-content { padding: 16px 12px; min-height: calc(100vh - 56px); }
+
+  .pf-card { padding: 28px 16px 24px; }
+  .pf-name { font-size: 22px; }
+  .pf-input, .pf-textarea { font-size: 13px; }
+}
