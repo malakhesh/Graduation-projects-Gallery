@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react"
+import { useNavigate } from "react-router-dom"
 import { getReports, deleteReport, resolveReport, resolveCommentReport } from "./reports.js"
+import { getProj } from "./projects.js"
+import MagicBookEmpty from "./Magicbookempty.js" // ✅ fixed import position
 
 // ─────────────────────────────────────────────────────────────────────────────
 // helpers
@@ -17,6 +20,17 @@ function isCommentReport(projectId) {
 
 function shortId(id = "") {
   return id.length > 14 ? id.slice(0, 7) + "…" + id.slice(-5) : id
+}
+
+// Extract real projectId and comment index from encoded comment report id
+function parseCommentReport(encodedId) {
+  const marker = "_comment_"
+  const markerIdx = encodedId.indexOf(marker)
+  if (markerIdx === -1) return { projectId: encodedId, commentIndex: null }
+  return {
+    projectId: encodedId.slice(0, markerIdx),
+    commentIndex: parseInt(encodedId.slice(markerIdx + marker.length), 10),
+  }
 }
 
 const ADMIN_ROLE = "admin"
@@ -64,7 +78,8 @@ function EmptyState() {
     <div style={{
       display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center",
-      gap: "14px", flex: 1, minHeight: "300px",
+      gap: "14px", flex: 1, minHeight: "350px",paddingTop: "20px", 
+      overflow: "visible",
       animation: "fadeUp 0.5s ease",
     }}>
       <div style={{ fontSize: "64px", lineHeight: 1 }}>📭</div>
@@ -203,20 +218,55 @@ function ConfirmModal({ modal, onCancel, onConfirm }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function AdminReports({ onBack }) {
-  const [reports, setReports]         = useState([])
-  const [loading, setLoading]         = useState(true)
+  const navigate = useNavigate()
+  const [reports, setReports]             = useState([])
+  const [loading, setLoading]             = useState(true)
   const [actionLoading, setActionLoading] = useState({})
-  const [toast, setToast]             = useState(null)
-  const [confirmModal, setConfirmModal] = useState(null)
-  const [hoveredRow, setHoveredRow]   = useState(null)
-  const [hoveredBtn, setHoveredBtn]   = useState(null)
+  const [toast, setToast]                 = useState(null)
+  const [confirmModal, setConfirmModal]   = useState(null)
+  const [hoveredRow, setHoveredRow]       = useState(null)
+  const [hoveredBtn, setHoveredBtn]       = useState(null)
+
+  // enriched data: projectTitle and commentText fetched from Firestore
+  const [enriched, setEnriched] = useState({}) // { [reportId]: { title?, commentText? } }
 
   // ── fetch ─────────────────────────────────────────────────────────────────
   const fetchAll = useCallback(async () => {
     setLoading(true)
-    const data = await getReports(ADMIN_ROLE) // fixed: pass ADMIN_ROLE
-    setReports(Array.isArray(data) ? data : [])
+    const data = await getReports(ADMIN_ROLE)
+    const arr = Array.isArray(data) ? data : []
+    setReports(arr)
     setLoading(false)
+
+    // Enrich each report with project title / comment text
+    const enrichMap = {}
+    await Promise.all(arr.map(async (rep) => {
+      if (!rep.projectId) return
+      const isComment = isCommentReport(rep.projectId)
+      const { projectId, commentIndex } = isComment
+        ? parseCommentReport(rep.projectId)
+        : { projectId: rep.projectId, commentIndex: null }
+
+      const proj = await getProj(projectId)
+      if (!proj || proj === "no-proj" || proj === "get-fail") return
+
+      if (isComment && commentIndex !== null) {
+        const comments = Array.isArray(proj.comments) ? proj.comments : []
+        const comment = comments[commentIndex]
+        enrichMap[rep.id] = {
+          projectId,
+          title: proj.title || null,
+          commentText: comment?.text || comment?.content || null,
+        }
+      } else {
+        enrichMap[rep.id] = {
+          projectId,
+          title: proj.title || null,
+          commentText: null,
+        }
+      }
+    }))
+    setEnriched(enrichMap)
   }, [])
 
   useEffect(() => { fetchAll() }, [fetchAll])
@@ -236,7 +286,7 @@ function AdminReports({ onBack }) {
 
     let result
     if (type === "dismiss") {
-      result = await deleteReport(reportId, ADMIN_ROLE) // fixed: pass ADMIN_ROLE
+      result = await deleteReport(reportId, ADMIN_ROLE)
       showToast(
         result === "dismiss-ok" ? "Report dismissed successfully." : "Failed to dismiss report.",
         result === "dismiss-ok"
@@ -259,6 +309,18 @@ function AdminReports({ onBack }) {
 
     setActionLoading((p) => { const n = { ...p }; delete n[reportId]; return n })
     fetchAll()
+  }
+
+  // ── navigate to project or comment ────────────────────────────────────────
+  const handleGoToContent = (rep) => {
+    const info = enriched[rep.id]
+    if (!info?.projectId) return
+    if (isCommentReport(rep.projectId)) {
+      // go to project page, comment will be visible inside the modal
+      navigate(`/project/${info.projectId}?scrollToComments=true`)
+    } else {
+      navigate(`/project/${info.projectId}`)
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -333,6 +395,7 @@ function AdminReports({ onBack }) {
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #c9a882; border-radius: 10px; }
+        .content-link:hover { text-decoration: underline; opacity: 0.85; }
       `}</style>
 
       <Toast toast={toast} />
@@ -367,7 +430,6 @@ function AdminReports({ onBack }) {
               textTransform: "uppercase",
             }}>Dashboard</h2>
 
-            {/* Back link */}
             <button
               onClick={onBack}
               onMouseEnter={() => setHoveredBtn("back")}
@@ -387,7 +449,6 @@ function AdminReports({ onBack }) {
               ← Back
             </button>
 
-            {/* Active page indicator */}
             <div style={{
               marginTop: "16px",
               padding: "10px 12px", borderRadius: "10px",
@@ -402,7 +463,6 @@ function AdminReports({ onBack }) {
             </div>
           </div>
 
-          {/* Stats pill at bottom of sidebar */}
           {!loading && (
             <div style={{
               backgroundColor: "rgba(111,78,55,0.1)",
@@ -436,11 +496,7 @@ function AdminReports({ onBack }) {
           overflowY: "auto",
         }}>
 
-          {/* Page header */}
-          <div style={{
-            marginBottom: "36px",
-            animation: "fadeUp 0.4s ease",
-          }}>
+          <div style={{ marginBottom: "36px", animation: "fadeUp 0.4s ease" }}>
             <div style={{ display: "flex", alignItems: "baseline", gap: "14px", flexWrap: "wrap" }}>
               <h1 style={{
                 fontFamily: "'Georgia', serif",
@@ -463,20 +519,13 @@ function AdminReports({ onBack }) {
                 </span>
               )}
             </div>
-            <p style={{
-              color: "#8a6245", fontSize: "14px",
-              margin: "8px 0 0", lineHeight: 1.5,
-            }}>
+            <p style={{ color: "#8a6245", fontSize: "14px", margin: "8px 0 0", lineHeight: 1.5 }}>
               Review flagged content and take action — dismiss or remove.
             </p>
-
-            {/* Decorative rule */}
             <div style={{
-              marginTop: "20px",
-              height: "3px",
+              marginTop: "20px", height: "3px",
               background: "linear-gradient(to right, #6F4E37, #c9a882, transparent)",
-              borderRadius: "4px",
-              width: "280px",
+              borderRadius: "4px", width: "280px",
             }} />
           </div>
 
@@ -484,7 +533,7 @@ function AdminReports({ onBack }) {
           {loading ? (
             <Spinner />
           ) : reports.length === 0 ? (
-            <EmptyState />
+            <MagicBookEmpty />
           ) : (
             <div style={{
               backgroundColor: "rgba(253,246,238,0.72)",
@@ -501,7 +550,7 @@ function AdminReports({ onBack }) {
                     <tr>
                       <th style={{ ...TH, width: "44px" }}>#</th>
                       <th style={TH}>Type</th>
-                      <th style={TH}>Project / Content ID</th>
+                      <th style={TH}>Project / Comment</th>
                       <th style={TH}>Reason</th>
                       <th style={TH}>Reporter</th>
                       <th style={TH}>Date</th>
@@ -513,6 +562,7 @@ function AdminReports({ onBack }) {
                       const isComment = isCommentReport(rep.projectId)
                       const acting    = !!actionLoading[rep.id]
                       const rowHov    = hoveredRow === rep.id
+                      const info      = enriched[rep.id]
 
                       return (
                         <tr
@@ -536,27 +586,70 @@ function AdminReports({ onBack }) {
                             <TypePill isComment={isComment} />
                           </td>
 
-                          {/* ID */}
-                          <td style={{ ...TD }}>
-                            <span
-                              title={rep.projectId}
-                              style={{
-                                fontFamily: "monospace",
-                                fontSize: "12px",
+                          {/* Project / Comment — clickable */}
+                          <td style={{ ...TD, maxWidth: "220px" }}>
+                            {info ? (
+                              <div
+                                className="content-link"
+                                onClick={() => handleGoToContent(rep)}
+                                style={{
+                                  cursor: "pointer",
+                                  color: "#5a3825",
+                                  fontWeight: "600",
+                                  fontSize: "13px",
+                                  lineHeight: 1.5,
+                                }}
+                              >
+                                {isComment ? (
+                                  // Show comment text + project name below
+                                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                    <span style={{
+                                      display: "-webkit-box",
+                                      WebkitLineClamp: 2,
+                                      WebkitBoxOrient: "vertical",
+                                      overflow: "hidden",
+                                      backgroundColor: "rgba(111,78,55,0.08)",
+                                      padding: "4px 8px",
+                                      borderRadius: "6px",
+                                      fontStyle: "italic",
+                                      fontSize: "12px",
+                                      color: "#3B2F2F",
+                                    }}>
+                                      💬 {info.commentText || "Comment text unavailable"}
+                                    </span>
+                                    {info.title && (
+                                      <span style={{ fontSize: "11px", color: "#9a7050" }}>
+                                        in: {info.title}
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  // Show project title
+                                  <span style={{
+                                    backgroundColor: "rgba(111,78,55,0.08)",
+                                    padding: "4px 10px",
+                                    borderRadius: "6px",
+                                    display: "inline-block",
+                                  }}>
+                                    📁 {info.title || shortId(rep.projectId)}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              // fallback while loading enriched data
+                              <span style={{
+                                fontFamily: "monospace", fontSize: "12px",
                                 backgroundColor: "rgba(111,78,55,0.08)",
-                                padding: "3px 8px",
-                                borderRadius: "6px",
+                                padding: "3px 8px", borderRadius: "6px",
                                 color: "#5a3825",
-                                letterSpacing: "0.3px",
-                                cursor: "default",
-                              }}
-                            >
-                              {shortId(rep.projectId || "—")}
-                            </span>
+                              }}>
+                                {shortId(rep.projectId || "—")}
+                              </span>
+                            )}
                           </td>
 
                           {/* Reason */}
-                          <td style={{ ...TD, maxWidth: "240px" }}>
+                          <td style={{ ...TD, maxWidth: "200px" }}>
                             <span style={{
                               display: "-webkit-box",
                               WebkitLineClamp: 2,
@@ -572,15 +665,10 @@ function AdminReports({ onBack }) {
 
                           {/* Reporter */}
                           <td style={{ ...TD }}>
-                            <span
-                              title={rep.reporterId}
-                              style={{
-                                fontFamily: "monospace",
-                                fontSize: "12px",
-                                color: "#7a5030",
-                                cursor: "default",
-                              }}
-                            >
+                            <span title={rep.reporterId} style={{
+                              fontFamily: "monospace", fontSize: "12px",
+                              color: "#7a5030", cursor: "default",
+                            }}>
                               {shortId(rep.reporterId || "—")}
                             </span>
                           </td>
