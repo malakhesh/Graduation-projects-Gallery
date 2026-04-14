@@ -4,6 +4,7 @@ import { checkRole } from "./auth.js";
 import { auth, db } from "./firebase.js";
 import { getDocs, collection, query, where } from "firebase/firestore";
 import "./Reviewprojects.css";
+import MagicBookEmpty from "./Magicbookempty.js" // ✅ fixed import position
 
 function Reviewprojects({ onBack }) {
   const [allProjects, setAllProjects] = useState([]);
@@ -98,13 +99,36 @@ function Reviewprojects({ onBack }) {
       )}
 
       {/* Empty State */}
+{/* Empty State */}
       {!loading && userRole === "admin" && displayed.length === 0 && (
-        <div className="rp-empty">
-          <p>
-            {filter === "pending"  ? "✅ No pending projects — all done!"  :
-             filter === "approved" ? "No approved projects yet."           :
-                                     "No rejected projects."}
-          </p>
+        <div style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          width: "100%",
+          minHeight: "60vh",
+        }}>
+          {filter === "pending" && (
+            <MagicBookEmpty
+              leftText={"Pending Log\n\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\n\nDate: Today\n\nNo projects are\nawaiting review.\n\nThe queue stands\nquite empty.\n\n\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015"}
+              rightText={"Observations:\n\n\u201cNo pending work\nto be done.\n\nAll submissions\nhave been handled.\n\nThe admin may rest\nand take their tea.\u201d\n\n\u2014 The Registry\n\n\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015"}
+              caption="— no pending projects —"
+            />
+          )}
+          {filter === "approved" && (
+            <MagicBookEmpty
+              leftText={"Approved Log\n\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\n\nDate: Today\n\nNo projects have\nbeen approved yet.\n\nThe list remains\nquite bare.\n\n\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015"}
+              rightText={"Observations:\n\n\u201cNo approvals\nrecorded herein.\n\nAwaiting worthy\nsubmissions.\n\nThe admin shall\nreview in time.\u201d\n\n\u2014 The Registry\n\n\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015"}
+              caption="— no approved projects —"
+            />
+          )}
+          {filter === "rejected" && (
+            <MagicBookEmpty
+              leftText={"Rejected Log\n\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\n\nDate: Today\n\nNo projects have\nbeen rejected.\n\nAll stands well\nin the registry.\n\n\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015"}
+              rightText={"Observations:\n\n\u201cNo rejections\nfound herein.\n\nAll submissions\nmet the standard.\n\nThe admin may rest\nand take their tea.\u201d\n\n\u2014 The Registry\n\n\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015\u2015"}
+              caption="— no rejected projects —"
+            />
+          )}
         </div>
       )}
 

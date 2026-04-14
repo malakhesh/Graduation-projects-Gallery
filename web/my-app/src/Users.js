@@ -65,7 +65,6 @@ function ViolationModal({ user, currentRole, onClose, onAddDone, onRemoveDone })
           </span>
         </p>
 
-        {/* ── Existing violations ── */}
         {existingViolations.length > 0 && (
           <>
             <label className="us-modal-label">Recorded Violations</label>
@@ -88,7 +87,6 @@ function ViolationModal({ user, currentRole, onClose, onAddDone, onRemoveDone })
           </>
         )}
 
-        {/* ── Add new violation (only if not yet at 3) ── */}
         {(user.violations || 0) < 3 && (
           <>
             <label className="us-modal-label">Add New Violation</label>
@@ -134,15 +132,96 @@ function ViolationModal({ user, currentRole, onClose, onAddDone, onRemoveDone })
 
 /* ─────────────────────────────────────── */
 
+function UserCard({ user, index, currentUid, updating, onToggleRole, onUnsuspend, onOpenModal }) {
+  const isSelf      = user.id === currentUid;
+  const isSuspended = user.status === "suspended";
+  const violations  = user.violations || 0;
+
+  return (
+    <div className={`us-card ${user.role === "admin" ? "us-card-admin" : ""} ${isSuspended ? "us-card-suspended" : ""}`}>
+      <div className="us-card-header">
+        <span className="us-card-index">{index + 1}</span>
+        <div className="us-card-name-wrap">
+          <span className="us-card-name">{user.name || "—"}</span>
+          {isSelf      && <span className="us-you-badge">You</span>}
+          {isSuspended && <span className="us-suspended-badge">🔒 Suspended</span>}
+        </div>
+        <span className={`us-role-badge ${user.role === "admin" ? "us-role-admin" : "us-role-client"}`}>
+          {user.role === "admin" ? "⭐ Admin" : "👤 Client"}
+        </span>
+      </div>
+
+      <div className="us-card-body">
+        <div className="us-card-row">
+          <span className="us-card-label">Email</span>
+          <span className="us-card-value">{user.email || "—"}</span>
+        </div>
+        <div className="us-card-row">
+          <span className="us-card-label">Year</span>
+          <span className="us-card-value">{user.year || "—"}</span>
+        </div>
+        <div className="us-card-row">
+          <span className="us-card-label">Violations</span>
+          <span className={`us-violations-count ${
+            violations === 0 ? "" :
+            violations === 1 ? "us-v-warning" :
+            violations === 2 ? "us-v-danger"  :
+            "us-v-suspended"
+          }`}>
+            {violations} / 3
+          </span>
+        </div>
+      </div>
+
+      {!isSelf && (
+        <div className="us-card-actions">
+          <button
+            className={`us-role-toggle-btn ${user.role === "admin" ? "us-demote-btn" : "us-promote-btn"}`}
+            onClick={() => onToggleRole(user)}
+            disabled={updating === user.id + "_role"}
+          >
+            {updating === user.id + "_role" ? "..." : user.role === "admin" ? "Remove Admin" : "Make Admin"}
+          </button>
+
+          {(!isSuspended || violations > 0) && (
+            <button className="us-violation-btn" onClick={() => onOpenModal(user)}>
+              ⚠️ {violations > 0 ? `Violations (${violations})` : "Violation"}
+            </button>
+          )}
+
+          {isSuspended && (
+            <button
+              className="us-unsuspend-btn"
+              onClick={() => onUnsuspend(user)}
+              disabled={updating === user.id + "_unsuspend"}
+            >
+              {updating === user.id + "_unsuspend" ? "..." : "✅ Unsuspend"}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────── */
+
 function Users({ onBack }) {
   const [users,       setUsers]       = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [filter,      setFilter]      = useState("all");
   const [allowed,     setAllowed]     = useState(false);
-  const [currentRole, setCurrentRole] = useState(null); // ← محفوظ مرة واحدة
+  const [currentRole, setCurrentRole] = useState(null);
   const [updating,    setUpdating]    = useState(null);
   const [search,      setSearch]      = useState("");
   const [modalUser,   setModalUser]   = useState(null);
+  const [isMobile,    setIsMobile]    = useState(window.innerWidth <= 640);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 640);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const init = async () => {
@@ -156,7 +235,7 @@ function Users({ onBack }) {
       }
 
       setAllowed(true);
-      setCurrentRole(role); // ← بنحفظه هنا بس
+      setCurrentRole(role);
 
       const snapshot = await getDocs(collection(db, "users"));
       const arr = [];
@@ -226,7 +305,6 @@ function Users({ onBack }) {
     );
   };
 
-  // ── حسابات الـ stats من الـ users state مباشرة ──
   const currentUid = auth.currentUser?.uid;
   const admins     = users.filter((u) => u.role === "admin").length;
   const clients    = users.filter((u) => u.role !== "admin").length;
@@ -250,7 +328,6 @@ function Users({ onBack }) {
   return (
     <div className="us-page">
 
-      {/* Modal */}
       {modalUser && (
         <ViolationModal
           user={modalUser}
@@ -273,7 +350,6 @@ function Users({ onBack }) {
         </div>
       </div>
 
-      {/* Loading */}
       {loading && (
         <div className="us-loading">
           <div className="us-spinner" />
@@ -281,14 +357,12 @@ function Users({ onBack }) {
         </div>
       )}
 
-      {/* No Permission */}
       {!loading && !allowed && (
         <div className="us-empty">
           <p>⛔ You don't have permission to view users.</p>
         </div>
       )}
 
-      {/* Search + Filter */}
       {!loading && allowed && (
         <div className="us-toolbar">
           <div className="us-search-wrapper">
@@ -320,112 +394,123 @@ function Users({ onBack }) {
         </div>
       )}
 
-      {/* Empty */}
       {!loading && allowed && displayed.length === 0 && (
         <div className="us-empty">
           <p>{search ? `No results for "${search}"` : "No users found."}</p>
         </div>
       )}
 
-      {/* Table */}
+      {/* Desktop: Table — Mobile: Cards */}
       {!loading && allowed && displayed.length > 0 && (
-        <div className="us-table-wrapper">
-          <table className="us-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Year</th>
-                <th>Violations</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {displayed.map((user, index) => {
-                const isSelf      = user.id === currentUid;
-                const isSuspended = user.status === "suspended";
-                const violations  = user.violations || 0;
+        isMobile ? (
+          <div className="us-cards-list">
+            {displayed.map((user, index) => (
+              <UserCard
+                key={user.id}
+                user={user}
+                index={index}
+                currentUid={currentUid}
+                updating={updating}
+                onToggleRole={handleToggleRole}
+                onUnsuspend={handleUnsuspend}
+                onOpenModal={setModalUser}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="us-table-wrapper">
+            <table className="us-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Year</th>
+                  <th>Violations</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {displayed.map((user, index) => {
+                  const isSelf      = user.id === currentUid;
+                  const isSuspended = user.status === "suspended";
+                  const violations  = user.violations || 0;
 
-                return (
-                  <tr
-                    key={user.id}
-                    className={`
-                      ${user.role === "admin" ? "us-row-admin" : ""}
-                      ${isSuspended ? "us-row-suspended" : ""}
-                    `.trim()}
-                  >
-                    <td>{index + 1}</td>
-                    <td>
-                      {user.name || "—"}
-                      {isSelf      && <span className="us-you-badge">You</span>}
-                      {isSuspended && <span className="us-suspended-badge">🔒 Suspended</span>}
-                    </td>
-                    <td>{user.email || "—"}</td>
-                    <td>
-                      <span className={`us-role-badge ${user.role === "admin" ? "us-role-admin" : "us-role-client"}`}>
-                        {user.role === "admin" ? "⭐ Admin" : "👤 Client"}
-                      </span>
-                    </td>
-                    <td>{user.year || "—"}</td>
-                    <td>
-                      <span className={`us-violations-count ${
-                        violations === 0 ? "" :
-                        violations === 1 ? "us-v-warning" :
-                        violations === 2 ? "us-v-danger"  :
-                        "us-v-suspended"
-                      }`}>
-                        {violations} / 3
-                      </span>
-                    </td>
-                    <td>
-                      {isSelf ? (
-                        <span className="us-self-note">—</span>
-                      ) : (
-                        <div className="us-actions">
-
-                          {/* Role toggle */}
-                          <button
-                            className={`us-role-toggle-btn ${user.role === "admin" ? "us-demote-btn" : "us-promote-btn"}`}
-                            onClick={() => handleToggleRole(user)}
-                            disabled={updating === user.id + "_role"}
-                          >
-                            {updating === user.id + "_role"
-                              ? "..."
-                              : user.role === "admin" ? "Remove Admin" : "Make Admin"}
-                          </button>
-
-                          {/* Violations button */}
-                          {(!isSuspended || violations > 0) && (
+                  return (
+                    <tr
+                      key={user.id}
+                      className={`
+                        ${user.role === "admin" ? "us-row-admin" : ""}
+                        ${isSuspended ? "us-row-suspended" : ""}
+                      `.trim()}
+                    >
+                      <td>{index + 1}</td>
+                      <td>
+                        {user.name || "—"}
+                        {isSelf      && <span className="us-you-badge">You</span>}
+                        {isSuspended && <span className="us-suspended-badge">🔒 Suspended</span>}
+                      </td>
+                      <td>{user.email || "—"}</td>
+                      <td>
+                        <span className={`us-role-badge ${user.role === "admin" ? "us-role-admin" : "us-role-client"}`}>
+                          {user.role === "admin" ? "⭐ Admin" : "👤 Client"}
+                        </span>
+                      </td>
+                      <td>{user.year || "—"}</td>
+                      <td>
+                        <span className={`us-violations-count ${
+                          violations === 0 ? "" :
+                          violations === 1 ? "us-v-warning" :
+                          violations === 2 ? "us-v-danger"  :
+                          "us-v-suspended"
+                        }`}>
+                          {violations} / 3
+                        </span>
+                      </td>
+                      <td>
+                        {isSelf ? (
+                          <span className="us-self-note">—</span>
+                        ) : (
+                          <div className="us-actions">
                             <button
-                              className="us-violation-btn"
-                              onClick={() => setModalUser(user)}
+                              className={`us-role-toggle-btn ${user.role === "admin" ? "us-demote-btn" : "us-promote-btn"}`}
+                              onClick={() => handleToggleRole(user)}
+                              disabled={updating === user.id + "_role"}
                             >
-                              ⚠️ {violations > 0 ? `Violations (${violations})` : "Violation"}
+                              {updating === user.id + "_role"
+                                ? "..."
+                                : user.role === "admin" ? "Remove Admin" : "Make Admin"}
                             </button>
-                          )}
 
-                          {/* Unsuspend */}
-                          {isSuspended && (
-                            <button
-                              className="us-unsuspend-btn"
-                              onClick={() => handleUnsuspend(user)}
-                              disabled={updating === user.id + "_unsuspend"}
-                            >
-                              {updating === user.id + "_unsuspend" ? "..." : "✅ Unsuspend"}
-                            </button>
-                          )}
+                            {(!isSuspended || violations > 0) && (
+                              <button
+                                className="us-violation-btn"
+                                onClick={() => setModalUser(user)}
+                              >
+                                ⚠️ {violations > 0 ? `Violations (${violations})` : "Violation"}
+                              </button>
+                            )}
 
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                            {isSuspended && (
+                              <button
+                                className="us-unsuspend-btn"
+                                onClick={() => handleUnsuspend(user)}
+                                disabled={updating === user.id + "_unsuspend"}
+                              >
+                                {updating === user.id + "_unsuspend" ? "..." : "✅ Unsuspend"}
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )
       )}
     </div>
   );

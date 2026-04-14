@@ -2,10 +2,6 @@ import React, { useState, useEffect } from "react"
 import { db } from "./firebase.js"
 import { doc, getDoc, setDoc } from "firebase/firestore"
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Firestore helpers — reads/writes to settings/siteConfig
-// ─────────────────────────────────────────────────────────────────────────────
-
 const SETTINGS_REF = () => doc(db, "settings", "siteConfig")
 
 async function loadSettings() {
@@ -23,27 +19,19 @@ async function saveSettings(data) {
   } catch { return "fail" }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// defaults
-// ─────────────────────────────────────────────────────────────────────────────
-
 const DEFAULTS = {
   siteName: "",
-  welcomeMessage: "",
   maintenanceMode: false,
   registrationOpen: true,
   projectUploadOpen: true,
   autoApprove: false,
+  maxProjectsPerUser: 3,
   categories: [],
   tags: [],
   notifyOnNewProject: true,
   notifyOnNewUser: true,
   notifyOnReport: true,
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// small reusable pieces
-// ─────────────────────────────────────────────────────────────────────────────
 
 function SectionCard({ icon, title, children }) {
   return (
@@ -168,8 +156,6 @@ function TagManager({ label, sublabel, items, onChange }) {
       {sublabel && (
         <div style={{ fontSize: "11px", color: "#9a7050", marginBottom: "8px" }}>{sublabel}</div>
       )}
-
-      {/* existing items */}
       <div style={{
         display: "flex", flexWrap: "wrap", gap: "8px",
         marginBottom: "10px", minHeight: "32px",
@@ -197,8 +183,6 @@ function TagManager({ label, sublabel, items, onChange }) {
           </span>
         ))}
       </div>
-
-      {/* add input */}
       <div style={{ display: "flex", gap: "8px" }}>
         <input
           type="text"
@@ -257,10 +241,6 @@ function Toast({ toast }) {
   )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Main page
-// ─────────────────────────────────────────────────────────────────────────────
-
 function DashboardSettings({ onBack }) {
   const [settings, setSettings] = useState(DEFAULTS)
   const [loading, setLoading]   = useState(true)
@@ -268,7 +248,6 @@ function DashboardSettings({ onBack }) {
   const [toast, setToast]       = useState(null)
   const [hoveredBtn, setHoveredBtn] = useState(null)
 
-  // ── load ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     loadSettings().then((data) => {
       if (data) setSettings({ ...DEFAULTS, ...data })
@@ -276,7 +255,6 @@ function DashboardSettings({ onBack }) {
     })
   }, [])
 
-  // ── helpers ───────────────────────────────────────────────────────────────
   const set = (key, val) => setSettings((prev) => ({ ...prev, [key]: val }))
 
   const showToast = (msg, ok = true) => {
@@ -292,9 +270,15 @@ function DashboardSettings({ onBack }) {
     else showToast("Failed to save settings.", false)
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // render
-  // ─────────────────────────────────────────────────────────────────────────
+  const counterBtn = (action) => ({
+    width: "34px", height: "34px", borderRadius: "50%",
+    border: "1.5px solid rgba(111,78,55,0.3)",
+    backgroundColor: hoveredBtn === action ? "#e8d5bf" : "rgba(255,255,255,0.6)",
+    fontSize: "18px", cursor: "pointer",
+    color: "#6F4E37", fontWeight: "bold",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    transition: "all 0.2s",
+  })
 
   return (
     <>
@@ -317,7 +301,7 @@ function DashboardSettings({ onBack }) {
         background: "linear-gradient(160deg, #f0e5d8 0%, #dcc4a8 50%, #c9a882 100%)",
       }}>
 
-        {/* ── Sidebar ───────────────────────────────────────────────────── */}
+        {/* Sidebar */}
         <aside style={{
           position: "fixed", left: 0, top: 0, bottom: 0, width: "200px",
           backgroundColor: "#f0e5d8",
@@ -366,7 +350,6 @@ function DashboardSettings({ onBack }) {
             </div>
           </div>
 
-          {/* save button in sidebar */}
           <button
             onClick={handleSave}
             disabled={saving || loading}
@@ -386,23 +369,19 @@ function DashboardSettings({ onBack }) {
           </button>
         </aside>
 
-        {/* ── Main ──────────────────────────────────────────────────────── */}
+        {/* Main */}
         <main style={{
           marginLeft: "200px", flex: 1,
           padding: "40px 48px",
           overflowY: "auto", minHeight: "100vh",
         }}>
-
-          {/* Page header */}
           <div style={{ marginBottom: "36px", animation: "fadeUp 0.4s ease" }}>
             <h1 style={{
               fontFamily: "'Georgia', serif",
               fontSize: "34px", fontWeight: "bold",
               color: "#3B1F0F", margin: "0 0 6px",
               letterSpacing: "0.5px",
-            }}>
-              Site Settings
-            </h1>
+            }}>Site Settings</h1>
             <p style={{ color: "#8a6245", fontSize: "14px", margin: 0 }}>
               Control everything about how the site behaves.
             </p>
@@ -431,7 +410,7 @@ function DashboardSettings({ onBack }) {
           ) : (
             <div style={{ maxWidth: "720px", animation: "fadeUp 0.45s ease" }}>
 
-              {/* ── 1. General ──────────────────────────────────────────── */}
+              {/* General */}
               <SectionCard icon="🏫" title="General">
                 <TextInput
                   label="Site Name"
@@ -440,16 +419,9 @@ function DashboardSettings({ onBack }) {
                   onChange={(v) => set("siteName", v)}
                   placeholder="e.g. Graduation Projects Catalog"
                 />
-                <TextInput
-                  label="Welcome Message"
-                  sublabel="Shown on the homepage hero section"
-                  value={settings.welcomeMessage}
-                  onChange={(v) => set("welcomeMessage", v)}
-                  placeholder="e.g. Explore all graduation projects…"
-                />
               </SectionCard>
 
-              {/* ── 2. Access Control ───────────────────────────────────── */}
+              {/* Access Control */}
               <SectionCard icon="🔐" title="Access Control">
                 <Toggle
                   checked={settings.maintenanceMode}
@@ -475,9 +447,51 @@ function DashboardSettings({ onBack }) {
                   label="Auto-Approve Projects"
                   sublabel="Skip review — projects go live immediately"
                 />
+
+                {/* Max Projects Counter */}
+                <div style={{ marginTop: "16px" }}>
+                  <label style={{
+                    display: "block", fontSize: "13px",
+                    fontWeight: "700", color: "#5a3825",
+                    marginBottom: "4px", letterSpacing: "0.3px",
+                  }}>Max Projects Per User</label>
+                  <div style={{ fontSize: "11px", color: "#9a7050", marginBottom: "10px" }}>
+                    Maximum number of projects each user can submit
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <button
+                      onClick={() => set("maxProjectsPerUser", Math.max(1, settings.maxProjectsPerUser - 1))}
+                      onMouseEnter={() => setHoveredBtn("minus")}
+                      onMouseLeave={() => setHoveredBtn(null)}
+                      style={counterBtn("minus")}
+                    >−</button>
+
+                    <div style={{
+                      width: "60px", height: "34px",
+                      borderRadius: "10px",
+                      border: "1.5px solid rgba(180,130,80,0.35)",
+                      backgroundColor: "rgba(255,255,255,0.6)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: "16px", fontWeight: "700", color: "#3B2F2F",
+                    }}>
+                      {settings.maxProjectsPerUser}
+                    </div>
+
+                    <button
+                      onClick={() => set("maxProjectsPerUser", Math.min(20, settings.maxProjectsPerUser + 1))}
+                      onMouseEnter={() => setHoveredBtn("plus")}
+                      onMouseLeave={() => setHoveredBtn(null)}
+                      style={counterBtn("plus")}
+                    >+</button>
+
+                    <span style={{ fontSize: "12px", color: "#9a7050" }}>
+                      projects per user (max 20)
+                    </span>
+                  </div>
+                </div>
               </SectionCard>
 
-              {/* ── 3. Categories & Tags ────────────────────────────────── */}
+              {/* Categories & Tags */}
               <SectionCard icon="🏷️" title="Categories & Tags">
                 <TagManager
                   label="Categories"
@@ -493,7 +507,7 @@ function DashboardSettings({ onBack }) {
                 />
               </SectionCard>
 
-              {/* ── 4. Notifications ────────────────────────────────────── */}
+              {/* Notifications */}
               <SectionCard icon="🔔" title="Admin Notifications">
                 <Toggle
                   checked={settings.notifyOnNewProject}
@@ -515,7 +529,7 @@ function DashboardSettings({ onBack }) {
                 />
               </SectionCard>
 
-              {/* ── bottom save ─────────────────────────────────────────── */}
+              {/* Bottom Save */}
               <div style={{ display: "flex", justifyContent: "flex-end", paddingBottom: "40px" }}>
                 <button
                   onClick={handleSave}

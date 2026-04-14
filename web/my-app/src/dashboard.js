@@ -8,6 +8,7 @@ import Projects from "./AllProjects.js";
 import AdminReports from "./Adminreports.js";
 import DashboardSettings from "./Dashboardsettings.js";
 import { getApproved, getPending, getRejected } from "./projects.js";
+import { getReports } from "./reports.js";
 
 // ── Pie helpers ──────────────────────────────────────────────────────────────
 
@@ -138,21 +139,42 @@ function Dashboard() {
   const [totalProjects, setTotalProjects] = useState(0);
   const [loadingChart, setLoadingChart] = useState(true);
 
+  // ── Dynamic counts ────────────────────────────────────────────────────────
+  const [pendingCount, setPendingCount] = useState(0);
+  const [reportsCount, setReportsCount] = useState(0);
+  const [reviewPct, setReviewPct] = useState(0);
+  const [reportPct, setReportPct] = useState(0);
+
   // Close sidebar when switching to desktop
   useEffect(() => {
     if (!isMobile) setSidebarOpen(false);
   }, [isMobile]);
 
   useEffect(() => {
-    const fetchDistribution = async () => {
-      const [approved, pending, rejected] = await Promise.all([
-        getApproved(), getPending(), getRejected(),
+    const fetchData = async () => {
+      const [approved, pending, rejected, reports] = await Promise.all([
+        getApproved(), getPending(), getRejected(), getReports("admin"),
       ]);
+
       const approvedArr = Array.isArray(approved) ? approved : [];
       const pendingArr  = Array.isArray(pending)  ? pending  : [];
       const rejectedArr = Array.isArray(rejected) ? rejected : [];
-      const all = [...approvedArr, ...pendingArr, ...rejectedArr];
+      const reportsArr  = Array.isArray(reports)  ? reports  : [];
 
+      // Dynamic counts
+      setPendingCount(pendingArr.length);
+      setReportsCount(reportsArr.length);
+
+      // Review bar: نسبة الـ pending من (approved + pending)
+      const totalReview = approvedArr.length + pendingArr.length;
+      setReviewPct(totalReview > 0 ? Math.round((pendingArr.length / totalReview) * 100) : 0);
+
+      // Report bar: نسبة الـ reports من إجمالي الـ projects
+      const totalAll = approvedArr.length + pendingArr.length + rejectedArr.length;
+      setReportPct(totalAll > 0 ? Math.round((reportsArr.length / totalAll) * 100) : 0);
+
+      // Chart
+      const all = [...approvedArr, ...pendingArr, ...rejectedArr];
       const categoryMap = {};
       all.forEach((p) => {
         const cat = p.category?.trim();
@@ -165,7 +187,7 @@ function Dashboard() {
       setSlices(buildSlices(categoryMap, total, 70, 70, 60));
       setLoadingChart(false);
     };
-    fetchDistribution();
+    fetchData();
   }, []);
 
   // ── view routing ──────────────────────────────────────────────────────────
@@ -285,7 +307,6 @@ function Dashboard() {
           }}
           aria-label="Toggle menu"
         >
-          {/* Hamburger lines → X when open */}
           {[0, 1, 2].map((i) => (
             <span key={i} style={{
               display: "block",
@@ -328,7 +349,6 @@ function Dashboard() {
         transition: isMobile ? "left 0.3s ease" : "none",
         boxShadow: isMobile && sidebarOpen ? "4px 0 20px rgba(0,0,0,0.2)" : "none",
       }}>
-        {/* Close button inside sidebar on mobile */}
         {isMobile && (
           <button
             onClick={() => setSidebarOpen(false)}
@@ -374,12 +394,14 @@ function Dashboard() {
               <span style={{ fontSize: isMobile ? "18px" : "22px", flexShrink: 0 }}>📋</span>
               <span style={{ fontSize: isMobile ? "16px" : "22px", fontWeight: "700", letterSpacing: "0.5px", color: "#3B1F0F", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>PROJECTS TO REVIEW</span>
             </div>
-            <div style={{ fontSize: isMobile ? "44px" : "56px", fontWeight: "800", color: "#3B2F2F", lineHeight: 1, textAlign: "center" }}>12</div>
+            <div style={{ fontSize: isMobile ? "44px" : "56px", fontWeight: "800", color: "#3B2F2F", lineHeight: 1, textAlign: "center" }}>
+              {pendingCount}
+            </div>
             <div>
               <div style={{ width: "100%", backgroundColor: "#c8a882", borderRadius: "10px", height: "8px", overflow: "hidden" }}>
-                <div style={{ width: "60%", backgroundColor: "#6F4E37", height: "100%", borderRadius: "10px", transition: "width 0.5s ease" }} />
+                <div style={{ width: `${reviewPct}%`, backgroundColor: "#6F4E37", height: "100%", borderRadius: "10px", transition: "width 0.5s ease" }} />
               </div>
-              <div style={{ fontSize: "12px", color: "#5C4033", marginTop: "4px" }}>60% reviewed</div>
+              <div style={{ fontSize: "12px", color: "#5C4033", marginTop: "4px" }}>{reviewPct}% pending review</div>
             </div>
           </div>
 
@@ -391,12 +413,14 @@ function Dashboard() {
               <span style={{ fontSize: isMobile ? "18px" : "22px", flexShrink: 0 }}>📝</span>
               <span style={{ fontSize: isMobile ? "16px" : "22px", fontWeight: "700", letterSpacing: "0.5px", color: "#3B1F0F", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>PROJECTS TO REPORT</span>
             </div>
-            <div style={{ fontSize: isMobile ? "44px" : "56px", fontWeight: "800", color: "#3B2F2F", lineHeight: 1, textAlign: "center" }}>7</div>
+            <div style={{ fontSize: isMobile ? "44px" : "56px", fontWeight: "800", color: "#3B2F2F", lineHeight: 1, textAlign: "center" }}>
+              {reportsCount}
+            </div>
             <div>
               <div style={{ width: "100%", backgroundColor: "#b89868", borderRadius: "10px", height: "8px", overflow: "hidden" }}>
-                <div style={{ width: "10%", backgroundColor: "#5C4033", height: "100%", borderRadius: "10px", transition: "width 0.5s ease" }} />
+                <div style={{ width: `${reportPct}%`, backgroundColor: "#5C4033", height: "100%", borderRadius: "10px", transition: "width 0.5s ease" }} />
               </div>
-              <div style={{ fontSize: "12px", color: "#5C4033", marginTop: "4px" }}>10% reported</div>
+              <div style={{ fontSize: "12px", color: "#5C4033", marginTop: "4px" }}>{reportPct}% of projects reported</div>
             </div>
           </div>
 
