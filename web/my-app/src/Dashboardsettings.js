@@ -41,20 +41,20 @@ function SectionCard({ icon, title, children }) {
       borderRadius: "16px",
       border: "1px solid rgba(200,168,130,0.3)",
       boxShadow: "0 6px 24px rgba(111,78,55,0.08)",
-      padding: "28px 32px",
-      marginBottom: "24px",
+      padding: "20px 20px",
+      marginBottom: "20px",
     }}>
       <div style={{
         display: "flex", alignItems: "center", gap: "10px",
-        marginBottom: "22px",
-        paddingBottom: "14px",
+        marginBottom: "18px",
+        paddingBottom: "12px",
         borderBottom: "2px solid rgba(180,130,80,0.2)",
       }}>
-        <span style={{ fontSize: "22px" }}>{icon}</span>
+        <span style={{ fontSize: "20px" }}>{icon}</span>
         <h2 style={{
           margin: 0,
           fontFamily: "'Georgia', serif",
-          fontSize: "18px", fontWeight: "bold",
+          fontSize: "16px", fontWeight: "bold",
           color: "#3B1F0F", letterSpacing: "0.3px",
         }}>{title}</h2>
       </div>
@@ -70,10 +70,16 @@ function Toggle({ checked, onChange, label, sublabel }) {
       justifyContent: "space-between",
       padding: "12px 0",
       borderBottom: "1px solid rgba(200,168,130,0.15)",
+      gap: "12px",
     }}>
-      <div>
+      <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: "14px", fontWeight: "600", color: "#3B2F2F" }}>{label}</div>
-        {sublabel && <div style={{ fontSize: "12px", color: "#9a7050", marginTop: "2px" }}>{sublabel}</div>}
+        {sublabel && (
+          <div style={{
+            fontSize: "12px", color: "#9a7050", marginTop: "2px",
+            whiteSpace: "normal", wordBreak: "break-word",
+          }}>{sublabel}</div>
+        )}
       </div>
       <div
         onClick={() => onChange(!checked)}
@@ -198,6 +204,7 @@ function TagManager({ label, sublabel, items, onChange }) {
             fontSize: "13px", color: "#3B2F2F",
             outline: "none",
             fontFamily: "'Poppins', sans-serif",
+            minWidth: 0,
           }}
           onFocus={(e) => e.target.style.borderColor = "#6F4E37"}
           onBlur={(e) => e.target.style.borderColor = "rgba(180,130,80,0.35)"}
@@ -205,12 +212,14 @@ function TagManager({ label, sublabel, items, onChange }) {
         <button
           onClick={add}
           style={{
-            padding: "8px 18px",
+            padding: "8px 16px",
             borderRadius: "8px", border: "none",
             backgroundColor: "#6F4E37", color: "#fff",
             fontWeight: "700", fontSize: "13px",
             cursor: "pointer",
             transition: "background-color 0.2s",
+            whiteSpace: "nowrap",
+            flexShrink: 0,
           }}
           onMouseEnter={(e) => e.target.style.backgroundColor = "#8B6347"}
           onMouseLeave={(e) => e.target.style.backgroundColor = "#6F4E37"}
@@ -226,14 +235,15 @@ function Toast({ toast }) {
     <>
       <style>{`@keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(-12px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }`}</style>
       <div style={{
-        position: "fixed", top: "22px", left: "50%",
+        position: "fixed", top: "16px", left: "50%",
         transform: "translateX(-50%)",
         backgroundColor: toast.ok ? "#3B2F2F" : "#7a1800",
-        color: "#fff", padding: "12px 26px",
+        color: "#fff", padding: "12px 20px",
         borderRadius: "14px", fontWeight: "700", fontSize: "13px",
         boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
         zIndex: 9999, letterSpacing: "0.4px",
         animation: "toastIn 0.25s ease", whiteSpace: "nowrap",
+        maxWidth: "90vw",
       }}>
         {toast.ok ? "✅" : "❌"} {toast.msg}
       </div>
@@ -246,7 +256,15 @@ function DashboardSettings({ onBack }) {
   const [loading, setLoading]   = useState(true)
   const [saving, setSaving]     = useState(false)
   const [toast, setToast]       = useState(null)
-  const [hoveredBtn, setHoveredBtn] = useState(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
 
   useEffect(() => {
     loadSettings().then((data) => {
@@ -254,6 +272,20 @@ function DashboardSettings({ onBack }) {
       setLoading(false)
     })
   }, [])
+
+  // Close sidebar on outside tap (mobile)
+  useEffect(() => {
+    if (!sidebarOpen) return
+    const handler = (e) => {
+      if (!e.target.closest("#sidebar")) setSidebarOpen(false)
+    }
+    document.addEventListener("mousedown", handler)
+    document.addEventListener("touchstart", handler)
+    return () => {
+      document.removeEventListener("mousedown", handler)
+      document.removeEventListener("touchstart", handler)
+    }
+  }, [sidebarOpen])
 
   const set = (key, val) => setSettings((prev) => ({ ...prev, [key]: val }))
 
@@ -268,17 +300,10 @@ function DashboardSettings({ onBack }) {
     setSaving(false)
     if (result === "ok") showToast("Settings saved successfully.")
     else showToast("Failed to save settings.", false)
+    if (isMobile) setSidebarOpen(false)
   }
 
-  const counterBtn = (action) => ({
-    width: "34px", height: "34px", borderRadius: "50%",
-    border: "1.5px solid rgba(111,78,55,0.3)",
-    backgroundColor: hoveredBtn === action ? "#e8d5bf" : "rgba(255,255,255,0.6)",
-    fontSize: "18px", cursor: "pointer",
-    color: "#6F4E37", fontWeight: "bold",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    transition: "all 0.2s",
-  })
+  const SIDEBAR_WIDTH = "200px"
 
   return (
     <>
@@ -287,13 +312,90 @@ function DashboardSettings({ onBack }) {
           from { opacity: 0; transform: translateY(14px); }
           to   { opacity: 1; transform: translateY(0); }
         }
+        @keyframes sidebarIn {
+          from { transform: translateX(-100%); }
+          to   { transform: translateX(0); }
+        }
         * { box-sizing: border-box; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #c9a882; border-radius: 10px; }
+
+        /* ── Responsive overrides ── */
+        @media (max-width: 767px) {
+          .ds-sidebar {
+            width: 220px !important;
+            transform: translateX(-100%);
+            transition: transform 0.28s ease !important;
+            box-shadow: 6px 0 28px rgba(0,0,0,0.18) !important;
+          }
+          .ds-sidebar.open {
+            transform: translateX(0) !important;
+            animation: none !important;
+          }
+          .ds-main {
+            margin-left: 0 !important;
+            padding: 72px 16px 32px !important;
+          }
+          .ds-overlay {
+            display: block !important;
+          }
+          .ds-hamburger {
+            display: flex !important;
+          }
+        }
+        @media (min-width: 768px) {
+          .ds-sidebar {
+            transform: translateX(0) !important;
+          }
+          .ds-hamburger {
+            display: none !important;
+          }
+          .ds-overlay {
+            display: none !important;
+          }
+        }
       `}</style>
 
       <Toast toast={toast} />
+
+      {/* Overlay for mobile */}
+      <div
+        className="ds-overlay"
+        onClick={() => setSidebarOpen(false)}
+        style={{
+          display: "none",
+          position: "fixed", inset: 0,
+          backgroundColor: "rgba(0,0,0,0.35)",
+          zIndex: 99,
+        }}
+      />
+
+      {/* Hamburger button — mobile only */}
+      <button
+        className="ds-hamburger"
+        onClick={() => setSidebarOpen((v) => !v)}
+        style={{
+          display: "none",
+          position: "fixed", top: "14px", left: "14px",
+          zIndex: 200,
+          width: "42px", height: "42px",
+          borderRadius: "10px", border: "none",
+          backgroundColor: "#6F4E37",
+          flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+          gap: "5px", cursor: "pointer",
+          boxShadow: "0 4px 14px rgba(111,78,55,0.35)",
+        }}
+        aria-label="Open menu"
+      >
+        {[0,1,2].map((i) => (
+          <div key={i} style={{
+            width: "20px", height: "2px",
+            backgroundColor: "#fff", borderRadius: "2px",
+          }} />
+        ))}
+      </button>
 
       <div style={{
         display: "flex", minHeight: "100vh", width: "100%",
@@ -302,15 +404,22 @@ function DashboardSettings({ onBack }) {
       }}>
 
         {/* Sidebar */}
-        <aside style={{
-          position: "fixed", left: 0, top: 0, bottom: 0, width: "200px",
-          backgroundColor: "#f0e5d8",
-          borderRight: "2px solid rgba(111,78,55,0.2)",
-          display: "flex", flexDirection: "column",
-          justifyContent: "space-between",
-          padding: "24px 20px", zIndex: 100,
-          boxShadow: "4px 0 20px rgba(111,78,55,0.08)",
-        }}>
+        <aside
+          id="sidebar"
+          className={`ds-sidebar${sidebarOpen ? " open" : ""}`}
+          style={{
+            position: "fixed", left: 0, top: 0, bottom: 0,
+            width: SIDEBAR_WIDTH,
+            backgroundColor: "#f0e5d8",
+            borderRight: "2px solid rgba(111,78,55,0.2)",
+            display: "flex", flexDirection: "column",
+            justifyContent: "space-between",
+            padding: "24px 20px", zIndex: 100,
+            boxShadow: "4px 0 20px rgba(111,78,55,0.08)",
+            transition: "transform 0.28s ease",
+            overflowY: "auto",
+          }}
+        >
           <div>
             <h2 style={{
               fontFamily: "'Georgia', serif",
@@ -320,21 +429,29 @@ function DashboardSettings({ onBack }) {
             }}>Dashboard</h2>
 
             <button
-              onClick={onBack}
-              onMouseEnter={() => setHoveredBtn("back")}
-              onMouseLeave={() => setHoveredBtn(null)}
+              onClick={() => { onBack?.(); setSidebarOpen(false) }}
               style={{
                 width: "100%", textAlign: "left",
                 background: "none", border: "none",
                 padding: "10px 12px", borderRadius: "10px",
                 cursor: "pointer", color: "#6F4E37",
-                fontWeight: hoveredBtn === "back" ? "700" : "600",
+                fontWeight: "600",
                 fontSize: "13px", letterSpacing: "0.5px",
-                backgroundColor: hoveredBtn === "back" ? "#e8d5bf" : "transparent",
-                transform: hoveredBtn === "back" ? "translateX(5px)" : "translateX(0)",
+                backgroundColor: "transparent",
                 transition: "all 0.25s ease",
                 display: "flex", alignItems: "center", gap: "8px",
-              }}>
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#e8d5bf"
+                e.currentTarget.style.fontWeight = "700"
+                e.currentTarget.style.transform = "translateX(5px)"
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent"
+                e.currentTarget.style.fontWeight = "600"
+                e.currentTarget.style.transform = "translateX(0)"
+              }}
+            >
               ← Back
             </button>
 
@@ -353,32 +470,39 @@ function DashboardSettings({ onBack }) {
           <button
             onClick={handleSave}
             disabled={saving || loading}
-            onMouseEnter={() => setHoveredBtn("save-side")}
-            onMouseLeave={() => setHoveredBtn(null)}
             style={{
               width: "100%", padding: "12px",
               borderRadius: "12px", border: "none",
-              backgroundColor: saving ? "#a07850" : hoveredBtn === "save-side" ? "#8B6347" : "#6F4E37",
+              backgroundColor: saving ? "#a07850" : "#6F4E37",
               color: "#fff", fontWeight: "700", fontSize: "13px",
               cursor: saving ? "not-allowed" : "pointer",
               transition: "all 0.2s ease",
               boxShadow: "0 4px 14px rgba(111,78,55,0.3)",
               letterSpacing: "0.4px",
-            }}>
+              marginTop: "24px",
+            }}
+            onMouseEnter={(e) => { if (!saving) e.currentTarget.style.backgroundColor = "#8B6347" }}
+            onMouseLeave={(e) => { if (!saving) e.currentTarget.style.backgroundColor = "#6F4E37" }}
+          >
             {saving ? "Saving…" : "💾 Save Changes"}
           </button>
         </aside>
 
-        {/* Main */}
-        <main style={{
-          marginLeft: "200px", flex: 1,
-          padding: "40px 48px",
-          overflowY: "auto", minHeight: "100vh",
-        }}>
-          <div style={{ marginBottom: "36px", animation: "fadeUp 0.4s ease" }}>
+        {/* Main content */}
+        <main
+          className="ds-main"
+          style={{
+            marginLeft: SIDEBAR_WIDTH,
+            flex: 1,
+            padding: "40px 48px",
+            overflowY: "auto", minHeight: "100vh",
+          }}
+        >
+          <div style={{ marginBottom: "30px", animation: "fadeUp 0.4s ease" }}>
             <h1 style={{
               fontFamily: "'Georgia', serif",
-              fontSize: "34px", fontWeight: "bold",
+              fontSize: "clamp(24px, 5vw, 34px)",
+              fontWeight: "bold",
               color: "#3B1F0F", margin: "0 0 6px",
               letterSpacing: "0.5px",
             }}>Site Settings</h1>
@@ -386,9 +510,9 @@ function DashboardSettings({ onBack }) {
               Control everything about how the site behaves.
             </p>
             <div style={{
-              marginTop: "18px", height: "3px",
+              marginTop: "16px", height: "3px",
               background: "linear-gradient(to right, #6F4E37, #c9a882, transparent)",
-              borderRadius: "4px", width: "260px",
+              borderRadius: "4px", width: "min(260px, 80%)",
             }} />
           </div>
 
@@ -408,7 +532,10 @@ function DashboardSettings({ onBack }) {
               </span>
             </div>
           ) : (
-            <div style={{ maxWidth: "720px", animation: "fadeUp 0.45s ease" }}>
+            <div style={{
+              maxWidth: "720px", width: "100%",
+              animation: "fadeUp 0.45s ease",
+            }}>
 
               {/* General */}
               <SectionCard icon="🏫" title="General">
@@ -458,30 +585,49 @@ function DashboardSettings({ onBack }) {
                   <div style={{ fontSize: "11px", color: "#9a7050", marginBottom: "10px" }}>
                     Maximum number of projects each user can submit
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
                     <button
                       onClick={() => set("maxProjectsPerUser", Math.max(1, settings.maxProjectsPerUser - 1))}
-                      onMouseEnter={() => setHoveredBtn("minus")}
-                      onMouseLeave={() => setHoveredBtn(null)}
-                      style={counterBtn("minus")}
+                      style={{
+                        width: "38px", height: "38px", borderRadius: "50%",
+                        border: "1.5px solid rgba(111,78,55,0.3)",
+                        backgroundColor: "rgba(255,255,255,0.6)",
+                        fontSize: "20px", cursor: "pointer",
+                        color: "#6F4E37", fontWeight: "bold",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        transition: "all 0.2s", flexShrink: 0,
+                        touchAction: "manipulation",
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#e8d5bf"}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"}
                     >−</button>
 
                     <div style={{
-                      width: "60px", height: "34px",
+                      width: "60px", height: "38px",
                       borderRadius: "10px",
                       border: "1.5px solid rgba(180,130,80,0.35)",
                       backgroundColor: "rgba(255,255,255,0.6)",
                       display: "flex", alignItems: "center", justifyContent: "center",
                       fontSize: "16px", fontWeight: "700", color: "#3B2F2F",
+                      flexShrink: 0,
                     }}>
                       {settings.maxProjectsPerUser}
                     </div>
 
                     <button
                       onClick={() => set("maxProjectsPerUser", Math.min(20, settings.maxProjectsPerUser + 1))}
-                      onMouseEnter={() => setHoveredBtn("plus")}
-                      onMouseLeave={() => setHoveredBtn(null)}
-                      style={counterBtn("plus")}
+                      style={{
+                        width: "38px", height: "38px", borderRadius: "50%",
+                        border: "1.5px solid rgba(111,78,55,0.3)",
+                        backgroundColor: "rgba(255,255,255,0.6)",
+                        fontSize: "20px", cursor: "pointer",
+                        color: "#6F4E37", fontWeight: "bold",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        transition: "all 0.2s", flexShrink: 0,
+                        touchAction: "manipulation",
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#e8d5bf"}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"}
                     >+</button>
 
                     <span style={{ fontSize: "12px", color: "#9a7050" }}>
@@ -534,18 +680,22 @@ function DashboardSettings({ onBack }) {
                 <button
                   onClick={handleSave}
                   disabled={saving || loading}
-                  onMouseEnter={() => setHoveredBtn("save-bot")}
-                  onMouseLeave={() => setHoveredBtn(null)}
                   style={{
                     padding: "13px 36px",
                     borderRadius: "12px", border: "none",
-                    backgroundColor: saving ? "#a07850" : hoveredBtn === "save-bot" ? "#8B6347" : "#6F4E37",
+                    backgroundColor: saving ? "#a07850" : "#6F4E37",
                     color: "#fff", fontWeight: "700", fontSize: "14px",
                     cursor: saving ? "not-allowed" : "pointer",
                     transition: "all 0.2s ease",
                     boxShadow: "0 6px 20px rgba(111,78,55,0.3)",
                     letterSpacing: "0.5px",
-                  }}>
+                    width: "100%",
+                    maxWidth: "280px",
+                    touchAction: "manipulation",
+                  }}
+                  onMouseEnter={(e) => { if (!saving) e.currentTarget.style.backgroundColor = "#8B6347" }}
+                  onMouseLeave={(e) => { if (!saving) e.currentTarget.style.backgroundColor = "#6F4E37" }}
+                >
                   {saving ? "Saving…" : "💾 Save Changes"}
                 </button>
               </div>
