@@ -31,6 +31,7 @@ const DEFAULTS = {
   notifyOnNewProject: true,
   notifyOnNewUser: true,
   notifyOnReport: true,
+  contactOpen: true,         // ← new
 }
 
 function SectionCard({ icon, title, children }) {
@@ -273,7 +274,6 @@ function DashboardSettings({ onBack }) {
     })
   }, [])
 
-  // Close sidebar on outside tap (mobile)
   useEffect(() => {
     if (!sidebarOpen) return
     const handler = (e) => {
@@ -321,7 +321,6 @@ function DashboardSettings({ onBack }) {
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #c9a882; border-radius: 10px; }
 
-        /* ── Responsive overrides ── */
         @media (max-width: 767px) {
           .ds-sidebar {
             width: 220px !important;
@@ -359,7 +358,6 @@ function DashboardSettings({ onBack }) {
 
       <Toast toast={toast} />
 
-      {/* Overlay for mobile */}
       <div
         className="ds-overlay"
         onClick={() => setSidebarOpen(false)}
@@ -371,7 +369,6 @@ function DashboardSettings({ onBack }) {
         }}
       />
 
-      {/* Hamburger button — mobile only */}
       <button
         className="ds-hamburger"
         onClick={() => setSidebarOpen((v) => !v)}
@@ -634,6 +631,39 @@ function DashboardSettings({ onBack }) {
                       projects per user (max 20)
                     </span>
                   </div>
+                </div>
+              </SectionCard>
+
+              {/* Contact Settings — NEW */}
+              <SectionCard icon="✉️" title="Contact & Messaging">
+                <Toggle
+                  checked={settings.contactOpen}
+                  onChange={(v) => set("contactOpen", v)}
+                  label="Allow Contact Messages"
+                  sublabel="When disabled, users cannot send messages through the contact form"
+                />
+                <div style={{
+                  marginTop: "12px",
+                  padding: "10px 14px",
+                  borderRadius: "10px",
+                  backgroundColor: settings.contactOpen
+                    ? "rgba(39,174,96,0.08)"
+                    : "rgba(192,57,43,0.08)",
+                  border: `1px solid ${settings.contactOpen
+                    ? "rgba(39,174,96,0.2)"
+                    : "rgba(192,57,43,0.2)"}`,
+                  fontSize: "12px",
+                  color: settings.contactOpen ? "#1e6b3c" : "#7a1800",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}>
+                  <span style={{ fontSize: "14px" }}>
+                    {settings.contactOpen ? "✅" : "🔒"}
+                  </span>
+                  {settings.contactOpen
+                    ? "Contact form is currently open — users can send up to 3 messages per day."
+                    : "Contact form is currently closed — all messages will be blocked."}
                 </div>
               </SectionCard>
 
