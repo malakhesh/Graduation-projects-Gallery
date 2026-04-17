@@ -246,6 +246,10 @@
   padding: 80px 0;
   color: rgb(104, 68, 42);
   font-size: 16px;
+
+  position: relative;   /* 👈 مهم */
+  overflow: visible;    /* 👈 مهم جدًا */
+  min-height: 500px;    /* 👈 عشان يدي مساحة للفراشات */
 }
 
 /* ===========================

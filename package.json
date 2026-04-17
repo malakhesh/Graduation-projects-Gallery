@@ -21,6 +21,11 @@
   },
   "homepage": "https://github.com/ndosha123mo-lab/Graduation-projects-Gallery#readme",
   "dependencies": {
+    "expo": "^55.0.15",
     "firebase": "^12.9.0"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.10",
+    "typescript": "~5.9.2"
   }
 }
