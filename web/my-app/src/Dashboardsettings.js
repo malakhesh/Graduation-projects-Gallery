@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react"
-import { db } from "./firebase.js"
+import { db, auth } from "./firebase.js"
 import { doc, getDoc, setDoc } from "firebase/firestore"
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Firestore helpers — reads/writes to settings/siteConfig
-// ─────────────────────────────────────────────────────────────────────────────
+import { useAuthState } from "react-firebase-hooks/auth"
+import { getUploadOptions, addOption, removeOption } from "./configs.js"
 
 const SETTINGS_REF = () => doc(db, "settings", "siteConfig")
 
@@ -23,27 +21,18 @@ async function saveSettings(data) {
   } catch { return "fail" }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// defaults
-// ─────────────────────────────────────────────────────────────────────────────
-
 const DEFAULTS = {
   siteName: "",
-  welcomeMessage: "",
   maintenanceMode: false,
   registrationOpen: true,
   projectUploadOpen: true,
   autoApprove: false,
-  categories: [],
-  tags: [],
+  maxProjectsPerUser: 3,
   notifyOnNewProject: true,
   notifyOnNewUser: true,
   notifyOnReport: true,
+  contactOpen: true,
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// small reusable pieces
-// ─────────────────────────────────────────────────────────────────────────────
 
 function SectionCard({ icon, title, children }) {
   return (
@@ -53,20 +42,20 @@ function SectionCard({ icon, title, children }) {
       borderRadius: "16px",
       border: "1px solid rgba(200,168,130,0.3)",
       boxShadow: "0 6px 24px rgba(111,78,55,0.08)",
-      padding: "28px 32px",
-      marginBottom: "24px",
+      padding: "20px 20px",
+      marginBottom: "20px",
     }}>
       <div style={{
         display: "flex", alignItems: "center", gap: "10px",
-        marginBottom: "22px",
-        paddingBottom: "14px",
+        marginBottom: "18px",
+        paddingBottom: "12px",
         borderBottom: "2px solid rgba(180,130,80,0.2)",
       }}>
-        <span style={{ fontSize: "22px" }}>{icon}</span>
+        <span style={{ fontSize: "20px" }}>{icon}</span>
         <h2 style={{
           margin: 0,
           fontFamily: "'Georgia', serif",
-          fontSize: "18px", fontWeight: "bold",
+          fontSize: "16px", fontWeight: "bold",
           color: "#3B1F0F", letterSpacing: "0.3px",
         }}>{title}</h2>
       </div>
@@ -82,10 +71,16 @@ function Toggle({ checked, onChange, label, sublabel }) {
       justifyContent: "space-between",
       padding: "12px 0",
       borderBottom: "1px solid rgba(200,168,130,0.15)",
+      gap: "12px",
     }}>
-      <div>
+      <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: "14px", fontWeight: "600", color: "#3B2F2F" }}>{label}</div>
-        {sublabel && <div style={{ fontSize: "12px", color: "#9a7050", marginTop: "2px" }}>{sublabel}</div>}
+        {sublabel && (
+          <div style={{
+            fontSize: "12px", color: "#9a7050", marginTop: "2px",
+            whiteSpace: "normal", wordBreak: "break-word",
+          }}>{sublabel}</div>
+        )}
       </div>
       <div
         onClick={() => onChange(!checked)}
@@ -146,20 +141,39 @@ function TextInput({ label, sublabel, value, onChange, placeholder }) {
   )
 }
 
-function TagManager({ label, sublabel, items, onChange }) {
+function UploadOptionManager({ label, sublabel, listName, items, role, onItemsChange, showToast }) {
   const [input, setInput] = useState("")
+  const [busy, setBusy] = useState(false)
 
-  const add = () => {
+  const add = async () => {
     const val = input.trim()
     if (!val || items.includes(val)) return
-    onChange([...items, val])
-    setInput("")
+    setBusy(true)
+    const result = await addOption(listName, val, role)
+    if (result === "option-added") {
+      onItemsChange([...items, val])
+      setInput("")
+      showToast(`"${val}" added to ${label.toLowerCase()}`)
+    } else {
+      showToast(`Failed to add "${val}" (${result})`, false)
+    }
+    setBusy(false)
   }
 
-  const remove = (item) => onChange(items.filter((i) => i !== item))
+  const remove = async (item) => {
+    setBusy(true)
+    const result = await removeOption(listName, item, role)
+    if (result === "option-removed") {
+      onItemsChange(items.filter((i) => i !== item))
+      showToast(`"${item}" removed from ${label.toLowerCase()}`)
+    } else {
+      showToast(`Failed to remove "${item}" (${result})`, false)
+    }
+    setBusy(false)
+  }
 
   return (
-    <div style={{ marginBottom: "18px" }}>
+    <div style={{ marginBottom: "24px" }}>
       <label style={{
         display: "block", fontSize: "13px",
         fontWeight: "700", color: "#5a3825",
@@ -168,8 +182,6 @@ function TagManager({ label, sublabel, items, onChange }) {
       {sublabel && (
         <div style={{ fontSize: "11px", color: "#9a7050", marginBottom: "8px" }}>{sublabel}</div>
       )}
-
-      {/* existing items */}
       <div style={{
         display: "flex", flexWrap: "wrap", gap: "8px",
         marginBottom: "10px", minHeight: "32px",
@@ -185,27 +197,29 @@ function TagManager({ label, sublabel, items, onChange }) {
             border: "1px solid rgba(111,78,55,0.2)",
             borderRadius: "20px",
             fontSize: "12px", fontWeight: "600", color: "#5a3825",
+            opacity: busy ? 0.6 : 1,
+            transition: "opacity 0.2s",
           }}>
             {item}
             <span
-              onClick={() => remove(item)}
+              onClick={() => !busy && remove(item)}
               style={{
-                cursor: "pointer", color: "#9a5030",
+                cursor: busy ? "not-allowed" : "pointer",
+                color: "#9a5030",
                 fontWeight: "bold", fontSize: "14px",
                 lineHeight: 1,
               }}>×</span>
           </span>
         ))}
       </div>
-
-      {/* add input */}
       <div style={{ display: "flex", gap: "8px" }}>
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && add()}
-          placeholder={`Add ${label.toLowerCase()}…`}
+          onKeyDown={(e) => e.key === "Enter" && !busy && add()}
+          placeholder={`Add to ${label.toLowerCase()}…`}
+          disabled={busy}
           style={{
             flex: 1, padding: "8px 12px",
             borderRadius: "8px",
@@ -214,23 +228,29 @@ function TagManager({ label, sublabel, items, onChange }) {
             fontSize: "13px", color: "#3B2F2F",
             outline: "none",
             fontFamily: "'Poppins', sans-serif",
+            minWidth: 0,
+            opacity: busy ? 0.6 : 1,
           }}
           onFocus={(e) => e.target.style.borderColor = "#6F4E37"}
           onBlur={(e) => e.target.style.borderColor = "rgba(180,130,80,0.35)"}
         />
         <button
           onClick={add}
+          disabled={busy}
           style={{
-            padding: "8px 18px",
+            padding: "8px 16px",
             borderRadius: "8px", border: "none",
-            backgroundColor: "#6F4E37", color: "#fff",
+            backgroundColor: busy ? "#a07850" : "#6F4E37",
+            color: "#fff",
             fontWeight: "700", fontSize: "13px",
-            cursor: "pointer",
+            cursor: busy ? "not-allowed" : "pointer",
             transition: "background-color 0.2s",
+            whiteSpace: "nowrap",
+            flexShrink: 0,
           }}
-          onMouseEnter={(e) => e.target.style.backgroundColor = "#8B6347"}
-          onMouseLeave={(e) => e.target.style.backgroundColor = "#6F4E37"}
-        >+ Add</button>
+          onMouseEnter={(e) => { if (!busy) e.target.style.backgroundColor = "#8B6347" }}
+          onMouseLeave={(e) => { if (!busy) e.target.style.backgroundColor = busy ? "#a07850" : "#6F4E37" }}
+        >{busy ? "…" : "+ Add"}</button>
       </div>
     </div>
   )
@@ -242,14 +262,15 @@ function Toast({ toast }) {
     <>
       <style>{`@keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(-12px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }`}</style>
       <div style={{
-        position: "fixed", top: "22px", left: "50%",
+        position: "fixed", top: "16px", left: "50%",
         transform: "translateX(-50%)",
         backgroundColor: toast.ok ? "#3B2F2F" : "#7a1800",
-        color: "#fff", padding: "12px 26px",
+        color: "#fff", padding: "12px 20px",
         borderRadius: "14px", fontWeight: "700", fontSize: "13px",
         boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
         zIndex: 9999, letterSpacing: "0.4px",
         animation: "toastIn 0.25s ease", whiteSpace: "nowrap",
+        maxWidth: "90vw",
       }}>
         {toast.ok ? "✅" : "❌"} {toast.msg}
       </div>
@@ -257,26 +278,61 @@ function Toast({ toast }) {
   )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Main page
-// ─────────────────────────────────────────────────────────────────────────────
-
 function DashboardSettings({ onBack }) {
-  const [settings, setSettings] = useState(DEFAULTS)
-  const [loading, setLoading]   = useState(true)
-  const [saving, setSaving]     = useState(false)
-  const [toast, setToast]       = useState(null)
-  const [hoveredBtn, setHoveredBtn] = useState(null)
+  const [user] = useAuthState(auth)
+  const [role, setRole] = useState(null)
 
-  // ── load ──────────────────────────────────────────────────────────────────
+  const [settings, setSettings] = useState(DEFAULTS)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [toast, setToast] = useState(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  const [uploadOptions, setUploadOptions] = useState({ tags: [], categories: [], techStacks: [] })
+
+  // Fetch role from Firestore using logged-in user's uid
   useEffect(() => {
-    loadSettings().then((data) => {
-      if (data) setSettings({ ...DEFAULTS, ...data })
+    if (!user) return
+    getDoc(doc(db, "users", user.uid)).then((snap) => {
+      if (snap.exists()) setRole(snap.data()?.role ?? null)
+    })
+  }, [user])
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
+
+  useEffect(() => {
+    Promise.all([loadSettings(), getUploadOptions()]).then(([siteData, optionsData]) => {
+      if (siteData) setSettings({ ...DEFAULTS, ...siteData })
+      if (optionsData && optionsData !== "get-options-fail") {
+        setUploadOptions({
+          tags: optionsData.tags || [],
+          categories: optionsData.categories || [],
+          techStacks: optionsData.techStacks || [],
+        })
+      }
       setLoading(false)
     })
   }, [])
 
-  // ── helpers ───────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!sidebarOpen) return
+    const handler = (e) => {
+      if (!e.target.closest("#sidebar")) setSidebarOpen(false)
+    }
+    document.addEventListener("mousedown", handler)
+    document.addEventListener("touchstart", handler)
+    return () => {
+      document.removeEventListener("mousedown", handler)
+      document.removeEventListener("touchstart", handler)
+    }
+  }, [sidebarOpen])
+
   const set = (key, val) => setSettings((prev) => ({ ...prev, [key]: val }))
 
   const showToast = (msg, ok = true) => {
@@ -290,11 +346,10 @@ function DashboardSettings({ onBack }) {
     setSaving(false)
     if (result === "ok") showToast("Settings saved successfully.")
     else showToast("Failed to save settings.", false)
+    if (isMobile) setSidebarOpen(false)
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // render
-  // ─────────────────────────────────────────────────────────────────────────
+  const SIDEBAR_WIDTH = "200px"
 
   return (
     <>
@@ -303,13 +358,87 @@ function DashboardSettings({ onBack }) {
           from { opacity: 0; transform: translateY(14px); }
           to   { opacity: 1; transform: translateY(0); }
         }
+        @keyframes sidebarIn {
+          from { transform: translateX(-100%); }
+          to   { transform: translateX(0); }
+        }
         * { box-sizing: border-box; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #c9a882; border-radius: 10px; }
+
+        @media (max-width: 767px) {
+          .ds-sidebar {
+            width: 220px !important;
+            transform: translateX(-100%);
+            transition: transform 0.28s ease !important;
+            box-shadow: 6px 0 28px rgba(0,0,0,0.18) !important;
+          }
+          .ds-sidebar.open {
+            transform: translateX(0) !important;
+            animation: none !important;
+          }
+          .ds-main {
+            margin-left: 0 !important;
+            padding: 72px 16px 32px !important;
+          }
+          .ds-overlay {
+            display: block !important;
+          }
+          .ds-hamburger {
+            display: flex !important;
+          }
+        }
+        @media (min-width: 768px) {
+          .ds-sidebar {
+            transform: translateX(0) !important;
+          }
+          .ds-hamburger {
+            display: none !important;
+          }
+          .ds-overlay {
+            display: none !important;
+          }
+        }
       `}</style>
 
       <Toast toast={toast} />
+
+      <div
+        className="ds-overlay"
+        onClick={() => setSidebarOpen(false)}
+        style={{
+          display: "none",
+          position: "fixed", inset: 0,
+          backgroundColor: "rgba(0,0,0,0.35)",
+          zIndex: 99,
+        }}
+      />
+
+      <button
+        className="ds-hamburger"
+        onClick={() => setSidebarOpen((v) => !v)}
+        style={{
+          display: "none",
+          position: "fixed", top: "14px", left: "14px",
+          zIndex: 200,
+          width: "42px", height: "42px",
+          borderRadius: "10px", border: "none",
+          backgroundColor: "#6F4E37",
+          flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+          gap: "5px", cursor: "pointer",
+          boxShadow: "0 4px 14px rgba(111,78,55,0.35)",
+        }}
+        aria-label="Open menu"
+      >
+        {[0,1,2].map((i) => (
+          <div key={i} style={{
+            width: "20px", height: "2px",
+            backgroundColor: "#fff", borderRadius: "2px",
+          }} />
+        ))}
+      </button>
 
       <div style={{
         display: "flex", minHeight: "100vh", width: "100%",
@@ -317,16 +446,23 @@ function DashboardSettings({ onBack }) {
         background: "linear-gradient(160deg, #f0e5d8 0%, #dcc4a8 50%, #c9a882 100%)",
       }}>
 
-        {/* ── Sidebar ───────────────────────────────────────────────────── */}
-        <aside style={{
-          position: "fixed", left: 0, top: 0, bottom: 0, width: "200px",
-          backgroundColor: "#f0e5d8",
-          borderRight: "2px solid rgba(111,78,55,0.2)",
-          display: "flex", flexDirection: "column",
-          justifyContent: "space-between",
-          padding: "24px 20px", zIndex: 100,
-          boxShadow: "4px 0 20px rgba(111,78,55,0.08)",
-        }}>
+        {/* Sidebar */}
+        <aside
+          id="sidebar"
+          className={`ds-sidebar${sidebarOpen ? " open" : ""}`}
+          style={{
+            position: "fixed", left: 0, top: 0, bottom: 0,
+            width: SIDEBAR_WIDTH,
+            backgroundColor: "#f0e5d8",
+            borderRight: "2px solid rgba(111,78,55,0.2)",
+            display: "flex", flexDirection: "column",
+            justifyContent: "space-between",
+            padding: "24px 20px", zIndex: 100,
+            boxShadow: "4px 0 20px rgba(111,78,55,0.08)",
+            transition: "transform 0.28s ease",
+            overflowY: "auto",
+          }}
+        >
           <div>
             <h2 style={{
               fontFamily: "'Georgia', serif",
@@ -336,21 +472,29 @@ function DashboardSettings({ onBack }) {
             }}>Dashboard</h2>
 
             <button
-              onClick={onBack}
-              onMouseEnter={() => setHoveredBtn("back")}
-              onMouseLeave={() => setHoveredBtn(null)}
+              onClick={() => { onBack?.(); setSidebarOpen(false) }}
               style={{
                 width: "100%", textAlign: "left",
                 background: "none", border: "none",
                 padding: "10px 12px", borderRadius: "10px",
                 cursor: "pointer", color: "#6F4E37",
-                fontWeight: hoveredBtn === "back" ? "700" : "600",
+                fontWeight: "600",
                 fontSize: "13px", letterSpacing: "0.5px",
-                backgroundColor: hoveredBtn === "back" ? "#e8d5bf" : "transparent",
-                transform: hoveredBtn === "back" ? "translateX(5px)" : "translateX(0)",
+                backgroundColor: "transparent",
                 transition: "all 0.25s ease",
                 display: "flex", alignItems: "center", gap: "8px",
-              }}>
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#e8d5bf"
+                e.currentTarget.style.fontWeight = "700"
+                e.currentTarget.style.transform = "translateX(5px)"
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent"
+                e.currentTarget.style.fontWeight = "600"
+                e.currentTarget.style.transform = "translateX(0)"
+              }}
+            >
               ← Back
             </button>
 
@@ -366,50 +510,52 @@ function DashboardSettings({ onBack }) {
             </div>
           </div>
 
-          {/* save button in sidebar */}
           <button
             onClick={handleSave}
             disabled={saving || loading}
-            onMouseEnter={() => setHoveredBtn("save-side")}
-            onMouseLeave={() => setHoveredBtn(null)}
             style={{
               width: "100%", padding: "12px",
               borderRadius: "12px", border: "none",
-              backgroundColor: saving ? "#a07850" : hoveredBtn === "save-side" ? "#8B6347" : "#6F4E37",
+              backgroundColor: saving ? "#a07850" : "#6F4E37",
               color: "#fff", fontWeight: "700", fontSize: "13px",
               cursor: saving ? "not-allowed" : "pointer",
               transition: "all 0.2s ease",
               boxShadow: "0 4px 14px rgba(111,78,55,0.3)",
               letterSpacing: "0.4px",
-            }}>
+              marginTop: "24px",
+            }}
+            onMouseEnter={(e) => { if (!saving) e.currentTarget.style.backgroundColor = "#8B6347" }}
+            onMouseLeave={(e) => { if (!saving) e.currentTarget.style.backgroundColor = "#6F4E37" }}
+          >
             {saving ? "Saving…" : "💾 Save Changes"}
           </button>
         </aside>
 
-        {/* ── Main ──────────────────────────────────────────────────────── */}
-        <main style={{
-          marginLeft: "200px", flex: 1,
-          padding: "40px 48px",
-          overflowY: "auto", minHeight: "100vh",
-        }}>
-
-          {/* Page header */}
-          <div style={{ marginBottom: "36px", animation: "fadeUp 0.4s ease" }}>
+        {/* Main content */}
+        <main
+          className="ds-main"
+          style={{
+            marginLeft: SIDEBAR_WIDTH,
+            flex: 1,
+            padding: "40px 48px",
+            overflowY: "auto", minHeight: "100vh",
+          }}
+        >
+          <div style={{ marginBottom: "30px", animation: "fadeUp 0.4s ease" }}>
             <h1 style={{
               fontFamily: "'Georgia', serif",
-              fontSize: "34px", fontWeight: "bold",
+              fontSize: "clamp(24px, 5vw, 34px)",
+              fontWeight: "bold",
               color: "#3B1F0F", margin: "0 0 6px",
               letterSpacing: "0.5px",
-            }}>
-              Site Settings
-            </h1>
+            }}>Site Settings</h1>
             <p style={{ color: "#8a6245", fontSize: "14px", margin: 0 }}>
               Control everything about how the site behaves.
             </p>
             <div style={{
-              marginTop: "18px", height: "3px",
+              marginTop: "16px", height: "3px",
               background: "linear-gradient(to right, #6F4E37, #c9a882, transparent)",
-              borderRadius: "4px", width: "260px",
+              borderRadius: "4px", width: "min(260px, 80%)",
             }} />
           </div>
 
@@ -429,9 +575,11 @@ function DashboardSettings({ onBack }) {
               </span>
             </div>
           ) : (
-            <div style={{ maxWidth: "720px", animation: "fadeUp 0.45s ease" }}>
+            <div style={{
+              maxWidth: "720px", width: "100%",
+              animation: "fadeUp 0.45s ease",
+            }}>
 
-              {/* ── 1. General ──────────────────────────────────────────── */}
               <SectionCard icon="🏫" title="General">
                 <TextInput
                   label="Site Name"
@@ -440,16 +588,8 @@ function DashboardSettings({ onBack }) {
                   onChange={(v) => set("siteName", v)}
                   placeholder="e.g. Graduation Projects Catalog"
                 />
-                <TextInput
-                  label="Welcome Message"
-                  sublabel="Shown on the homepage hero section"
-                  value={settings.welcomeMessage}
-                  onChange={(v) => set("welcomeMessage", v)}
-                  placeholder="e.g. Explore all graduation projects…"
-                />
               </SectionCard>
 
-              {/* ── 2. Access Control ───────────────────────────────────── */}
               <SectionCard icon="🔐" title="Access Control">
                 <Toggle
                   checked={settings.maintenanceMode}
@@ -475,25 +615,141 @@ function DashboardSettings({ onBack }) {
                   label="Auto-Approve Projects"
                   sublabel="Skip review — projects go live immediately"
                 />
+
+                <div style={{ marginTop: "16px" }}>
+                  <label style={{
+                    display: "block", fontSize: "13px",
+                    fontWeight: "700", color: "#5a3825",
+                    marginBottom: "4px", letterSpacing: "0.3px",
+                  }}>Max Projects Per User</label>
+                  <div style={{ fontSize: "11px", color: "#9a7050", marginBottom: "10px" }}>
+                    Maximum number of projects each user can submit
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                    <button
+                      onClick={() => set("maxProjectsPerUser", Math.max(1, settings.maxProjectsPerUser - 1))}
+                      style={{
+                        width: "38px", height: "38px", borderRadius: "50%",
+                        border: "1.5px solid rgba(111,78,55,0.3)",
+                        backgroundColor: "rgba(255,255,255,0.6)",
+                        fontSize: "20px", cursor: "pointer",
+                        color: "#6F4E37", fontWeight: "bold",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        transition: "all 0.2s", flexShrink: 0,
+                        touchAction: "manipulation",
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#e8d5bf"}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"}
+                    >−</button>
+
+                    <div style={{
+                      width: "60px", height: "38px",
+                      borderRadius: "10px",
+                      border: "1.5px solid rgba(180,130,80,0.35)",
+                      backgroundColor: "rgba(255,255,255,0.6)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: "16px", fontWeight: "700", color: "#3B2F2F",
+                      flexShrink: 0,
+                    }}>
+                      {settings.maxProjectsPerUser}
+                    </div>
+
+                    <button
+                      onClick={() => set("maxProjectsPerUser", Math.min(20, settings.maxProjectsPerUser + 1))}
+                      style={{
+                        width: "38px", height: "38px", borderRadius: "50%",
+                        border: "1.5px solid rgba(111,78,55,0.3)",
+                        backgroundColor: "rgba(255,255,255,0.6)",
+                        fontSize: "20px", cursor: "pointer",
+                        color: "#6F4E37", fontWeight: "bold",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        transition: "all 0.2s", flexShrink: 0,
+                        touchAction: "manipulation",
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#e8d5bf"}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"}
+                    >+</button>
+
+                    <span style={{ fontSize: "12px", color: "#9a7050" }}>
+                      projects per user (max 20)
+                    </span>
+                  </div>
+                </div>
               </SectionCard>
 
-              {/* ── 3. Categories & Tags ────────────────────────────────── */}
-              <SectionCard icon="🏷️" title="Categories & Tags">
-                <TagManager
-                  label="Categories"
-                  sublabel="Project categories users can choose from"
-                  items={settings.categories}
-                  onChange={(v) => set("categories", v)}
+              <SectionCard icon="✉️" title="Contact & Messaging">
+                <Toggle
+                  checked={settings.contactOpen}
+                  onChange={(v) => set("contactOpen", v)}
+                  label="Allow Contact Messages"
+                  sublabel="When disabled, users cannot send messages through the contact form"
                 />
-                <TagManager
-                  label="Tags"
-                  sublabel="Tags users can apply to their projects"
-                  items={settings.tags}
-                  onChange={(v) => set("tags", v)}
-                />
+                <div style={{
+                  marginTop: "12px",
+                  padding: "10px 14px",
+                  borderRadius: "10px",
+                  backgroundColor: settings.contactOpen
+                    ? "rgba(39,174,96,0.08)"
+                    : "rgba(192,57,43,0.08)",
+                  border: `1px solid ${settings.contactOpen
+                    ? "rgba(39,174,96,0.2)"
+                    : "rgba(192,57,43,0.2)"}`,
+                  fontSize: "12px",
+                  color: settings.contactOpen ? "#1e6b3c" : "#7a1800",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}>
+                  <span style={{ fontSize: "14px" }}>
+                    {settings.contactOpen ? "✅" : "🔒"}
+                  </span>
+                  {settings.contactOpen
+                    ? "Contact form is currently open — users can send up to 3 messages per day."
+                    : "Contact form is currently closed — all messages will be blocked."}
+                </div>
               </SectionCard>
 
-              {/* ── 4. Notifications ────────────────────────────────────── */}
+              <SectionCard icon="🏷️" title="Upload Options">
+                <p style={{ fontSize: "12px", color: "#9a7050", marginBottom: "18px", marginTop: "-8px" }}>
+                  Changes here are saved instantly to Firestore and reflected in the upload modal immediately.
+                </p>
+                {role === null ? (
+                  <p style={{ fontSize: "13px", color: "#9a7050", fontStyle: "italic" }}>Loading permissions…</p>
+                ) : role !== "admin" ? (
+                  <p style={{ fontSize: "13px", color: "#7a1800" }}>⛔ You don't have permission to edit these options.</p>
+                ) : (
+                  <>
+                    <UploadOptionManager
+                      label="Tags"
+                      sublabel="Tags users can pick when uploading a project"
+                      listName="tags"
+                      items={uploadOptions.tags}
+                      role={role}
+                      onItemsChange={(v) => setUploadOptions((prev) => ({ ...prev, tags: v }))}
+                      showToast={showToast}
+                    />
+                    <UploadOptionManager
+                      label="Categories"
+                      sublabel="Categories users can assign to their project"
+                      listName="categories"
+                      items={uploadOptions.categories}
+                      role={role}
+                      onItemsChange={(v) => setUploadOptions((prev) => ({ ...prev, categories: v }))}
+                      showToast={showToast}
+                    />
+                    <UploadOptionManager
+                      label="Tech Stacks"
+                      sublabel="Technologies users can tag their project with"
+                      listName="techStacks"
+                      items={uploadOptions.techStacks}
+                      role={role}
+                      onItemsChange={(v) => setUploadOptions((prev) => ({ ...prev, techStacks: v }))}
+                      showToast={showToast}
+                    />
+                  </>
+                )}
+              </SectionCard>
+
               <SectionCard icon="🔔" title="Admin Notifications">
                 <Toggle
                   checked={settings.notifyOnNewProject}
@@ -515,23 +771,26 @@ function DashboardSettings({ onBack }) {
                 />
               </SectionCard>
 
-              {/* ── bottom save ─────────────────────────────────────────── */}
               <div style={{ display: "flex", justifyContent: "flex-end", paddingBottom: "40px" }}>
                 <button
                   onClick={handleSave}
                   disabled={saving || loading}
-                  onMouseEnter={() => setHoveredBtn("save-bot")}
-                  onMouseLeave={() => setHoveredBtn(null)}
                   style={{
                     padding: "13px 36px",
                     borderRadius: "12px", border: "none",
-                    backgroundColor: saving ? "#a07850" : hoveredBtn === "save-bot" ? "#8B6347" : "#6F4E37",
+                    backgroundColor: saving ? "#a07850" : "#6F4E37",
                     color: "#fff", fontWeight: "700", fontSize: "14px",
                     cursor: saving ? "not-allowed" : "pointer",
                     transition: "all 0.2s ease",
                     boxShadow: "0 6px 20px rgba(111,78,55,0.3)",
                     letterSpacing: "0.5px",
-                  }}>
+                    width: "100%",
+                    maxWidth: "280px",
+                    touchAction: "manipulation",
+                  }}
+                  onMouseEnter={(e) => { if (!saving) e.currentTarget.style.backgroundColor = "#8B6347" }}
+                  onMouseLeave={(e) => { if (!saving) e.currentTarget.style.backgroundColor = "#6F4E37" }}
+                >
                   {saving ? "Saving…" : "💾 Save Changes"}
                 </button>
               </div>

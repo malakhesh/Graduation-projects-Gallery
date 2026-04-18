@@ -15,8 +15,10 @@ import { useFilters } from './useFilters.js';
 import {
   FaGraduationCap, FaUser, FaBell, FaSearch, FaFilter, FaChevronDown,
   FaBookOpen, FaBookmark, FaFolderOpen, FaBriefcase, FaShoppingCart, FaFilm, FaNewspaper,
-  FaBars, FaTimes
+  FaBars, FaTimes, FaChevronLeft, FaChevronRight
 } from "react-icons/fa";
+
+const API_BASE = "http://localhost:5000";
 
 const exploreTags = [
   { label: "Business", icon: <FaBriefcase /> },
@@ -25,6 +27,31 @@ const exploreTags = [
   { label: "Entertainment", icon: <FaFilm /> },
   { label: "Blog", icon: <FaNewspaper /> },
 ];
+
+// ── API helpers ──────────────────────────────────────────────
+async function trackView(uid, projectId) {
+  try {
+    await fetch(`${API_BASE}/api/view/${uid}/${projectId}`, { method: "POST" });
+  } catch { }
+}
+
+async function trackTagSearch(uid, tag) {
+  try {
+    await fetch(`${API_BASE}/api/search/${uid}/${encodeURIComponent(tag)}`, { method: "POST" });
+  } catch { }
+}
+
+async function fetchRecommendations(uid) {
+  try {
+    const res = await fetch(`${API_BASE}/api/recommendations/${uid}`);
+    const data = await res.json();
+    if (data.success) return data;
+    return null;
+  } catch {
+    return null;
+  }
+}
+// ────────────────────────────────────────────────────────────
 
 function NotifItem({ notif, uid, onProjectOpen, onWelcomeOpen }) {
   const isUnread = !notif.read;
@@ -103,12 +130,8 @@ export function Navbar({ isAdmin }) {
     return () => unsub();
   }, [user]);
 
-  // Close sidebar on route change
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [location.pathname]);
+  useEffect(() => { setSidebarOpen(false); }, [location.pathname]);
 
-  // Lock body scroll when sidebar is open
   useEffect(() => {
     if (sidebarOpen) {
       document.body.style.overflow = "hidden";
@@ -151,13 +174,11 @@ export function Navbar({ isAdmin }) {
   }, []);
 
   const handleLogout = async () => { await logOut(); navigate("/"); };
-
   const closeSidebar = () => setSidebarOpen(false);
 
   return (
     <>
       <nav className="hg-navbar">
-        {/* Left: hamburger (mobile) + logo + dashboard */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <button className="hg-hamburger" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
             <FaBars />
@@ -173,7 +194,6 @@ export function Navbar({ isAdmin }) {
           )}
         </div>
 
-        {/* Center: desktop nav links */}
         <div className="hg-navbar-links">
           <Link to="/projects" className={`hg-nav-link${location.pathname === "/projects" ? " hg-nav-link-active" : ""}`}>
             <FaFolderOpen className="hg-nav-icon" /> My Projects
@@ -201,13 +221,7 @@ export function Navbar({ isAdmin }) {
                 ) : (
                   <div style={{ maxHeight: 380, overflowY: "auto", scrollbarWidth: "thin", scrollbarColor: "rgb(164,132,109) rgb(223,205,192)" }}>
                     {notifs.map((n) => (
-                      <NotifItem
-                        key={n.id}
-                        notif={n}
-                        uid={user.uid}
-                        onProjectOpen={handleProjectOpen}
-                        onWelcomeOpen={handleWelcomeOpen}
-                      />
+                      <NotifItem key={n.id} notif={n} uid={user.uid} onProjectOpen={handleProjectOpen} onWelcomeOpen={handleWelcomeOpen} />
                     ))}
                   </div>
                 )}
@@ -216,9 +230,7 @@ export function Navbar({ isAdmin }) {
           </div>
         </div>
 
-        {/* Right: mobile bell + upload + avatar */}
         <div className="hg-navbar-right">
-          {/* Bell icon — only visible on mobile */}
           <div ref={mobileNotifRef} className="hg-mobile-bell-wrapper">
             <button className={`hg-mobile-bell${notifOpen ? " hg-mobile-bell-active" : ""}`} onClick={handleBellClick} aria-label="Notifications">
               <span className="hg-notif-wrapper">
@@ -238,13 +250,7 @@ export function Navbar({ isAdmin }) {
                 ) : (
                   <div style={{ maxHeight: 380, overflowY: "auto", scrollbarWidth: "thin", scrollbarColor: "rgb(164,132,109) rgb(223,205,192)" }}>
                     {notifs.map((n) => (
-                      <NotifItem
-                        key={n.id}
-                        notif={n}
-                        uid={user.uid}
-                        onProjectOpen={handleProjectOpen}
-                        onWelcomeOpen={handleWelcomeOpen}
-                      />
+                      <NotifItem key={n.id} notif={n} uid={user.uid} onProjectOpen={handleProjectOpen} onWelcomeOpen={handleWelcomeOpen} />
                     ))}
                   </div>
                 )}
@@ -269,88 +275,38 @@ export function Navbar({ isAdmin }) {
         </div>
       </nav>
 
-      {/* =====================
-          MOBILE SIDEBAR
-      ===================== */}
-      {sidebarOpen && (
-        <div className="hg-sidebar-overlay" onClick={closeSidebar} />
-      )}
+      {sidebarOpen && <div className="hg-sidebar-overlay" onClick={closeSidebar} />}
       <div className={`hg-admin-sidebar${sidebarOpen ? " hg-sidebar-open" : ""}`}>
-        {/* Sidebar header */}
         <div className="hg-sidebar-header">
-          <Link to="/home" className="hg-sidebar-title" onClick={closeSidebar}>
-            Graduation Gallery
-          </Link>
-          <button
-            onClick={closeSidebar}
-            style={{
-              marginLeft: "auto",
-              background: "none",
-              border: "none",
-              fontSize: 18,
-              color: "rgb(104, 68, 42)",
-              cursor: "pointer",
-              padding: "4px 6px",
-              borderRadius: 8,
-            }}
-          >
+          <Link to="/home" className="hg-sidebar-title" onClick={closeSidebar}>Graduation Gallery</Link>
+          <button onClick={closeSidebar} style={{ marginLeft: "auto", background: "none", border: "none", fontSize: 18, color: "rgb(104, 68, 42)", cursor: "pointer", padding: "4px 6px", borderRadius: 8 }}>
             <FaTimes />
           </button>
         </div>
-
-        {/* Sidebar nav links */}
         <ul className="hg-sidebar-links">
-          <li
-            className={`hg-sidebar-item${location.pathname === "/projects" ? " hg-sidebar-item-active" : ""}`}
-            onClick={() => { closeSidebar(); navigate("/projects"); }}
-          >
+          <li className={`hg-sidebar-item${location.pathname === "/projects" ? " hg-sidebar-item-active" : ""}`} onClick={() => { closeSidebar(); navigate("/projects"); }}>
             <FaFolderOpen style={{ marginRight: 10 }} /> My Projects
           </li>
-          <li
-            className={`hg-sidebar-item${location.pathname === "/bookmarks" ? " hg-sidebar-item-active" : ""}`}
-            onClick={() => { closeSidebar(); navigate("/bookmarks"); }}
-          >
+          <li className={`hg-sidebar-item${location.pathname === "/bookmarks" ? " hg-sidebar-item-active" : ""}`} onClick={() => { closeSidebar(); navigate("/bookmarks"); }}>
             <FaBookmark style={{ marginRight: 10 }} /> Bookmarks
           </li>
-          {/* Divider */}
           <li style={{ height: 1, background: "rgb(185, 174, 167)", margin: "8px 0", listStyle: "none" }} />
-
-          <li
-            className="hg-sidebar-item"
-            onClick={() => { closeSidebar(); setShowUpload(true); }}
-          >
+          <li className="hg-sidebar-item" onClick={() => { closeSidebar(); setShowUpload(true); }}>
             <span style={{ marginRight: 10, fontSize: 15 }}>＋</span> Upload Project
           </li>
-          <li
-            className={`hg-sidebar-item${location.pathname === "/all-projects" ? " hg-sidebar-item-active" : ""}`}
-            onClick={() => { closeSidebar(); navigate("/all-projects"); }}
-          >
+          <li className={`hg-sidebar-item${location.pathname === "/all-projects" ? " hg-sidebar-item-active" : ""}`} onClick={() => { closeSidebar(); navigate("/all-projects"); }}>
             <FaFolderOpen style={{ marginRight: 10 }} /> All Projects
           </li>
-          <li
-            className={`hg-sidebar-item${location.pathname === "/profile" ? " hg-sidebar-item-active" : ""}`}
-            onClick={() => { closeSidebar(); navigate("/profile"); }}
-          >
+          <li className={`hg-sidebar-item${location.pathname === "/profile" ? " hg-sidebar-item-active" : ""}`} onClick={() => { closeSidebar(); navigate("/profile"); }}>
             <FaUser style={{ marginRight: 10 }} /> My Profile
           </li>
-
           {isAdmin && (
-            <li
-              className={`hg-sidebar-item${location.pathname === "/dashboard" ? " hg-sidebar-item-active" : ""}`}
-              onClick={() => { closeSidebar(); navigate("/dashboard"); }}
-            >
+            <li className={`hg-sidebar-item${location.pathname === "/dashboard" ? " hg-sidebar-item-active" : ""}`} onClick={() => { closeSidebar(); navigate("/dashboard"); }}>
               Dashboard
             </li>
           )}
-
-          {/* Divider */}
           <li style={{ height: 1, background: "rgb(185, 174, 167)", margin: "8px 0", listStyle: "none" }} />
-
-          <li
-            className="hg-sidebar-item"
-            style={{ color: "rgb(180, 60, 60)" }}
-            onClick={async () => { closeSidebar(); await logOut(); navigate("/"); }}
-          >
+          <li className="hg-sidebar-item" style={{ color: "rgb(180, 60, 60)" }} onClick={async () => { closeSidebar(); await logOut(); navigate("/"); }}>
             Log Out
           </li>
         </ul>
@@ -408,14 +364,175 @@ function SearchBar({ search, setSearch, filtersOpen, setFiltersOpen, hasActiveFi
   );
 }
 
-function RecentProjects() {
+// ── True sliding carousel — all cards laid out in one track ──
+function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProject }) {
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [label, setLabel] = useState("Recommended Projects");
+  const [index, setIndex] = useState(0);
+  const containerRef = useRef(null);
+  const scrollAccum = useRef(0);
+  const VISIBLE = 3;
+  const GAP = 20;
+
+  useEffect(() => {
+    if (!uid) return;
+    fetchRecommendations(uid).then((data) => {
+      if (data) {
+        setProjects(data.projects || []);
+        setLabel(
+          data.type === "popular" || data.type === "fallback_popular"
+            ? "Popular Projects"
+            : "Recommended For You"
+        );
+      }
+      setLoading(false);
+    });
+  }, [uid]);
+
+  // Two-finger trackpad scroll
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const handleWheel = (e) => {
+      // Only handle horizontal scrolling (two-finger swipe on trackpad)
+      if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) return;
+      e.preventDefault();
+
+      scrollAccum.current += e.deltaX;
+      const threshold = 60;
+
+      if (scrollAccum.current > threshold) {
+        scrollAccum.current = 0;
+        setIndex(i => Math.min(i + 1, projects.length - VISIBLE));
+      } else if (scrollAccum.current < -threshold) {
+        scrollAccum.current = 0;
+        setIndex(i => Math.max(i - 1, 0));
+      }
+    };
+
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, [projects.length]);
+
+  const handleOpen = (project) => {
+    if (uid) trackView(uid, project.id);
+    onOpenProject(project);
+  };
+
+  const canPrev = index > 0;
+  const canNext = index + VISIBLE < projects.length;
+
+  const cardWidthPercent = 100 / VISIBLE;
+  const translateX = -(index * (cardWidthPercent + (GAP / VISIBLE)));
+
   return (
     <section className="hg-section">
-      <h2 className="hg-section-title">Recommended Projects</h2>
-      <p className="hg-no-results">Recommendations coming soon.</p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+        <h2 className="hg-section-title" style={{ margin: 0 }}>{label}</h2>
+        {projects.length > VISIBLE && (
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              onClick={() => canPrev && setIndex(i => i - 1)}
+              disabled={!canPrev}
+              style={{
+                width: 34, height: 34, borderRadius: "50%",
+                border: "1.5px solid rgba(111,78,55,0.3)",
+                backgroundColor: canPrev ? "#6F4E37" : "rgba(255,255,255,0.4)",
+                color: canPrev ? "#fff" : "#b09070",
+                cursor: canPrev ? "pointer" : "not-allowed",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "all 0.2s", flexShrink: 0,
+              }}
+            >
+              <FaChevronLeft size={12} />
+            </button>
+            <button
+              onClick={() => canNext && setIndex(i => i + 1)}
+              disabled={!canNext}
+              style={{
+                width: 34, height: 34, borderRadius: "50%",
+                border: "1.5px solid rgba(111,78,55,0.3)",
+                backgroundColor: canNext ? "#6F4E37" : "rgba(255,255,255,0.4)",
+                color: canNext ? "#fff" : "#b09070",
+                cursor: canNext ? "pointer" : "not-allowed",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "all 0.2s", flexShrink: 0,
+              }}
+            >
+              <FaChevronRight size={12} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="hg-spinner-wrapper"><div className="hg-spinner" /></div>
+      ) : projects.length === 0 ? (
+        <p className="hg-no-results">No recommendations yet. Start exploring projects!</p>
+      ) : (
+        <div ref={containerRef} style={{ overflow: "hidden", width: "100%" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: `${GAP}px`,
+              // Improved spring-like easing
+              transform: `translateX(calc(${translateX}% - ${index * GAP / VISIBLE}px))`,
+              transition: "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
+              willChange: "transform",
+            }}
+          >
+            {projects.map((p, i) => {
+              // Fade + slightly scale down cards at the edges that are sliding out
+              const distFromView = i < index ? index - i : i - (index + VISIBLE - 1);
+              const isEdge = i < index || i >= index + VISIBLE;
+              return (
+                <div
+                  key={p.id}
+                  style={{
+                    flex: `0 0 calc(${100 / VISIBLE}% - ${GAP * (VISIBLE - 1) / VISIBLE}px)`,
+                    minWidth: 0,
+                    opacity: isEdge ? Math.max(0, 1 - distFromView * 0.5) : 1,
+                    transform: isEdge ? `scale(${Math.max(0.94, 1 - distFromView * 0.03)})` : "scale(1)",
+                    transition: "opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
+                  }}
+                >
+                  <ProjectCard
+                    project={p}
+                    onOpen={handleOpen}
+                    bookmarked={bookmarkedIds.includes(p.id)}
+                    onToggleBookmark={onToggleBookmark}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {projects.length > VISIBLE && (
+        <div style={{ display: "flex", justifyContent: "center", gap: "6px", marginTop: "16px" }}>
+          {Array.from({ length: projects.length - VISIBLE + 1 }).map((_, i) => (
+            <div
+              key={i}
+              onClick={() => setIndex(i)}
+              style={{
+                width: i === index ? "20px" : "8px",
+                height: "8px",
+                borderRadius: "4px",
+                backgroundColor: i === index ? "#6F4E37" : "rgba(111,78,55,0.25)",
+                cursor: "pointer",
+                transition: "all 0.25s ease",
+              }}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
+// ────────────────────────────────────────────────────────────
 
 function ExploreTags({ selectedTag, onSelectTag }) {
   return (
@@ -437,7 +554,7 @@ function ExploreTags({ selectedTag, onSelectTag }) {
   );
 }
 
-function TagProjects({ tag, bookmarkedIds, onToggleBookmark }) {
+function TagProjects({ tag, bookmarkedIds, onToggleBookmark, onOpenProject }) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -452,6 +569,11 @@ function TagProjects({ tag, bookmarkedIds, onToggleBookmark }) {
     });
   }, [tag]);
 
+  const handleOpen = (project) => {
+    setSelectedProject(project);
+    onOpenProject(project);
+  };
+
   return (
     <section className="hg-section">
       <h2 className="hg-section-title">{tag} Projects</h2>
@@ -465,7 +587,7 @@ function TagProjects({ tag, bookmarkedIds, onToggleBookmark }) {
                 <ProjectCard
                   key={p.id}
                   project={p}
-                  onOpen={setSelectedProject}
+                  onOpen={handleOpen}
                   bookmarked={bookmarkedIds.includes(p.id)}
                   onToggleBookmark={onToggleBookmark}
                 />
@@ -527,6 +649,16 @@ function Home() {
     }
   };
 
+  const handleOpenProject = (project) => {
+    if (user) trackView(user.uid, project.id);
+    setSelectedProject(project);
+  };
+
+  const handleSelectTag = (tag) => {
+    setSelectedTag(tag);
+    if (tag && user) trackTagSearch(user.uid, tag);
+  };
+
   return (
     <div className="hg-page">
       <Navbar isAdmin={isAdmin} />
@@ -561,7 +693,7 @@ function Home() {
                   <ProjectCard
                     key={p.id}
                     project={p}
-                    onOpen={setSelectedProject}
+                    onOpen={handleOpenProject}
                     bookmarked={bookmarkedIds.includes(p.id)}
                     onToggleBookmark={toggleBookmark}
                   />
@@ -575,13 +707,19 @@ function Home() {
           </section>
         ) : (
           <>
-            <RecentProjects />
-            <ExploreTags selectedTag={selectedTag} onSelectTag={setSelectedTag} />
+            <RecommendedProjects
+              uid={user?.uid}
+              bookmarkedIds={bookmarkedIds}
+              onToggleBookmark={toggleBookmark}
+              onOpenProject={handleOpenProject}
+            />
+            <ExploreTags selectedTag={selectedTag} onSelectTag={handleSelectTag} />
             {selectedTag && (
               <TagProjects
                 tag={selectedTag}
                 bookmarkedIds={bookmarkedIds}
                 onToggleBookmark={toggleBookmark}
+                onOpenProject={handleOpenProject}
               />
             )}
           </>

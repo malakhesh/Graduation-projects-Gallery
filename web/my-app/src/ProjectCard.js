@@ -358,13 +358,20 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
     setSubmittingComment(false);
   };
 
+  // ── UPDATED: save commentText with the report ──
   const handleReportSubmit = async (reason) => {
     if (!reason.trim() || !user) return;
     setSubmittingReport(true);
     const targetId = reportTarget?.type === "comment"
       ? `${project.id}_comment_${reportTarget.commentIndex}`
       : project.id;
-    await addReport(targetId, user.uid, reason);
+
+    // Save comment text so admin can see it without relying on index
+    const commentText = reportTarget?.type === "comment"
+      ? (comments[reportTarget.commentIndex]?.text || "")
+      : null;
+
+    await addReport(targetId, user.uid, reason, commentText);
     setSubmittingReport(false);
     setReportOpen(false);
     setReportTarget(null);

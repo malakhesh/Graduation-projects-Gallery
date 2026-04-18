@@ -163,4 +163,104 @@ async function getBookmarks(uid) {
   } catch { return "bookmarks-fail" }
 }
 
-export { regUser, logUser, logWithGoogle, logWithGithub, resetPass, logOut, getUser, checkRole, watchUser, getUsersByYear, getUsersByTechStack, updateRole ,addBookmark, removeBookmark, getBookmarks }
+// ── Violations & Status ───────────────────────────────────────────────────────
+
+async function checkStatus(uid) {
+  try {
+    const d = await getDoc(doc(db, "users", uid))
+    if (!d.exists()) return "no-user"
+    const data = d.data()
+    return {
+      status:         data.status         || "active",
+      violations:     data.violations     || 0,
+      suspendReasons: data.suspendReasons || [],
+    }
+  } catch { return "status-fail" }
+}
+
+async function addViolation(targetUid, reason, adminRole) {
+  try {
+    if (adminRole !== "admin") return "unauth"
+
+    const userRef  = doc(db, "users", targetUid)
+    const userSnap = await getDoc(userRef)
+    if (!userSnap.exists()) return "no-user"
+
+    const data           = userSnap.data()
+    const violations     = (data.violations || 0) + 1
+    const suspendReasons = [...(data.suspendReasons || []), reason]
+    const status         = violations >= 3 ? "suspended" : (data.status || "active")
+
+    await updateDoc(userRef, { violations, suspendReasons, status })
+
+    if (violations === 1) {
+      await sendNotif(targetUid, {
+        type: "warning",
+        message: `⚠️ تحذير: تم تسجيل مخالفة بسببك "${reason}". انتبه إن التكرار هيأثر على حسابك.`,
+        clickable: false,
+      })
+    } else if (violations === 2) {
+      await sendNotif(targetUid, {
+        type: "danger",
+        message: `🚨 تحذير أخير: حسابك في خطر بسبب "${reason}". مخالفة واحدة أخرى وهيتعلق فوراً.`,
+        clickable: false,
+      })
+    } else if (violations >= 3) {
+      await sendNotif(targetUid, {
+        type: "suspended",
+        message: `🔒 تم تعليق حسابك بسبب تكرار المخالفات. تواصل مع الأدمن لو في سوء فهم.`,
+        clickable: false,
+      })
+    }
+
+    return { result: "violation-added", violations, status, suspendReasons }
+  } catch { return "violation-fail" }
+}
+
+async function removeViolation(targetUid, violationIndex, adminRole) {
+  try {
+    if (adminRole !== "admin") return "unauth"
+
+    const userRef  = doc(db, "users", targetUid)
+    const userSnap = await getDoc(userRef)
+    if (!userSnap.exists()) return "no-user"
+
+    const data           = userSnap.data()
+    const suspendReasons = [...(data.suspendReasons || [])]
+    suspendReasons.splice(violationIndex, 1)
+
+    const violations = Math.max(0, suspendReasons.length)
+    const status     = data.status === "suspended" && violations < 3 ? "active" : data.status
+
+    await updateDoc(userRef, { violations, suspendReasons, status })
+
+    if (status === "active" && data.status === "suspended") {
+      await sendNotif(targetUid, {
+        type: "info",
+        message: `✅ تم حذف إحدى المخالفات المسجلة ضدك، حسابك نشط مجدداً.`,
+        clickable: false,
+      })
+    }
+
+    return { violations, status, suspendReasons }
+  } catch { return "violation-fail" }
+}
+
+async function unsuspendUser(targetUid, adminRole) {
+  try {
+    if (adminRole !== "admin") return "unauth"
+    await updateDoc(doc(db, "users", targetUid), {
+      status:         "active",
+      violations:     0,
+      suspendReasons: [],
+    })
+    await sendNotif(targetUid, {
+      type: "info",
+      message: `✅ تم رفع التعليق عن حسابك، يمكنك استخدام المنصة مجدداً.`,
+      clickable: false,
+    })
+    return "unsuspend-ok"
+  } catch { return "unsuspend-fail" }
+}
+
+export { regUser, logUser, logWithGoogle, logWithGithub, resetPass, logOut, getUser, checkRole, watchUser, getUsersByYear, getUsersByTechStack, updateRole ,addBookmark, removeBookmark, getBookmarks ,checkStatus, addViolation, removeViolation, unsuspendUser }

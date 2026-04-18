@@ -1,27 +1,12 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import "./uploadmodal.css";
 import { FaGithub, FaImage, FaChevronLeft, FaChevronRight, FaCheck } from "react-icons/fa";
 import { addProj } from "./projects.js";
 import { getUser } from "./auth.js";
+import { getUploadOptions } from "./configs.js";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "./firebase.js";
-
-const TAGS = ["Business", "Education", "E-commerce", "Entertainment", "Blog"];
-
-const CATEGORIES = [
-  "Web", "Mobile", "Desktop", "AI / ML",
-  "Embedded / IoT", "Game Dev", "Blockchain", "Cloud / DevOps",
-];
-
-const TECH_STACKS = [
-  "React", "Vue", "Angular", "Next.js", "Svelte",
-  "Flutter", "React Native", "Swift", "Kotlin",
-  "Node.js", "Django", "Laravel", "Spring Boot", "Express", "FastAPI",
-  "Python", "Java", "C++", "C#", "Go", "PHP",
-  "MongoDB", "MySQL", "PostgreSQL", "Firebase", "Supabase",
-  "TensorFlow", "PyTorch", "Docker", "AWS", "Tailwind CSS", "Unity",
-];
 
 const CLOUDINARY_CLOUD = "df4nquqin";
 const CLOUDINARY_PRESET = "snqtqhha";
@@ -45,6 +30,23 @@ function UploadModal({ onClose }) {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const fileRef = useRef();
+
+  // Fetched from Firestore
+  const [options, setOptions] = useState({ tags: [], categories: [], techStacks: [] });
+  const [loadingOptions, setLoadingOptions] = useState(true);
+
+  useEffect(() => {
+    getUploadOptions().then((data) => {
+      if (data && data !== "get-options-fail") {
+        setOptions({
+          tags: data.tags || [],
+          categories: data.categories || [],
+          techStacks: data.techStacks || [],
+        });
+      }
+      setLoadingOptions(false);
+    });
+  }, []);
 
   const toggleTech = (tech) => {
     setTechStack((prev) =>
@@ -212,47 +214,56 @@ function UploadModal({ onClose }) {
               {/* Step 1 — Details */}
               {step === 1 && (
                 <div className="um-step-content">
-                  <div className="um-field">
-                    <label className="um-label">Tag <span className="um-req">*</span></label>
-                    <div className="um-chips">
-                      {TAGS.map((t) => (
-                        <button key={t} type="button"
-                          className={`um-chip ${tag === t ? "um-chip-active" : ""}`}
-                          onClick={() => { setTag(t); setErrors((p) => ({ ...p, tag: null })); }}
-                        >{t}</button>
-                      ))}
+                  {loadingOptions ? (
+                    <div className="um-options-loading">
+                      <div className="um-spinner" />
+                      <span>Loading options...</span>
                     </div>
-                    {errors.tag && <span className="um-error">{errors.tag}</span>}
-                  </div>
+                  ) : (
+                    <>
+                      <div className="um-field">
+                        <label className="um-label">Tag <span className="um-req">*</span></label>
+                        <div className="um-chips">
+                          {options.tags.map((t) => (
+                            <button key={t} type="button"
+                              className={`um-chip ${tag === t ? "um-chip-active" : ""}`}
+                              onClick={() => { setTag(t); setErrors((p) => ({ ...p, tag: null })); }}
+                            >{t}</button>
+                          ))}
+                        </div>
+                        {errors.tag && <span className="um-error">{errors.tag}</span>}
+                      </div>
 
-                  <div className="um-field">
-                    <label className="um-label">Category <span className="um-req">*</span></label>
-                    <div className="um-chips">
-                      {CATEGORIES.map((c) => (
-                        <button key={c} type="button"
-                          className={`um-chip ${category === c ? "um-chip-active" : ""}`}
-                          onClick={() => { setCategory(c); setErrors((p) => ({ ...p, category: null })); }}
-                        >{c}</button>
-                      ))}
-                    </div>
-                    {errors.category && <span className="um-error">{errors.category}</span>}
-                  </div>
+                      <div className="um-field">
+                        <label className="um-label">Category <span className="um-req">*</span></label>
+                        <div className="um-chips">
+                          {options.categories.map((c) => (
+                            <button key={c} type="button"
+                              className={`um-chip ${category === c ? "um-chip-active" : ""}`}
+                              onClick={() => { setCategory(c); setErrors((p) => ({ ...p, category: null })); }}
+                            >{c}</button>
+                          ))}
+                        </div>
+                        {errors.category && <span className="um-error">{errors.category}</span>}
+                      </div>
 
-                  <div className="um-field">
-                    <label className="um-label">
-                      Tech Stack <span className="um-req">*</span>
-                      {techStack.length > 0 && <span className="um-count">{techStack.length} selected</span>}
-                    </label>
-                    <div className="um-chips">
-                      {TECH_STACKS.map((tech) => (
-                        <button key={tech} type="button"
-                          className={`um-chip um-chip-sm ${techStack.includes(tech) ? "um-chip-active" : ""}`}
-                          onClick={() => toggleTech(tech)}
-                        >{tech}</button>
-                      ))}
-                    </div>
-                    {errors.techStack && <span className="um-error">{errors.techStack}</span>}
-                  </div>
+                      <div className="um-field">
+                        <label className="um-label">
+                          Tech Stack <span className="um-req">*</span>
+                          {techStack.length > 0 && <span className="um-count">{techStack.length} selected</span>}
+                        </label>
+                        <div className="um-chips">
+                          {options.techStacks.map((tech) => (
+                            <button key={tech} type="button"
+                              className={`um-chip um-chip-sm ${techStack.includes(tech) ? "um-chip-active" : ""}`}
+                              onClick={() => toggleTech(tech)}
+                            >{tech}</button>
+                          ))}
+                        </div>
+                        {errors.techStack && <span className="um-error">{errors.techStack}</span>}
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
@@ -309,7 +320,7 @@ function UploadModal({ onClose }) {
               <button className="um-btn-cancel" onClick={onClose}>Cancel</button>
             )}
             {step < 2 ? (
-              <button className="um-btn-next" onClick={handleNext}>
+              <button className="um-btn-next" onClick={handleNext} disabled={step === 1 && loadingOptions}>
                 Next <FaChevronRight size={12} />
               </button>
             ) : (

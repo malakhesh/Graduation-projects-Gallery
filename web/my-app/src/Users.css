@@ -122,7 +122,7 @@
 /* ===========================
    FILTER BUTTONS
 =========================== */
-.us-filter-row { display: flex; gap: 10px; }
+.us-filter-row { display: flex; gap: 10px; flex-wrap: wrap; }
 
 .us-filter-btn {
   padding: 8px 20px;
@@ -186,10 +186,10 @@
 .us-table tbody tr:last-child td { border-bottom: none; }
 .us-table tbody tr:hover          { background: rgb(240, 229, 216); }
 
-.us-row-admin     { background: rgb(255, 251, 235); }
+.us-row-admin       { background: rgb(255, 251, 235); }
 .us-row-admin:hover { background: rgb(255, 245, 210) !important; }
 
-.us-row-suspended { background: rgb(255, 240, 240); }
+.us-row-suspended       { background: rgb(255, 240, 240); }
 .us-row-suspended:hover { background: rgb(255, 228, 228) !important; }
 
 /* ===========================
@@ -337,6 +337,7 @@
   justify-content: center;
   z-index: 100;
   backdrop-filter: blur(3px);
+  padding: 16px;
 }
 
 .us-modal {
@@ -391,7 +392,8 @@
   transition: all 0.2s;
 }
 
-.us-reason-btn:hover  { border-color: rgb(104, 68, 42); }
+.us-reason-btn:hover { border-color: rgb(104, 68, 42); }
+
 .us-reason-active {
   background: rgb(104, 68, 42) !important;
   color: white !important;
@@ -545,11 +547,199 @@
   line-height: 1;
 }
 
-.us-remove-violation-btn:hover:not(:disabled) {
-  background: rgb(248, 215, 218);
+.us-remove-violation-btn:hover:not(:disabled) { background: rgb(248, 215, 218); }
+.us-remove-violation-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ===========================
+   MOBILE CARDS
+=========================== */
+.us-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.us-remove-violation-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.us-card {
+  background: rgb(254, 251, 245);
+  border-radius: 14px;
+  border: 1px solid rgb(185, 174, 167);
+  box-shadow: 0 2px 8px rgba(47, 28, 15, 0.07);
+  overflow: hidden;
+}
+
+.us-card-admin     { background: rgb(255, 251, 235); border-color: rgb(220, 180, 80); }
+.us-card-suspended { background: rgb(255, 240, 240); border-color: rgb(210, 120, 120); }
+
+.us-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: rgb(104, 68, 42);
+}
+
+.us-card-admin .us-card-header     { background: rgb(133, 100, 10); }
+.us-card-suspended .us-card-header { background: rgb(160, 50, 50); }
+
+.us-card-index {
+  min-width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.us-card-name-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.us-card-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.us-card-body {
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.us-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.us-card-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgb(130, 100, 70);
+  flex-shrink: 0;
+}
+
+.us-card-value {
+  font-size: 13px;
+  color: rgb(47, 28, 15);
+  text-align: right;
+  word-break: break-all;
+}
+
+.us-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border-top: 1px solid rgb(223, 205, 192);
+  background: rgb(248, 242, 235);
+}
+
+/* ===========================
+   RESPONSIVE — TABLET (≤ 768px)
+=========================== */
+@media (max-width: 768px) {
+  .us-page {
+    padding: 20px 16px;
+  }
+
+  .us-header {
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .us-title {
+    font-size: 22px;
+    flex-basis: 100%;
+    order: -1;
+  }
+
+  .us-stats { gap: 8px; }
+
+  .us-stat {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+
+  .us-search-wrapper { max-width: 100%; }
+
+  .us-filter-btn {
+    font-size: 12px;
+    padding: 7px 14px;
+  }
+}
+
+/* ===========================
+   RESPONSIVE — MOBILE (≤ 640px)
+=========================== */
+@media (max-width: 640px) {
+  .us-page {
+    padding: 14px 10px;
+  }
+
+  .us-header {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .us-title { font-size: 20px; }
+
+  .us-stats {
+    width: 100%;
+    gap: 6px;
+  }
+
+  .us-stat {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+
+  .us-search-wrapper {
+    max-width: 100%;
+    padding: 7px 12px;
+  }
+
+  .us-filter-btn {
+    font-size: 11px;
+    padding: 6px 11px;
+  }
+
+  /* Modal → bottom sheet */
+  .us-modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .us-modal {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 18px 18px 0 0;
+    padding: 20px 16px 28px;
+    max-height: 85vh;
+  }
+
+  .us-modal-footer {
+    flex-direction: row;
+  }
+
+  .us-modal-cancel,
+  .us-modal-submit {
+    flex: 1;
+    text-align: center;
+  }
 }
