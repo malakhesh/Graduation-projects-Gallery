@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react"
-import { db } from "./firebase.js"
+import { db, auth } from "./firebase.js"
 import { doc, getDoc, setDoc } from "firebase/firestore"
+import { useAuthState } from "react-firebase-hooks/auth"
+import { getUploadOptions, addOption, removeOption } from "./configs.js"
 
 const SETTINGS_REF = () => doc(db, "settings", "siteConfig")
 
@@ -26,12 +28,10 @@ const DEFAULTS = {
   projectUploadOpen: true,
   autoApprove: false,
   maxProjectsPerUser: 3,
-  categories: [],
-  tags: [],
   notifyOnNewProject: true,
   notifyOnNewUser: true,
   notifyOnReport: true,
-  contactOpen: true,         // ← new
+  contactOpen: true,
 }
 
 function SectionCard({ icon, title, children }) {
@@ -141,20 +141,39 @@ function TextInput({ label, sublabel, value, onChange, placeholder }) {
   )
 }
 
-function TagManager({ label, sublabel, items, onChange }) {
+function UploadOptionManager({ label, sublabel, listName, items, role, onItemsChange, showToast }) {
   const [input, setInput] = useState("")
+  const [busy, setBusy] = useState(false)
 
-  const add = () => {
+  const add = async () => {
     const val = input.trim()
     if (!val || items.includes(val)) return
-    onChange([...items, val])
-    setInput("")
+    setBusy(true)
+    const result = await addOption(listName, val, role)
+    if (result === "option-added") {
+      onItemsChange([...items, val])
+      setInput("")
+      showToast(`"${val}" added to ${label.toLowerCase()}`)
+    } else {
+      showToast(`Failed to add "${val}" (${result})`, false)
+    }
+    setBusy(false)
   }
 
-  const remove = (item) => onChange(items.filter((i) => i !== item))
+  const remove = async (item) => {
+    setBusy(true)
+    const result = await removeOption(listName, item, role)
+    if (result === "option-removed") {
+      onItemsChange(items.filter((i) => i !== item))
+      showToast(`"${item}" removed from ${label.toLowerCase()}`)
+    } else {
+      showToast(`Failed to remove "${item}" (${result})`, false)
+    }
+    setBusy(false)
+  }
 
   return (
-    <div style={{ marginBottom: "18px" }}>
+    <div style={{ marginBottom: "24px" }}>
       <label style={{
         display: "block", fontSize: "13px",
         fontWeight: "700", color: "#5a3825",
@@ -178,12 +197,15 @@ function TagManager({ label, sublabel, items, onChange }) {
             border: "1px solid rgba(111,78,55,0.2)",
             borderRadius: "20px",
             fontSize: "12px", fontWeight: "600", color: "#5a3825",
+            opacity: busy ? 0.6 : 1,
+            transition: "opacity 0.2s",
           }}>
             {item}
             <span
-              onClick={() => remove(item)}
+              onClick={() => !busy && remove(item)}
               style={{
-                cursor: "pointer", color: "#9a5030",
+                cursor: busy ? "not-allowed" : "pointer",
+                color: "#9a5030",
                 fontWeight: "bold", fontSize: "14px",
                 lineHeight: 1,
               }}>×</span>
@@ -195,8 +217,9 @@ function TagManager({ label, sublabel, items, onChange }) {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && add()}
-          placeholder={`Add ${label.toLowerCase()}…`}
+          onKeyDown={(e) => e.key === "Enter" && !busy && add()}
+          placeholder={`Add to ${label.toLowerCase()}…`}
+          disabled={busy}
           style={{
             flex: 1, padding: "8px 12px",
             borderRadius: "8px",
@@ -206,25 +229,28 @@ function TagManager({ label, sublabel, items, onChange }) {
             outline: "none",
             fontFamily: "'Poppins', sans-serif",
             minWidth: 0,
+            opacity: busy ? 0.6 : 1,
           }}
           onFocus={(e) => e.target.style.borderColor = "#6F4E37"}
           onBlur={(e) => e.target.style.borderColor = "rgba(180,130,80,0.35)"}
         />
         <button
           onClick={add}
+          disabled={busy}
           style={{
             padding: "8px 16px",
             borderRadius: "8px", border: "none",
-            backgroundColor: "#6F4E37", color: "#fff",
+            backgroundColor: busy ? "#a07850" : "#6F4E37",
+            color: "#fff",
             fontWeight: "700", fontSize: "13px",
-            cursor: "pointer",
+            cursor: busy ? "not-allowed" : "pointer",
             transition: "background-color 0.2s",
             whiteSpace: "nowrap",
             flexShrink: 0,
           }}
-          onMouseEnter={(e) => e.target.style.backgroundColor = "#8B6347"}
-          onMouseLeave={(e) => e.target.style.backgroundColor = "#6F4E37"}
-        >+ Add</button>
+          onMouseEnter={(e) => { if (!busy) e.target.style.backgroundColor = "#8B6347" }}
+          onMouseLeave={(e) => { if (!busy) e.target.style.backgroundColor = busy ? "#a07850" : "#6F4E37" }}
+        >{busy ? "…" : "+ Add"}</button>
       </div>
     </div>
   )
@@ -253,12 +279,25 @@ function Toast({ toast }) {
 }
 
 function DashboardSettings({ onBack }) {
+  const [user] = useAuthState(auth)
+  const [role, setRole] = useState(null)
+
   const [settings, setSettings] = useState(DEFAULTS)
-  const [loading, setLoading]   = useState(true)
-  const [saving, setSaving]     = useState(false)
-  const [toast, setToast]       = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [toast, setToast] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+
+  const [uploadOptions, setUploadOptions] = useState({ tags: [], categories: [], techStacks: [] })
+
+  // Fetch role from Firestore using logged-in user's uid
+  useEffect(() => {
+    if (!user) return
+    getDoc(doc(db, "users", user.uid)).then((snap) => {
+      if (snap.exists()) setRole(snap.data()?.role ?? null)
+    })
+  }, [user])
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
@@ -268,8 +307,15 @@ function DashboardSettings({ onBack }) {
   }, [])
 
   useEffect(() => {
-    loadSettings().then((data) => {
-      if (data) setSettings({ ...DEFAULTS, ...data })
+    Promise.all([loadSettings(), getUploadOptions()]).then(([siteData, optionsData]) => {
+      if (siteData) setSettings({ ...DEFAULTS, ...siteData })
+      if (optionsData && optionsData !== "get-options-fail") {
+        setUploadOptions({
+          tags: optionsData.tags || [],
+          categories: optionsData.categories || [],
+          techStacks: optionsData.techStacks || [],
+        })
+      }
       setLoading(false)
     })
   }, [])
@@ -534,7 +580,6 @@ function DashboardSettings({ onBack }) {
               animation: "fadeUp 0.45s ease",
             }}>
 
-              {/* General */}
               <SectionCard icon="🏫" title="General">
                 <TextInput
                   label="Site Name"
@@ -545,7 +590,6 @@ function DashboardSettings({ onBack }) {
                 />
               </SectionCard>
 
-              {/* Access Control */}
               <SectionCard icon="🔐" title="Access Control">
                 <Toggle
                   checked={settings.maintenanceMode}
@@ -572,7 +616,6 @@ function DashboardSettings({ onBack }) {
                   sublabel="Skip review — projects go live immediately"
                 />
 
-                {/* Max Projects Counter */}
                 <div style={{ marginTop: "16px" }}>
                   <label style={{
                     display: "block", fontSize: "13px",
@@ -634,7 +677,6 @@ function DashboardSettings({ onBack }) {
                 </div>
               </SectionCard>
 
-              {/* Contact Settings — NEW */}
               <SectionCard icon="✉️" title="Contact & Messaging">
                 <Toggle
                   checked={settings.contactOpen}
@@ -667,23 +709,47 @@ function DashboardSettings({ onBack }) {
                 </div>
               </SectionCard>
 
-              {/* Categories & Tags */}
-              <SectionCard icon="🏷️" title="Categories & Tags">
-                <TagManager
-                  label="Categories"
-                  sublabel="Project categories users can choose from"
-                  items={settings.categories}
-                  onChange={(v) => set("categories", v)}
-                />
-                <TagManager
-                  label="Tags"
-                  sublabel="Tags users can apply to their projects"
-                  items={settings.tags}
-                  onChange={(v) => set("tags", v)}
-                />
+              <SectionCard icon="🏷️" title="Upload Options">
+                <p style={{ fontSize: "12px", color: "#9a7050", marginBottom: "18px", marginTop: "-8px" }}>
+                  Changes here are saved instantly to Firestore and reflected in the upload modal immediately.
+                </p>
+                {role === null ? (
+                  <p style={{ fontSize: "13px", color: "#9a7050", fontStyle: "italic" }}>Loading permissions…</p>
+                ) : role !== "admin" ? (
+                  <p style={{ fontSize: "13px", color: "#7a1800" }}>⛔ You don't have permission to edit these options.</p>
+                ) : (
+                  <>
+                    <UploadOptionManager
+                      label="Tags"
+                      sublabel="Tags users can pick when uploading a project"
+                      listName="tags"
+                      items={uploadOptions.tags}
+                      role={role}
+                      onItemsChange={(v) => setUploadOptions((prev) => ({ ...prev, tags: v }))}
+                      showToast={showToast}
+                    />
+                    <UploadOptionManager
+                      label="Categories"
+                      sublabel="Categories users can assign to their project"
+                      listName="categories"
+                      items={uploadOptions.categories}
+                      role={role}
+                      onItemsChange={(v) => setUploadOptions((prev) => ({ ...prev, categories: v }))}
+                      showToast={showToast}
+                    />
+                    <UploadOptionManager
+                      label="Tech Stacks"
+                      sublabel="Technologies users can tag their project with"
+                      listName="techStacks"
+                      items={uploadOptions.techStacks}
+                      role={role}
+                      onItemsChange={(v) => setUploadOptions((prev) => ({ ...prev, techStacks: v }))}
+                      showToast={showToast}
+                    />
+                  </>
+                )}
               </SectionCard>
 
-              {/* Notifications */}
               <SectionCard icon="🔔" title="Admin Notifications">
                 <Toggle
                   checked={settings.notifyOnNewProject}
@@ -705,7 +771,6 @@ function DashboardSettings({ onBack }) {
                 />
               </SectionCard>
 
-              {/* Bottom Save */}
               <div style={{ display: "flex", justifyContent: "flex-end", paddingBottom: "40px" }}>
                 <button
                   onClick={handleSave}

@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Fuse from "fuse.js";
+import { getUploadOptions } from "./configs.js";
 
 export function useFilters(projects) {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Read initial state from URL
   const [filters, setFilters] = useState({
     tags: searchParams.getAll("tags"),
     categories: searchParams.getAll("categories"),
@@ -16,6 +16,25 @@ export function useFilters(projects) {
   });
 
   const [search, setSearchState] = useState(searchParams.get("search") || "");
+
+  // Config-driven options from Firestore
+  const [configOptions, setConfigOptions] = useState({
+    tags: [],
+    categories: [],
+    techStacks: [],
+  });
+
+  useEffect(() => {
+    getUploadOptions().then((data) => {
+      if (data && data !== "get-options-fail") {
+        setConfigOptions({
+          tags: data.tags || [],
+          categories: data.categories || [],
+          techStacks: data.techStacks || [],
+        });
+      }
+    });
+  }, []);
 
   // Sync filters + search to URL
   useEffect(() => {
@@ -66,14 +85,25 @@ export function useFilters(projects) {
 
   const isSearchOrFilter = search.trim() !== "" || hasActiveFilters;
 
-  // All unique tech stacks used at least once
+  // Use config techStacks if available, fall back to deriving from projects
   const allStacks = useMemo(() => {
+    if (configOptions.techStacks.length > 0) return [...configOptions.techStacks].sort();
     const set = new Set();
     projects.forEach((p) => {
       if (Array.isArray(p.stack)) p.stack.forEach((s) => set.add(s));
     });
     return Array.from(set).sort();
-  }, [projects]);
+  }, [projects, configOptions.techStacks]);
+
+  const allTags = useMemo(() => {
+    if (configOptions.tags.length > 0) return [...configOptions.tags].sort();
+    return [...new Set(projects.map((p) => p.tag || (p.tags && p.tags[0]) || "").filter(Boolean))].sort();
+  }, [projects, configOptions.tags]);
+
+  const allCategories = useMemo(() => {
+    if (configOptions.categories.length > 0) return [...configOptions.categories].sort();
+    return [...new Set(projects.map((p) => p.category).filter(Boolean))].sort();
+  }, [projects, configOptions.categories]);
 
   // Fuse.js smart search
   const fuse = useMemo(() => new Fuse(projects, {
@@ -93,13 +123,11 @@ export function useFilters(projects) {
   const filtered = useMemo(() => {
     let result = [...projects];
 
-    // Smart fuzzy search
     if (search.trim()) {
       const fuseResults = fuse.search(search.trim());
       result = fuseResults.map((r) => r.item);
     }
 
-    // Filter by tags
     if (filters.tags.length > 0) {
       result = result.filter((p) => {
         const tag = p.tag || (p.tags && p.tags[0]) || "";
@@ -107,19 +135,16 @@ export function useFilters(projects) {
       });
     }
 
-    // Filter by category
     if (filters.categories.length > 0) {
       result = result.filter((p) => filters.categories.includes(p.category));
     }
 
-    // Filter by stack
     if (filters.stack.length > 0) {
       result = result.filter((p) =>
         Array.isArray(p.stack) && filters.stack.some((s) => p.stack.includes(s))
       );
     }
 
-    // Filter by min rating
     if (filters.minRating > 0) {
       result = result.filter((p) => {
         const ratings = p.ratings || [];
@@ -129,7 +154,6 @@ export function useFilters(projects) {
       });
     }
 
-    // Sort by rating
     if (filters.sortByRating) {
       result = [...result].sort((a, b) => {
         const avgA = a.ratings?.length ? a.ratings.reduce((x, y) => x + y, 0) / a.ratings.length : 0;
@@ -138,7 +162,6 @@ export function useFilters(projects) {
       });
     }
 
-    // Sort by grad year
     if (filters.dateSort === "latest") {
       result = [...result].sort((a, b) => (parseInt(b.year) || 0) - (parseInt(a.year) || 0));
     } else if (filters.dateSort === "oldest") {
@@ -159,6 +182,8 @@ export function useFilters(projects) {
     hasActiveFilters,
     isSearchOrFilter,
     allStacks,
+    allTags,
+    allCategories,
     filtered,
   };
 }
