@@ -1,9 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View, Text, TextInput, FlatList,
-  TouchableOpacity, StyleSheet, SafeAreaView, Image, ScrollView
+  TouchableOpacity, StyleSheet, SafeAreaView, Image, ScrollView, RefreshControl
 } from 'react-native';
 import { router } from 'expo-router';
+import Toast from 'react-native-toast-message';
+import UploadProjectModal from '../components/modals/UploadProjectModal';
 
 // ── Colors ────────────────────────────────────────
 const C = {
@@ -15,7 +17,7 @@ const C = {
   input:  'rgb(185, 174, 167)',
 };
 
-// ── Data ──────────────────────────────────────────
+// ── Mock Data ──────────────────────────────────────────
 const mockProjects = [
   {
     id: '1',
@@ -24,7 +26,7 @@ const mockProjects = [
     category: 'Mobile',
     image: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400',
     year: '2024',
-    description: 'A mobile e-commerce application for browsing products, adding them to cart, and completing orders in a simple and modern way.',
+    description: 'A mobile e-commerce application...',
     github: 'https://github.com',
     pdf: 'https://example.com',
     techStack: ['React Native', 'Firebase', 'Expo']
@@ -36,7 +38,7 @@ const mockProjects = [
     category: 'Web',
     image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400',
     year: '2024',
-    description: 'A modern dashboard interface for analytics, reporting, and management tools with a clean user experience.',
+    description: 'A modern dashboard interface...',
     github: 'https://github.com',
     pdf: 'https://example.com',
     techStack: ['React', 'Chart.js', 'CSS']
@@ -48,7 +50,7 @@ const mockProjects = [
     category: 'Mobile',
     image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400',
     year: '2023',
-    description: 'A food delivery app that allows users to browse restaurants, order meals, and track delivery.',
+    description: 'A food delivery app...',
     github: 'https://github.com',
     pdf: 'https://example.com',
     techStack: ['React Native', 'Node.js', 'MongoDB']
@@ -60,7 +62,7 @@ const mockProjects = [
     category: 'Web',
     image: 'https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=400',
     year: '2024',
-    description: 'A personal portfolio website to showcase projects, skills, and contact details in a professional format.',
+    description: 'A personal portfolio website...',
     github: 'https://github.com',
     pdf: 'https://example.com',
     techStack: ['HTML', 'CSS', 'JavaScript']
@@ -72,82 +74,10 @@ const mockProjects = [
     category: 'Mobile',
     image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400',
     year: '2022',
-    description: 'A fitness tracking app to monitor workouts, steps, calories, and progress over time.',
+    description: 'A fitness tracking app...',
     github: 'https://github.com',
     pdf: 'https://example.com',
     techStack: ['Flutter', 'Firebase', 'REST API']
-  },
-  {
-    id: '6',
-    name: 'Chat App',
-    student: 'Mona Sayed',
-    category: 'Mobile',
-    image: 'https://images.unsplash.com/photo-1611746872915-64382b5c76da?w=400',
-    year: '2024',
-    description: 'A real-time chat application with messaging, user presence, and modern interface design.',
-    github: 'https://github.com',
-    pdf: 'https://example.com',
-    techStack: ['React Native', 'Socket.io', 'Node.js']
-  },
-  {
-    id: '7',
-    name: 'Blog Platform',
-    student: 'Karim Adel',
-    category: 'Web',
-    image: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=400',
-    year: '2023',
-    description: 'A blogging platform where users can write, publish, and manage posts with categories and comments.',
-    github: 'https://github.com',
-    pdf: 'https://example.com',
-    techStack: ['Laravel', 'MySQL', 'Blade']
-  },
-  {
-    id: '8',
-    name: 'Weather App',
-    student: 'Layla Nasser',
-    category: 'AI',
-    image: 'https://images.unsplash.com/photo-1504608524841-42584120d693?w=400',
-    year: '2024',
-    description: 'A smart weather application that displays forecasts and useful weather insights.',
-    github: 'https://github.com',
-    pdf: 'https://example.com',
-    techStack: ['React', 'API', 'Tailwind']
-  },
-  {
-    id: '9',
-    name: 'AI Chatbot',
-    student: 'Youssef Tarek',
-    category: 'AI',
-    image: 'https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=400',
-    year: '2024',
-    description: 'An AI chatbot project for answering questions and assisting users with basic tasks.',
-    github: 'https://github.com',
-    pdf: 'https://example.com',
-    techStack: ['Python', 'TensorFlow', 'Flask']
-  },
-  {
-    id: '10',
-    name: 'Network Scanner',
-    student: 'Dina Walid',
-    category: 'Security',
-    image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=400',
-    year: '2023',
-    description: 'A security project for scanning networks, detecting devices, and checking connection information.',
-    github: 'https://github.com',
-    pdf: 'https://example.com',
-    techStack: ['Python', 'Security Tools', 'Networking']
-  },
-  {
-    id: '11',
-    name: 'Sales Analysis',
-    student: 'Hany Fathy',
-    category: 'Data Science',
-    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400',
-    year: '2024',
-    description: 'A data science project for analyzing sales trends, charts, and performance insights.',
-    github: 'https://github.com',
-    pdf: 'https://example.com',
-    techStack: ['Python', 'Pandas', 'Power BI']
   },
 ];
 
@@ -173,9 +103,13 @@ function ProjectCard({ item, onPress }: { item: any; onPress: () => void }) {
 export default function GalleryScreen() {
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [projects, setProjects] = useState(mockProjects);
 
+  // Filter projects
   const filtered = useMemo(() => {
-    return mockProjects.filter(p => {
+    return projects.filter(p => {
       const q = search.toLowerCase();
       const matchSearch =
         p.name.toLowerCase().includes(q) ||
@@ -185,11 +119,61 @@ export default function GalleryScreen() {
       const matchFilter = activeFilter === 'All' || p.category === activeFilter;
       return matchSearch && matchFilter;
     });
-  }, [search, activeFilter]);
+  }, [search, activeFilter, projects]);
+
+  // Pull to Refresh
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    // هنا هنضيف جلب البيانات من Firebase بعدين
+    setTimeout(() => {
+      setRefreshing(false);
+      Toast.show({
+        type: 'success',
+        text1: 'تم التحديث',
+        text2: 'تم تحديث المشاريع بنجاح',
+        position: 'top',
+        visibilityTime: 2000,
+      });
+    }, 1000);
+  }, []);
+
+  // Handle successful upload
+  const handleUploadSuccess = useCallback(() => {
+    Toast.show({
+      type: 'success',
+      text1: '✅ تم رفع المشروع!',
+      text2: 'سينتظر موافقة الأدمن',
+      position: 'top',
+      visibilityTime: 3000,
+    });
+  }, []);
+
+  // Empty State Component
+  const EmptyState = () => (
+    <View style={styles.emptyContainer}>
+      <Text style={styles.emptyEmoji}>📭</Text>
+      <Text style={styles.emptyTitle}>No projects yet</Text>
+      <Text style={styles.emptyText}>Be the first to upload a project!</Text>
+      <TouchableOpacity 
+        style={styles.emptyButton}
+        onPress={() => setModalVisible(true)}
+      >
+        <Text style={styles.emptyButtonText}>+ Upload Project</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>🗂️ Projects Gallery</Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>🗂️ Projects Gallery</Text>
+        <TouchableOpacity 
+          style={styles.uploadButton}
+          onPress={() => setModalVisible(true)}
+        >
+          <Text style={styles.uploadButtonText}>+ Upload</Text>
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.searchBox}>
         <Text style={styles.searchIcon}>🔍</Text>
@@ -236,6 +220,14 @@ export default function GalleryScreen() {
         data={filtered}
         keyExtractor={item => item.id}
         numColumns={2}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh} 
+            colors={[C.button]}
+            tintColor={C.button}
+          />
+        }
         renderItem={({ item }) => (
           <ProjectCard
             item={item}
@@ -261,12 +253,16 @@ export default function GalleryScreen() {
         contentContainerStyle={styles.list}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>No projects found 😕</Text>
-          </View>
-        }
+        ListEmptyComponent={EmptyState}
       />
+
+      <UploadProjectModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onSuccess={handleUploadSuccess}
+      />
+
+      <Toast />
     </SafeAreaView>
   );
 }
@@ -274,8 +270,24 @@ export default function GalleryScreen() {
 // ── Styles ────────────────────────────────────────
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingRight: 16,
+  },
   title: { fontSize: 22, fontWeight: 'bold', color: C.black, padding: 16, paddingBottom: 10 },
-
+  uploadButton: {
+    backgroundColor: C.button,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  uploadButtonText: {
+    color: C.white,
+    fontWeight: '600',
+    fontSize: 14,
+  },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -320,6 +332,38 @@ const styles = StyleSheet.create({
   cardBadge: { alignSelf: 'flex-start', backgroundColor: C.input, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
   cardBadgeText: { fontSize: 10, color: C.button, fontWeight: '600' },
 
-  empty: { alignItems: 'center', marginTop: 60 },
-  emptyText: { fontSize: 16, color: C.link },
+  // Empty State Styles
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 40,
+  },
+  emptyEmoji: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: C.black,
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: C.link,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  emptyButton: {
+    backgroundColor: C.button,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 25,
+  },
+  emptyButtonText: {
+    color: C.white,
+    fontWeight: '600',
+    fontSize: 16,
+  },
 });
