@@ -9,7 +9,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { auth } from "../backend/firebase";
 import { getUser, logOut } from "../backend/auth";
-import { addBookmark, isBookmarked } from "../backend/notifications";
+
 
 const CATEGORIES = ["All Projects", "AI / ML", "Web Dev", "Mobile", "Design"];
 
