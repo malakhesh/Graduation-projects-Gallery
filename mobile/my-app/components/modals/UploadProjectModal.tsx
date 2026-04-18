@@ -68,7 +68,6 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
   const [success, setSuccess] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
-  // التحقق من وجود بيانات مدخلة حقيقية (مش مسافات فقط)
   const hasData = () => {
     return name.trim() !== '' || 
            description.trim() !== '' || 
@@ -79,7 +78,6 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
            image !== null;
   };
 
-  // منع الخروج بالـ back button
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       if (visible && !success && hasData()) {
@@ -88,7 +86,6 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
       }
       return false;
     });
-
     return () => backHandler.remove();
   }, [visible, success, name, description, github, tag, category, techStack, image]);
 
@@ -108,27 +105,33 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       quality: 0.8,
-      base64: true,
     });
 
     if (!result.canceled && result.assets[0]) {
-      setImageUri(result.assets[0].uri);
-      setImage(result.assets[0].base64 || null);
+      const selectedAsset = result.assets[0];
+      setImageUri(selectedAsset.uri);
+      setImage(selectedAsset.uri);
       setErrors(prev => ({ ...prev, image: '' }));
+      console.log("📸 Image selected:", selectedAsset.uri);
     }
+  };
+
+  const isValidGithubLink = (url: string): boolean => {
+    return url.trim().startsWith('https://github.com/');
   };
 
   const validateStep = (currentStep: number): Record<string, string> => {
     const newErrors: Record<string, string> = {};
     if (currentStep === 0) {
-      if (!name.trim()) newErrors.name = 'Project name is required';
-      if (!description.trim()) newErrors.description = 'Description is required';
-      if (!github.trim()) newErrors.github = 'GitHub link is required';
-      else if (!github.trim().startsWith('https://github.com/')) {
-        newErrors.github = 'Must start with https://github.com/';
+      if (!name.trim()) newErrors.name = '✨ Project name is required';
+      if (!description.trim()) newErrors.description = '📝 Description is required';
+      if (!github.trim()) {
+        newErrors.github = '🌸 GitHub link is required';
+      } else if (!isValidGithubLink(github)) {
+        newErrors.github = '🌸 Please enter a valid GitHub link (starts with https://github.com/)';
       }
     }
     if (currentStep === 1) {
@@ -147,6 +150,15 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
     const validationErrors = validateStep(step);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
+      if (validationErrors.github && github.trim() !== '' && !isValidGithubLink(github)) {
+        Toast.show({
+          type: 'info',
+          text1: '🌸 GitHub Link Needed',
+          text2: 'Pretty please! Enter a valid GitHub repository link 💻✨',
+          position: 'top',
+          visibilityTime: 4000,
+        });
+      }
       return;
     }
     setErrors({});
@@ -164,15 +176,56 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
     const validationErrors = validateStep(2);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
+      if (validationErrors.github && github.trim() !== '' && !isValidGithubLink(github)) {
+        Toast.show({
+          type: 'info',
+          text1: '🌸 Oops! Invalid GitHub Link',
+          text2: 'Please enter a valid GitHub URL ✨',
+          position: 'top',
+          visibilityTime: 4000,
+        });
+      }
       return;
     }
 
     setSubmitting(true);
+    
+    Toast.show({
+      type: 'info',
+      text1: '📸 Uploading image...',
+      text2: 'Please wait ✨',
+      position: 'top',
+      visibilityTime: 2000,
+    });
+
     try {
       let imgUrl = '';
       if (imageUri) {
-        const blob = await fetch(imageUri).then(res => res.blob());
-        imgUrl = await uploadToCloudinary(blob);
+        try {
+          console.log("📸 Starting image upload...");
+          imgUrl = await uploadToCloudinary(imageUri);
+          console.log("✅ Image uploaded:", imgUrl);
+          
+          Toast.show({
+            type: 'success',
+            text1: '✅ Image uploaded!',
+            text2: 'Now submitting your project...',
+            position: 'top',
+            visibilityTime: 1500,
+          });
+          
+        } catch (uploadError: any) {
+          console.error("❌ Image upload error:", uploadError);
+          Toast.show({
+            type: 'error',
+            text1: '🖼️ Image Upload Failed',
+            text2: uploadError.message || 'Could not upload image. Please try again.',
+            position: 'top',
+            visibilityTime: 4000,
+          });
+          setSubmitting(false);
+          return;
+        }
       }
 
       const currentUser = auth.currentUser;
@@ -184,7 +237,8 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
           position: 'top',
           visibilityTime: 3000,
         });
-        throw new Error('No user logged in');
+        setSubmitting(false);
+        return;
       }
 
       const userYear = await getCurrentUserYear(currentUser.uid);
@@ -214,10 +268,10 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
         setSuccess(true);
         Toast.show({
           type: 'success',
-          text1: '✅ Project submitted!',
-          text2: 'An admin will review it shortly',
+          text1: '🎉 Project submitted!',
+          text2: '✨ An admin will review it shortly ✨',
           position: 'top',
-          visibilityTime: 3000,
+          visibilityTime: 3500,
         });
         
         setTimeout(() => {
@@ -225,18 +279,19 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
           onClose();
         }, 2000);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Submit error:', error);
-      setErrors({ submit: 'Upload failed. Please try again.' });
+      setErrors({ submit: error.message || 'Upload failed. Please try again.' });
       Toast.show({
         type: 'error',
         text1: '❌ Upload failed',
-        text2: 'Please check your connection and try again',
+        text2: error.message || 'Please check your connection and try again',
         position: 'top',
-        visibilityTime: 3000,
+        visibilityTime: 4000,
       });
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
   const resetForm = () => {
@@ -255,7 +310,6 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
   };
 
   const handleClose = () => {
-    // لو فيه بيانات حقيقية والمودال مش في حالة نجاح
     if (hasData() && !success) {
       setShowExitConfirm(true);
     } else {
@@ -270,7 +324,6 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
     onClose();
   };
 
-  // Confirm Exit Modal
   const renderExitConfirm = () => (
     <Modal visible={showExitConfirm} transparent animationType="fade">
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
@@ -337,15 +390,13 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
           >
             <View style={{ backgroundColor: COLORS.bg, borderRadius: 28, width: '100%', maxHeight: '90%', overflow: 'hidden' }}>
               
-              {/* Header */}
               <View style={{ padding: 20, borderBottomWidth: 1, borderBottomColor: COLORS.border }}>
                 <Text style={{ fontSize: 22, fontWeight: '700', color: COLORS.black, textAlign: 'center' }}>
-                  Upload Project
+                  ✨ Upload Project
                 </Text>
                 {renderStepper()}
               </View>
 
-              {/* Body */}
               <ScrollView 
                 style={{ padding: 20 }} 
                 showsVerticalScrollIndicator={false}
@@ -357,14 +408,14 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
                       <Text style={{ fontSize: 32, color: COLORS.white }}>✓</Text>
                     </View>
                     <Text style={{ fontSize: 20, fontWeight: '700', color: COLORS.black, marginBottom: 8 }}>Project submitted!</Text>
-                    <Text style={{ fontSize: 14, color: COLORS.link, textAlign: 'center' }}>An admin will review it shortly.</Text>
+                    <Text style={{ fontSize: 14, color: COLORS.link, textAlign: 'center' }}>An admin will review it shortly ✨</Text>
                   </View>
                 ) : (
                   <>
                     {step === 0 && (
                       <View style={{ gap: 20 }}>
                         <View>
-                          <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.button, marginBottom: 6 }}>Project Name <Text style={{ color: COLORS.error }}>*</Text></Text>
+                          <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.button, marginBottom: 6 }}>📦 Project Name <Text style={{ color: COLORS.error }}>*</Text></Text>
                           <TextInput 
                             style={{ backgroundColor: COLORS.input, borderRadius: 14, padding: 12, fontSize: 15, borderWidth: errors.name ? 1 : 0, borderColor: COLORS.error }}
                             placeholder="e.g. AI Robotics Research"
@@ -376,8 +427,9 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
                           />
                           {errors.name && <Text style={{ color: COLORS.error, fontSize: 11, marginTop: 4 }}>{errors.name}</Text>}
                         </View>
+                        
                         <View>
-                          <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.button, marginBottom: 6 }}>Description <Text style={{ color: COLORS.error }}>*</Text></Text>
+                          <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.button, marginBottom: 6 }}>📝 Description <Text style={{ color: COLORS.error }}>*</Text></Text>
                           <TextInput 
                             style={{ backgroundColor: COLORS.input, borderRadius: 14, padding: 12, fontSize: 15, minHeight: 100, textAlignVertical: 'top', borderWidth: errors.description ? 1 : 0, borderColor: COLORS.error }}
                             placeholder="Tell us about your project..."
@@ -391,10 +443,18 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
                           <Text style={{ fontSize: 11, color: COLORS.link, textAlign: 'right', marginTop: 4 }}>{description.length}/500</Text>
                           {errors.description && <Text style={{ color: COLORS.error, fontSize: 11, marginTop: 4 }}>{errors.description}</Text>}
                         </View>
+                        
                         <View>
-                          <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.button, marginBottom: 6 }}>GitHub Link <Text style={{ color: COLORS.error }}>*</Text></Text>
+                          <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.button, marginBottom: 6 }}>🔗 GitHub Link <Text style={{ color: COLORS.error }}>*</Text></Text>
                           <TextInput 
-                            style={{ backgroundColor: COLORS.input, borderRadius: 14, padding: 12, fontSize: 15, borderWidth: errors.github ? 1 : 0, borderColor: COLORS.error }}
+                            style={{ 
+                              backgroundColor: COLORS.input, 
+                              borderRadius: 14, 
+                              padding: 12, 
+                              fontSize: 15, 
+                              borderWidth: errors.github ? 1 : 0, 
+                              borderColor: errors.github ? COLORS.error : (isValidGithubLink(github) && github ? COLORS.button : 0),
+                            }}
                             placeholder="https://github.com/username/repo"
                             placeholderTextColor={COLORS.link}
                             value={github} 
@@ -402,7 +462,32 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
                             autoCapitalize="none"
                             returnKeyType="done"
                           />
-                          {errors.github && <Text style={{ color: COLORS.error, fontSize: 11, marginTop: 4 }}>{errors.github}</Text>}
+                          
+                          {errors.github ? (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, backgroundColor: '#FFF0F0', padding: 12, borderRadius: 14, gap: 10 }}>
+                              <Text style={{ fontSize: 20 }}>🌸</Text>
+                              <View style={{ flex: 1 }}>
+                                <Text style={{ color: COLORS.error, fontSize: 13, fontWeight: '600' }}>Oopsie! Invalid GitHub Link</Text>
+                                <Text style={{ color: COLORS.error, fontSize: 12, marginTop: 2 }}>Pretty please, enter a valid GitHub URL like: https://github.com/username/repo</Text>
+                              </View>
+                            </View>
+                          ) : isValidGithubLink(github) && github.trim() !== '' ? (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, backgroundColor: '#E8F5E9', padding: 12, borderRadius: 14, gap: 10 }}>
+                              <Text style={{ fontSize: 20 }}>✨🎉</Text>
+                              <View style={{ flex: 1 }}>
+                                <Text style={{ color: COLORS.button, fontSize: 13, fontWeight: '600' }}>Perfect GitHub Link!</Text>
+                                <Text style={{ color: COLORS.link, fontSize: 12, marginTop: 2 }}>Yay! Your GitHub repository link is valid! 💻</Text>
+                              </View>
+                            </View>
+                          ) : github.trim() !== '' && !isValidGithubLink(github) ? (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, backgroundColor: '#FFF8E1', padding: 12, borderRadius: 14, gap: 10 }}>
+                              <Text style={{ fontSize: 20 }}>🤔💭</Text>
+                              <View style={{ flex: 1 }}>
+                                <Text style={{ color: '#E65100', fontSize: 13, fontWeight: '600' }}>Hmm... Not a GitHub Link?</Text>
+                                <Text style={{ color: '#BF6F00', fontSize: 12, marginTop: 2 }}>GitHub links start with https://github.com/ — please double-check! 🌸</Text>
+                              </View>
+                            </View>
+                          ) : null}
                         </View>
                       </View>
                     )}
@@ -410,7 +495,7 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
                     {step === 1 && (
                       <View style={{ gap: 20 }}>
                         <View>
-                          <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.button, marginBottom: 6 }}>Tag <Text style={{ color: COLORS.error }}>*</Text></Text>
+                          <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.button, marginBottom: 6 }}>🏷️ Tag <Text style={{ color: COLORS.error }}>*</Text></Text>
                           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                             {TAGS.map(t => (
                               <TouchableOpacity 
@@ -426,7 +511,7 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
                         </View>
                         
                         <View>
-                          <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.button, marginBottom: 6 }}>Category <Text style={{ color: COLORS.error }}>*</Text></Text>
+                          <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.button, marginBottom: 6 }}>📂 Category <Text style={{ color: COLORS.error }}>*</Text></Text>
                           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                             {CATEGORIES.map(c => (
                               <TouchableOpacity 
@@ -443,7 +528,7 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
                         
                         <View>
                           <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.button, marginBottom: 6 }}>
-                            Tech Stack <Text style={{ color: COLORS.error }}>*</Text>
+                            💻 Tech Stack <Text style={{ color: COLORS.error }}>*</Text>
                             {techStack.length > 0 && <Text style={{ color: COLORS.link, fontSize: 11 }}> ({techStack.length} selected)</Text>}
                           </Text>
                           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -465,7 +550,7 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
                     {step === 2 && (
                       <View style={{ gap: 20 }}>
                         <View>
-                          <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.button, marginBottom: 6 }}>Project Image <Text style={{ color: COLORS.error }}>*</Text></Text>
+                          <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.button, marginBottom: 6 }}>🖼️ Project Image <Text style={{ color: COLORS.error }}>*</Text></Text>
                           <TouchableOpacity 
                             onPress={pickImage} 
                             style={{ borderWidth: 2, borderColor: errors.image ? COLORS.error : COLORS.link, borderStyle: 'dashed', borderRadius: 16, minHeight: 180, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
@@ -474,7 +559,7 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
                               <Image source={{ uri: imageUri }} style={{ width: '100%', height: 180 }} resizeMode="cover" />
                             ) : (
                               <View style={{ alignItems: 'center', padding: 32 }}>
-                                <Text style={{ fontSize: 40, marginBottom: 8 }}>🖼️</Text>
+                                <Text style={{ fontSize: 40, marginBottom: 8 }}>📷</Text>
                                 <Text style={{ color: COLORS.button, fontWeight: '600', fontSize: 14 }}>Click to upload image</Text>
                                 <Text style={{ color: COLORS.link, fontSize: 11, marginTop: 4 }}>PNG, JPG up to 5MB</Text>
                               </View>
@@ -483,9 +568,8 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
                           {errors.image && <Text style={{ color: COLORS.error, fontSize: 11, marginTop: 4 }}>{errors.image}</Text>}
                         </View>
                         
-                        {/* Summary Section */}
                         <View style={{ backgroundColor: COLORS.input, borderRadius: 16, padding: 16, marginTop: 8 }}>
-                          <Text style={{ fontSize: 11, fontWeight: '700', textTransform: 'uppercase', color: COLORS.link, marginBottom: 12 }}>Summary</Text>
+                          <Text style={{ fontSize: 11, fontWeight: '700', textTransform: 'uppercase', color: COLORS.link, marginBottom: 12 }}>📋 Summary</Text>
                           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
                             <Text style={{ color: COLORS.link, fontSize: 13 }}>Name</Text>
                             <Text style={{ color: COLORS.black, fontWeight: '500', fontSize: 13, flex: 1, textAlign: 'right' }} numberOfLines={1}>{name || '—'}</Text>
@@ -515,7 +599,6 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
                 )}
               </ScrollView>
 
-              {/* Footer */}
               {!success && (
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 16, borderTopWidth: 1, borderTopColor: COLORS.border, gap: 12 }}>
                   {step > 0 ? (
@@ -536,7 +619,7 @@ export default function UploadProjectModal({ visible, onClose, onSuccess }: Uplo
                       {submitting ? (
                         <ActivityIndicator color={COLORS.white} size="small" />
                       ) : (
-                        <Text style={{ color: COLORS.white, fontWeight: '700' }}>Submit Project</Text>
+                        <Text style={{ color: COLORS.white, fontWeight: '700' }}>✨ Submit Project</Text>
                       )}
                     </TouchableOpacity>
                   )}
