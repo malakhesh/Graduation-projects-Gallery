@@ -222,7 +222,6 @@ async function getRejected() {
   }
 }
 
-
 async function notifyBookmark(projectId, bookmarkerUid) {
   try {
     const project = await getProj(projectId)
@@ -241,9 +240,34 @@ async function notifyBookmark(projectId, bookmarkerUid) {
   } catch {}
 }
 
+async function searchProjects(keyword) {
+  try {
+    if (!keyword) return "no-keyword"
+
+    const projectsRef = collection(db, "projects")
+    const snapshot = await getDocs(projectsRef)
+
+    let arr = []
+    snapshot.forEach((d) => {
+      const data = d.data()
+      const inTitle = data.title?.toLowerCase().includes(keyword.toLowerCase())
+      const inDesc = data.desc?.toLowerCase().includes(keyword.toLowerCase())
+      const inTags = Array.isArray(data.tags) && data.tags.some(t => t.toLowerCase().includes(keyword.toLowerCase()))
+
+      if (inTitle || inDesc || inTags) {
+        arr.push({ id: d.id, ...data })
+      }
+    })
+
+    return arr
+  } catch {
+    return "search-fail"
+  }
+}
 
 export { 
   addProj, getProj, getApproved, getPending, setStatus, 
   getUserProjs, getByTag, getByCategory, getByStack,
-  addComment, addRate, removeRate, delProj, updProj, removeComment,getRejected,notifyBookmark
+  addComment, addRate, removeRate, delProj, updProj, removeComment,
+  getRejected, notifyBookmark, searchProjects
 }

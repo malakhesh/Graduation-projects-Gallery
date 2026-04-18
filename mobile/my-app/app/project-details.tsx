@@ -1,167 +1,263 @@
-import { View, Text, Image, ScrollView, TouchableOpacity, Linking, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  Linking,
+  StyleSheet,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
+import { getProj } from "../backend/projects";
 
 const C = {
-  bg: 'rgb(223, 205, 192)',
-  white: 'rgb(254, 251, 245)',
-  black: 'rgb(47, 28, 15)',
-  link: 'rgb(164, 132, 109)',
-  linkHover: 'rgb(75, 48, 28)',
-  button: 'rgb(104, 68, 42)',
-  buttonHover: 'rgb(75, 48, 28)',
-  buttonClick: 'rgb(50, 30, 15)',
-  input: 'rgb(185, 174, 167)',
+  bg: "rgb(223, 205, 192)",
+  white: "rgb(254, 251, 245)",
+  black: "rgb(47, 28, 15)",
+  link: "rgb(164, 132, 109)",
+  button: "rgb(104, 68, 42)",
+  input: "rgb(185, 174, 167)",
 };
 
 export default function ProjectDetails() {
   const params = useLocalSearchParams();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
-  const techStack =
-    typeof params.techStack === "string"
-      ? JSON.parse(params.techStack)
-      : ["React", "Node.js", "TensorFlow"];
+  const [project, setProject] = useState<any>(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const project = {
-    title: typeof params.title === "string" ? params.title : "AI Health App",
-    year: typeof params.year === "string" ? params.year : "2024",
-    description:
-      typeof params.description === "string"
-        ? params.description
-        : "This project is about AI health monitoring system...",
-    image:
-      typeof params.image === "string"
-        ? params.image
-        : "https://via.placeholder.com/300",
-    github:
-      typeof params.github === "string"
-        ? params.github
-        : "https://github.com",
-    pdf:
-      typeof params.pdf === "string"
-        ? params.pdf
-        : "https://example.com",
-    techStack,
-  };
+  useEffect(() => {
+    const fetchProject = async () => {
+      setLoading(true);
+
+      if (!id) {
+        setError("No project ID");
+        setLoading(false);
+        return;
+      }
+
+      const data = await getProj(id);
+
+      if (data === "no-proj") {
+        setError("Project not found");
+      } else if (data === "get-fail") {
+        setError("Failed to fetch project");
+      } else {
+        setProject(data);
+      }
+
+      setLoading(false);
+    };
+
+    fetchProject();
+  }, [id]);
+
+  // ⛔ Error UI
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <Text>{error}</Text>
+      </View>
+    );
+  }
+
+  // ⏳ Loading UI
+  if (loading || !project) {
+    return (
+      <View style={styles.center}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView style={styles.container}>
-      <Image source={{ uri: project.image }} style={styles.image} />
+    <SafeAreaView style={styles.container}>
+      <ScrollView>
 
-      <Text style={styles.title}>{project.title}</Text>
-      <Text style={styles.year}>{project.year}</Text>
+        {/* IMAGE */}
+        <Image source={{ uri: project.imgUrl }} style={styles.image} />
 
-      <View style={styles.techStack}>
-        {project.techStack.map((tech: string, index: number) => (
-          <View key={index} style={styles.techChip}>
-            <Text style={styles.techText}>{tech}</Text>
-          </View>
-        ))}
-      </View>
+        {/* TITLE */}
+        <Text style={styles.title}>{project.title}</Text>
 
-      <Text style={styles.description}>{project.description}</Text>
+        {/* YEAR */}
+        <Text style={styles.year}>{project.year}</Text>
 
-      <TouchableOpacity
-        onPress={() => Linking.openURL(project.github)}
-        style={styles.button}
-      >
-        <Text style={styles.buttonText}>View on GitHub</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        onPress={() => Linking.openURL(project.pdf)}
-        style={[styles.button, styles.pdfButton]}
-      >
-        <Text style={styles.buttonText}>Open PDF</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.rating}>⭐⭐⭐⭐☆</Text>
-
-      <View style={styles.commentsSection}>
-        <Text style={styles.commentsTitle}>Comments:</Text>
-
-        <View style={styles.commentBox}>
-          <Text>Great project 👏</Text>
+        {/* TECH STACK */}
+        <View style={styles.techStack}>
+          {project.stack?.map((tech: string, index: number) => (
+            <View key={index} style={styles.techChip}>
+              <Text style={styles.techText}>{tech}</Text>
+            </View>
+          ))}
         </View>
 
-        <View style={styles.commentBox}>
-          <Text>Very useful idea 💡</Text>
+        {/* DESCRIPTION */}
+        <Text style={styles.description}>{project.desc}</Text>
+
+        {/* GITHUB */}
+        {project.gitLink && (
+          <TouchableOpacity
+            onPress={() => Linking.openURL(project.gitLink)}
+            style={styles.button}
+          >
+            <Text style={styles.buttonText}>View on GitHub</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* PDF */}
+        {project.pdf && (
+          <TouchableOpacity
+            onPress={() => Linking.openURL(project.pdf)}
+            style={[styles.button, styles.pdfButton]}
+          >
+            <Text style={styles.buttonText}>Open PDF</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* RATINGS */}
+        <Text style={styles.rating}>
+          ⭐ {project.ratings?.length || 0} Ratings
+        </Text>
+
+        {/* COMMENTS */}
+        <View style={styles.commentsSection}>
+          <Text style={styles.commentsTitle}>Comments:</Text>
+
+          {project.comments?.length > 0 ? (
+            project.comments.map((c: any, i: number) => (
+              <View key={i} style={styles.commentBox}>
+                <Text style={styles.commentUser}>
+                  {c.userName}
+                </Text>
+
+                <Text style={styles.commentText}>
+                  {c.text}
+                </Text>
+
+                <Text style={styles.commentDate}>
+                  {c.date}
+                </Text>
+              </View>
+            ))
+          ) : (
+            <Text>No comments yet</Text>
+          )}
         </View>
-      </View>
-    </ScrollView>
+
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
+// ── Styles ────────────────────────────────────────
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: C.bg,
   },
+
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
   image: {
     width: "100%",
-    height: 200,
-    borderRadius: 12,
+    height: 220,
   },
+
   title: {
     fontSize: 24,
     fontWeight: "bold",
     marginTop: 10,
+    paddingHorizontal: 16,
     color: C.black,
   },
+
   year: {
+    paddingHorizontal: 16,
     color: "gray",
-    marginBottom: 10,
   },
+
   techStack: {
     flexDirection: "row",
     flexWrap: "wrap",
+    paddingHorizontal: 16,
     marginTop: 10,
   },
+
   techChip: {
     backgroundColor: C.white,
     padding: 6,
     margin: 4,
     borderRadius: 6,
   },
+
   techText: {
-    fontSize: 14,
     color: C.black,
   },
+
   description: {
+    paddingHorizontal: 16,
     marginTop: 10,
     fontSize: 16,
     color: C.black,
   },
+
   button: {
     backgroundColor: C.button,
+    margin: 16,
     padding: 12,
-    marginTop: 15,
     borderRadius: 8,
   },
+
   pdfButton: {
     backgroundColor: C.link,
   },
+
   buttonText: {
-    color: C.white,
+    color: "white",
     textAlign: "center",
   },
+
   rating: {
-    marginTop: 15,
-    fontSize: 18,
+    paddingHorizontal: 16,
+    marginTop: 10,
     color: "gold",
   },
+
   commentsSection: {
-    marginTop: 15,
+    padding: 16,
   },
+
   commentsTitle: {
     fontWeight: "bold",
-    fontSize: 16,
-    color: C.black,
+    marginBottom: 10,
   },
+
   commentBox: {
-    marginTop: 8,
-    padding: 10,
     backgroundColor: C.input,
-    borderRadius: 6,
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+
+  commentUser: {
+    fontWeight: "bold",
+  },
+
+  commentText: {
+    marginTop: 2,
+  },
+
+  commentDate: {
+    fontSize: 10,
+    color: "gray",
+    marginTop: 4,
   },
 });
