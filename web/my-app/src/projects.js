@@ -20,7 +20,8 @@ async function addProj(title, desc, userId, year, stack, category, gitLink, imgU
       createdAt: serverTimestamp(),
       comments: [],
       ratings: [],
-      status: "pending"
+      status: "pending",
+      hidden: false,
     })
     return r.id
   } catch {
@@ -43,7 +44,11 @@ async function getApproved() {
     const q = query(collection(db, "projects"), where("status", "==", "approved"))
     const s = await getDocs(q)
     let arr = []
-    s.forEach((d) => arr.push({ id: d.id, ...d.data() }))
+    // Filter hidden in JS — avoids excluding docs where the field doesn't exist yet
+    s.forEach((d) => {
+      const data = d.data()
+      if (data.hidden !== true) arr.push({ id: d.id, ...data })
+    })
     return arr
   } catch {
     return "approved-fail"
@@ -278,6 +283,15 @@ async function updProj(id, data) {
   }
 }
 
+async function setHidden(id, hidden) {
+  try {
+    await updateDoc(doc(db, "projects", id), { hidden })
+    return "hidden-ok"
+  } catch {
+    return "hidden-fail"
+  }
+}
+
 async function notifyBookmark(projectId, bookmarkerUid) {
   try {
     const project = await getProj(projectId)
@@ -300,5 +314,5 @@ export {
   addProj, getProj, getApproved, getPending, getRejected, setStatus, 
   getUserProjs, getByTag, getByCategory, getByStack,
   addComment, addRate, removeRate, delProj, updProj, removeComment,
-  notifyBookmark
+  notifyBookmark, setHidden
 }

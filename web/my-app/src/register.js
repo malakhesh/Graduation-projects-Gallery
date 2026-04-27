@@ -13,7 +13,7 @@ function Register() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    document.body.style.backgroundColor = 'rgb(223, 205, 192)';
+    document.body.style.backgroundColor = 'rgb(245, 239, 230)';
     document.body.style.display = 'flex';
     document.body.style.justifyContent = 'center';
     document.body.style.alignItems = 'center';

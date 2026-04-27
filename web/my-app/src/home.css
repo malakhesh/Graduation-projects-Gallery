@@ -3,9 +3,9 @@
 =========================== */
 .hg-page {
   min-height: 100vh;
-  background: rgb(223, 205, 192);
+  background: rgb(245, 239, 230);
   font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
   overflow-x: hidden;
 }
 
@@ -17,7 +17,7 @@
 
 .hg-page a {
   text-decoration: none;
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
 }
 
 /* ===========================
@@ -25,7 +25,7 @@
 =========================== */
 .hg-page {
   scrollbar-width: thin;
-  scrollbar-color: rgb(164, 132, 109) rgb(223, 205, 192);
+  scrollbar-color: rgb(160, 120, 80) rgb(245, 239, 230);
 }
 
 .hg-page::-webkit-scrollbar {
@@ -33,16 +33,16 @@
 }
 
 .hg-page::-webkit-scrollbar-track {
-  background: rgb(223, 205, 192);
+  background: rgb(245, 239, 230);
 }
 
 .hg-page::-webkit-scrollbar-thumb {
-  background: rgb(164, 132, 109);
+  background: rgb(160, 120, 80);
   border-radius: 10px;
 }
 
 .hg-page::-webkit-scrollbar-thumb:hover {
-  background: rgb(104, 68, 42);
+  background: rgb(122, 78, 45);
 }
 
 .hg-main-content {
@@ -55,8 +55,8 @@
    NAVBAR
 =========================== */
 .hg-navbar {
-  background: rgb(254, 251, 245);
-  border-bottom: 1px solid rgb(185, 174, 167);
+  background: rgb(249, 245, 240);
+  border-bottom: 1px solid rgb(196, 173, 150);
   padding: 0 40px 0 16px;
   height: 64px;
   display: flex;
@@ -65,7 +65,7 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 1px 6px rgba(47, 28, 15, 0.08);
+  box-shadow: 0 1px 6px rgba(44, 26, 14, 0.08);
 }
 
 .hg-navbar-logo {
@@ -73,13 +73,13 @@
   align-items: center;
   gap: 4px;
   font-size: 18px;
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
   text-decoration: none;
 }
 
 .hg-logo-icon {
   font-size: 22px;
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
 }
 
 .hg-logo-text strong {
@@ -94,7 +94,7 @@
 
 .hg-nav-link {
   font-size: 14px;
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
   font-weight: 500;
   transition: color 0.2s, background 0.2s;
   text-decoration: none;
@@ -110,13 +110,13 @@
 }
 
 .hg-nav-link:hover {
-  color: rgb(254, 251, 245);
-  background: rgb(164, 132, 109);
+  color: rgb(249, 245, 240);
+  background: rgb(160, 120, 80);
 }
 
 .hg-nav-link-active {
-  color: rgb(254, 251, 245) !important;
-  background: rgb(164, 132, 109) !important;
+  color: rgb(249, 245, 240) !important;
+  background: rgb(160, 120, 80) !important;
   font-weight: 600;
 }
 
@@ -127,8 +127,8 @@
 }
 
 .hg-upload-btn {
-  background: rgb(164, 132, 109);
-  color: rgb(254, 251, 245);
+  background: rgb(160, 120, 80);
+  color: rgb(249, 245, 240);
   border: none;
   padding: 8px 18px;
   border-radius: 20px;
@@ -151,12 +151,12 @@
   height: 36px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid rgb(185, 174, 167);
+  border: 2px solid rgb(196, 173, 150);
 }
 
 .hg-dropdown-arrow {
   font-size: 11px;
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
   transition: transform 0.2s ease;
 }
 
@@ -181,7 +181,7 @@
   height: 7px;
   background: rgb(180, 60, 40);
   border-radius: 50%;
-  border: 1.5px solid rgb(254, 251, 245);
+  border: 1.5px solid rgb(249, 245, 240);
 }
 
 /* ===========================
@@ -198,18 +198,18 @@
 .hg-search-bar {
   display: flex;
   align-items: center;
-  background: rgb(254, 251, 245);
-  border: 1px solid rgb(185, 174, 167);
+  background: rgb(249, 245, 240);
+  border: 1px solid rgb(196, 173, 150);
   border-radius: 50px;
   padding: 10px 20px;
   flex: 1;
-  box-shadow: 0 1px 4px rgba(47, 28, 15, 0.06);
+  box-shadow: 0 1px 4px rgba(44, 26, 14, 0.06);
   gap: 10px;
 }
 
 .hg-search-icon {
   font-size: 15px;
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
 }
 
 .hg-search-input {
@@ -217,18 +217,18 @@
   border: none;
   outline: none;
   font-size: 15px;
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
   background: transparent;
 }
 
 .hg-search-input::placeholder {
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
 }
 
 .hg-search-divider {
   width: 1px;
   height: 18px;
-  background: rgb(185, 174, 167);
+  background: rgb(196, 173, 150);
 }
 
 .hg-filter-btn {
@@ -236,7 +236,7 @@
   border: none;
   font-size: 14px;
   font-weight: 600;
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -264,26 +264,26 @@
 
 .hg-btn-outline {
   padding: 10px 20px;
-  border: 1.5px solid rgb(185, 174, 167);
+  border: 1.5px solid rgb(196, 173, 150);
   border-radius: 50px;
-  background: rgb(254, 251, 245);
+  background: rgb(249, 245, 240);
   font-size: 14px;
   font-weight: 600;
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
   cursor: pointer;
   white-space: nowrap;
   transition: border-color 0.2s, color 0.2s;
 }
 
 .hg-btn-outline:hover {
-  border-color: rgb(104, 68, 42);
-  color: rgb(104, 68, 42);
+  border-color: rgb(122, 78, 45);
+  color: rgb(122, 78, 45);
 }
 
 .hg-btn-outline-active {
-  background: rgb(104, 68, 42);
-  border-color: rgb(104, 68, 42);
-  color: rgb(254, 251, 245) !important;
+  background: rgb(122, 78, 45);
+  border-color: rgb(122, 78, 45);
+  color: rgb(249, 245, 240) !important;
 }
 
 /* ===========================
@@ -296,7 +296,7 @@
 .hg-section-title {
   font-size: 20px;
   font-weight: 700;
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
   font-family: 'Times New Roman', Times, serif;
   margin-bottom: 20px;
 }
@@ -304,7 +304,7 @@
 .hg-section-subtitle {
   font-size: 15px;
   font-weight: 400;
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
   font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -322,17 +322,17 @@
    PROJECT CARD
 =========================== */
 .hg-project-card {
-  background: rgb(254, 251, 245);
+  background: rgb(249, 245, 240);
   border-radius: 14px;
-  border: 1px solid rgb(185, 174, 167);
+  border: 1px solid rgb(196, 173, 150);
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(47, 28, 15, 0.06);
+  box-shadow: 0 2px 8px rgba(44, 26, 14, 0.06);
   transition: transform 0.2s, box-shadow 0.2s;
   display: flex;
   flex-direction: column;
   font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   font-size: 13px;
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
   text-align: left;
   width: 100%;
   box-sizing: border-box;
@@ -340,7 +340,7 @@
 
 .hg-project-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(47, 28, 15, 0.13);
+  box-shadow: 0 8px 24px rgba(44, 26, 14, 0.13);
 }
 
 .hg-card-header {
@@ -350,7 +350,7 @@
 .hg-card-title {
   font-size: 18px;
   font-weight: 700;
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
   font-family: 'Times New Roman', Times, serif;
   margin-bottom: 6px;
   white-space: nowrap;
@@ -369,18 +369,18 @@
   height: 30px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid rgb(185, 174, 167);
+  border: 1px solid rgb(196, 173, 150);
 }
 
 .hg-author-name {
   font-size: 11px;
   font-weight: 600;
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
 }
 
 .hg-author-date {
   font-size: 10px;
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
 }
 
 .hg-card-image-wrapper {
@@ -412,15 +412,15 @@
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
-  background: rgb(223, 205, 192);
-  color: rgb(104, 68, 42);
-  border: 1px solid rgb(185, 174, 167);
+  background: rgb(245, 239, 230);
+  color: rgb(122, 78, 45);
+  border: 1px solid rgb(196, 173, 150);
 }
 
 .hg-tag-github {
-  background: rgb(47, 28, 15);
-  color: rgb(254, 251, 245) !important;
-  border-color: rgb(47, 28, 15);
+  background: rgb(44, 26, 14);
+  color: rgb(249, 245, 240) !important;
+  border-color: rgb(44, 26, 14);
   display: inline-flex;
   align-items: center;
   text-decoration: none;
@@ -428,8 +428,8 @@
 }
 
 .hg-tag-github:hover {
-  background: rgb(104, 68, 42);
-  border-color: rgb(104, 68, 42);
+  background: rgb(122, 78, 45);
+  border-color: rgb(122, 78, 45);
 }
 
 /* ===========================
@@ -443,9 +443,9 @@
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
-  background: rgb(223, 205, 192);
-  color: rgb(104, 68, 42);
-  border: 1px solid rgb(185, 174, 167);
+  background: rgb(245, 239, 230);
+  color: rgb(122, 78, 45);
+  border: 1px solid rgb(196, 173, 150);
   cursor: pointer;
   text-decoration: none;
   transition: background 0.2s, color 0.2s;
@@ -453,15 +453,15 @@
 }
 
 .hg-card-footer-btn:hover {
-  background: rgb(164, 132, 109);
-  color: rgb(254, 251, 245);
-  border-color: rgb(164, 132, 109);
+  background: rgb(160, 120, 80);
+  color: rgb(249, 245, 240);
+  border-color: rgb(160, 120, 80);
 }
 
 .hg-card-footer-btn-active {
-  background: rgb(47, 28, 15);
-  color: rgb(254, 251, 245);
-  border-color: rgb(47, 28, 15);
+  background: rgb(44, 26, 14);
+  color: rgb(249, 245, 240);
+  border-color: rgb(44, 26, 14);
 }
 
 /* ===========================
@@ -474,8 +474,8 @@
 }
 
 .hg-tag-card {
-  background: rgb(254, 251, 245);
-  border: 1px solid rgb(185, 174, 167);
+  background: rgb(249, 245, 240);
+  border: 1px solid rgb(196, 173, 150);
   border-radius: 50px;
   padding: 10px 22px;
   display: flex;
@@ -484,38 +484,38 @@
   gap: 9px;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s, background 0.2s, color 0.2s, border-color 0.2s;
-  box-shadow: 0 1px 4px rgba(47, 28, 15, 0.05);
+  box-shadow: 0 1px 4px rgba(44, 26, 14, 0.05);
 }
 
 .hg-tag-card:hover {
-  box-shadow: 0 4px 12px rgba(47, 28, 15, 0.10);
-  background: rgb(164, 132, 109);
-  border-color: rgb(164, 132, 109);
+  box-shadow: 0 4px 12px rgba(44, 26, 14, 0.10);
+  background: rgb(160, 120, 80);
+  border-color: rgb(160, 120, 80);
 }
 
-.hg-tag-card:hover .hg-tag-icon { color: rgb(254, 251, 245); }
-.hg-tag-card:hover .hg-tag-label { color: rgb(254, 251, 245); }
+.hg-tag-card:hover .hg-tag-icon { color: rgb(249, 245, 240); }
+.hg-tag-card:hover .hg-tag-label { color: rgb(249, 245, 240); }
 
 .hg-tag-card-active {
-  background: rgb(104, 68, 42);
-  border-color: rgb(104, 68, 42);
+  background: rgb(122, 78, 45);
+  border-color: rgb(122, 78, 45);
 }
 
 .hg-tag-card-active .hg-tag-icon,
 .hg-tag-card-active .hg-tag-label {
-  color: rgb(254, 251, 245);
+  color: rgb(249, 245, 240);
 }
 
 .hg-tag-icon {
   font-size: 16px;
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
   transition: color 0.2s;
 }
 
 .hg-tag-label {
   font-size: 14px;
   font-weight: 600;
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
   transition: color 0.2s;
   white-space: nowrap;
 }
@@ -524,7 +524,7 @@
    NO RESULTS
 =========================== */
 .hg-no-results {
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
   font-size: 15px;
   padding: 20px 0;
   grid-column: 1 / -1;
@@ -553,8 +553,8 @@
   position: absolute;
   top: 45px;
   right: 0;
-  background-color: rgb(254, 251, 245);
-  border: 1px solid rgb(185, 174, 167);
+  background-color: rgb(249, 245, 240);
+  border: 1px solid rgb(196, 173, 150);
   border-radius: 10px;
   padding: 8px 0;
   width: 160px;
@@ -567,7 +567,7 @@
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
   font-family: Arial, Helvetica, sans-serif;
   font-size: 14px;
   font-weight: 550;
@@ -581,11 +581,11 @@
 }
 
 .hg-dropdown-item:hover {
-  background-color: rgb(223, 205, 192);
+  background-color: rgb(245, 239, 230);
 }
 
 .hg-dropdown-divider {
-  border-top: 1px solid rgb(185, 174, 167);
+  border-top: 1px solid rgb(196, 173, 150);
   margin: 6px 0;
 }
 
@@ -606,8 +606,8 @@
 .hg-spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid rgb(185, 174, 167);
-  border-top-color: rgb(104, 68, 42);
+  border: 4px solid rgb(196, 173, 150);
+  border-top-color: rgb(122, 78, 45);
   border-radius: 50%;
   animation: hg-spin 0.8s linear infinite;
 }
@@ -617,7 +617,7 @@
 }
 
 /* ===========================
-   MOBILE BELL (navbar right, mobile only)
+   MOBILE BELL
 =========================== */
 .hg-mobile-bell-wrapper {
   display: none;
@@ -628,7 +628,7 @@
   background: none;
   border: none;
   font-size: 18px;
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
   cursor: pointer;
   padding: 6px 8px;
   border-radius: 8px;
@@ -639,23 +639,22 @@
 }
 
 .hg-mobile-bell:hover {
-  background: rgb(223, 205, 192);
+  background: rgb(245, 239, 230);
 }
 
 .hg-mobile-bell-active {
-  background: rgb(223, 205, 192);
+  background: rgb(245, 239, 230);
 }
 
 /* ===========================
    HAMBURGER BUTTON
-   Hidden on desktop, shown on mobile
 =========================== */
 .hg-hamburger {
   display: none;
   background: none;
   border: none;
   font-size: 18px;
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
   cursor: pointer;
   padding: 6px 8px;
   border-radius: 8px;
@@ -666,7 +665,7 @@
 }
 
 .hg-hamburger:hover {
-  background: rgb(223, 205, 192);
+  background: rgb(245, 239, 230);
 }
 
 /* ===========================
@@ -688,8 +687,8 @@
   left: -280px;
   width: 260px;
   height: 100vh;
-  background-color: rgb(254, 251, 245);
-  border-right: 1px solid rgb(185, 174, 167);
+  background-color: rgb(249, 245, 240);
+  border-right: 1px solid rgb(196, 173, 150);
   border-radius: 0 14px 14px 0;
   padding: 24px 16px 32px;
   display: flex;
@@ -710,11 +709,11 @@
   justify-content: space-between;
   margin-bottom: 28px;
   padding-bottom: 16px;
-  border-bottom: 1px solid rgb(185, 174, 167);
+  border-bottom: 1px solid rgb(196, 173, 150);
 }
 
 .hg-sidebar-title {
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
   font-size: 17px;
   font-family: 'Times New Roman', Times, serif;
   font-weight: 700;
@@ -726,7 +725,7 @@
 }
 
 .hg-sidebar-title:hover {
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
 }
 
 .hg-sidebar-links {
@@ -743,7 +742,7 @@
   align-items: center;
   padding: 11px 14px;
   cursor: pointer;
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
   border-radius: 12px;
   font-size: 14px;
   font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
@@ -752,19 +751,19 @@
 }
 
 .hg-sidebar-item:hover {
-  background-color: rgb(223, 205, 192);
-  color: rgb(47, 28, 15);
+  background-color: rgb(245, 239, 230);
+  color: rgb(44, 26, 14);
   font-weight: 600;
 }
 
 .hg-sidebar-item-active {
-  background-color: rgb(164, 132, 109);
-  color: rgb(254, 251, 245) !important;
+  background-color: rgb(160, 120, 80);
+  color: rgb(249, 245, 240) !important;
   font-weight: 600;
 }
 
 .hg-sidebar-item-active:hover {
-  background-color: rgb(104, 68, 42);
+  background-color: rgb(122, 78, 45);
 }
 
 /* ===========================
@@ -775,10 +774,10 @@
   top: 48px;
   right: -100px;
   width: 340px;
-  background: rgb(254, 251, 245);
-  border: 1px solid rgb(185, 174, 167);
+  background: rgb(249, 245, 240);
+  border: 1px solid rgb(196, 173, 150);
   border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(47, 28, 15, 0.12);
+  box-shadow: 0 8px 24px rgba(44, 26, 14, 0.12);
   z-index: 200;
   overflow: hidden;
   animation: hg-dropdown-in 0.18s cubic-bezier(0.22, 1, 0.36, 1);
@@ -793,9 +792,9 @@
   padding: 14px 18px 10px;
   font-size: 14px;
   font-weight: 700;
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
   font-family: 'Times New Roman', Times, serif;
-  border-bottom: 1px solid rgb(185, 174, 167);
+  border-bottom: 1px solid rgb(196, 173, 150);
 }
 
 .hg-notif-empty {
@@ -809,18 +808,18 @@
 
 .hg-notif-empty-icon {
   font-size: 36px;
-  color: rgb(185, 174, 167);
+  color: rgb(196, 173, 150);
 }
 
 .hg-notif-empty-text {
   font-size: 14px;
   font-weight: 600;
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
 }
 
 .hg-notif-empty-sub {
   font-size: 12px;
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
   text-align: center;
   line-height: 1.5;
 }
@@ -832,8 +831,8 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgb(223, 205, 192);
-  border: 2px solid rgb(185, 174, 167);
+  background: rgb(245, 239, 230);
+  border: 2px solid rgb(196, 173, 150);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -841,7 +840,7 @@
 
 .hg-user-avatar-icon {
   font-size: 16px;
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
 }
 
 /* ===========================
@@ -857,7 +856,7 @@
 
 .hg-card-bookmark {
   background: none;
-  border: 1.5px solid rgb(185, 174, 167);
+  border: 1.5px solid rgb(196, 173, 150);
   border-radius: 50%;
   width: 30px;
   height: 30px;
@@ -866,21 +865,21 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: rgb(164, 132, 109);
+  color: rgb(160, 120, 80);
   font-size: 13px;
   transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
 
 .hg-card-bookmark:hover {
-  background: rgb(223, 205, 192);
-  border-color: rgb(104, 68, 42);
-  color: rgb(104, 68, 42);
+  background: rgb(245, 239, 230);
+  border-color: rgb(122, 78, 45);
+  color: rgb(122, 78, 45);
 }
 
 .hg-card-bookmark-active {
-  background: rgb(47, 28, 15);
-  border-color: rgb(47, 28, 15);
-  color: rgb(254, 251, 245) !important;
+  background: rgb(44, 26, 14);
+  border-color: rgb(44, 26, 14);
+  color: rgb(249, 245, 240) !important;
 }
 
 .hg-card-bookmark-active:hover {
@@ -894,7 +893,7 @@
 .hg-pm-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(47, 28, 15, 0.45);
+  background: rgba(44, 26, 14, 0.45);
   backdrop-filter: blur(4px);
   z-index: 500;
   display: flex;
@@ -910,7 +909,7 @@
 }
 
 .hg-pm {
-  background: rgb(254, 251, 245);
+  background: rgb(249, 245, 240);
   border-radius: 20px;
   width: 100%;
   max-width: 580px;
@@ -918,16 +917,16 @@
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
-  box-shadow: 0 16px 48px rgba(47, 28, 15, 0.2);
+  box-shadow: 0 16px 48px rgba(44, 26, 14, 0.2);
   animation: hg-pm-up 0.25s cubic-bezier(0.22, 1, 0.36, 1);
   scrollbar-width: thin;
-  scrollbar-color: rgb(164, 132, 109) rgb(223, 205, 192);
+  scrollbar-color: rgb(160, 120, 80) rgb(245, 239, 230);
 }
 
 .hg-pm::-webkit-scrollbar { width: 6px; }
-.hg-pm::-webkit-scrollbar-track { background: rgb(223, 205, 192); border-radius: 10px; }
-.hg-pm::-webkit-scrollbar-thumb { background: rgb(164, 132, 109); border-radius: 10px; }
-.hg-pm::-webkit-scrollbar-thumb:hover { background: rgb(104, 68, 42); }
+.hg-pm::-webkit-scrollbar-track { background: rgb(245, 239, 230); border-radius: 10px; }
+.hg-pm::-webkit-scrollbar-thumb { background: rgb(160, 120, 80); border-radius: 10px; }
+.hg-pm::-webkit-scrollbar-thumb:hover { background: rgb(122, 78, 45); }
 
 @keyframes hg-pm-up {
   from { opacity: 0; transform: translateY(24px); }
@@ -938,8 +937,8 @@
   position: absolute;
   top: 14px;
   right: 14px;
-  background: rgba(254, 251, 245, 0.85);
-  border: 1.5px solid rgb(185, 174, 167);
+  background: rgba(249, 245, 240, 0.85);
+  border: 1.5px solid rgb(196, 173, 150);
   border-radius: 50%;
   width: 32px;
   height: 32px;
@@ -948,12 +947,12 @@
   justify-content: center;
   cursor: pointer;
   font-size: 13px;
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
   z-index: 10;
   transition: background 0.2s;
 }
 
-.hg-pm-close:hover { background: rgb(223, 205, 192); }
+.hg-pm-close:hover { background: rgb(245, 239, 230); }
 
 .hg-pm-image-wrap {
   position: relative;
@@ -972,7 +971,7 @@
 .hg-pm-image-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(47, 28, 15, 0.75) 0%, transparent 60%);
+  background: linear-gradient(to top, rgba(44, 26, 14, 0.75) 0%, transparent 60%);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -984,7 +983,7 @@
   font-family: 'Times New Roman', Times, serif;
   font-size: 22px;
   font-weight: 700;
-  color: rgb(254, 251, 245);
+  color: rgb(249, 245, 240);
 }
 
 .hg-pm-tag {
@@ -992,9 +991,9 @@
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
-  background: rgba(254, 251, 245, 0.2);
-  color: rgb(254, 251, 245);
-  border: 1px solid rgba(254, 251, 245, 0.4);
+  background: rgba(249, 245, 240, 0.2);
+  color: rgb(249, 245, 240);
+  border: 1px solid rgba(249, 245, 240, 0.4);
   width: fit-content;
 }
 
@@ -1012,41 +1011,41 @@
   cursor: pointer;
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid rgb(185, 174, 167);
+  border: 1px solid rgb(196, 173, 150);
   transition: background 0.2s;
 }
 
-.hg-pm-author-row:hover { background: rgb(243, 236, 229); }
+.hg-pm-author-row:hover { background: rgb(237, 229, 218); }
 
 .hg-pm-author-avatar {
   width: 38px;
   height: 38px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid rgb(185, 174, 167);
+  border: 2px solid rgb(196, 173, 150);
 }
 
 .hg-pm-author-name {
   font-size: 14px;
   font-weight: 700;
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
 }
 
 .hg-pm-author-date {
   font-size: 12px;
-  color: rgb(164, 132, 109);
+  color: rgb(160, 120, 80);
 }
 
 .hg-pm-author-hint {
   margin-left: auto;
   font-size: 12px;
-  color: rgb(164, 132, 109);
+  color: rgb(160, 120, 80);
   white-space: nowrap;
 }
 
 .hg-pm-description {
   font-size: 14px;
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
   line-height: 1.7;
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -1059,7 +1058,7 @@
 
 .hg-pm-stack-chip {
   background: rgb(237, 228, 218);
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
   border: 1.5px solid rgb(210, 195, 180);
   border-radius: 20px;
   padding: 4px 12px;
@@ -1080,8 +1079,8 @@
   align-items: center;
   gap: 7px;
   padding: 9px 18px;
-  background: rgb(164, 132, 109);
-  color: rgb(254, 251, 245);
+  background: rgb(160, 120, 80);
+  color: rgb(249, 245, 240);
   border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
@@ -1090,7 +1089,7 @@
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.hg-pm-github-btn:hover { background: rgb(104, 68, 42); }
+.hg-pm-github-btn:hover { background: rgb(122, 78, 45); }
 
 .hg-pm-bookmark-btn {
   display: inline-flex;
@@ -1098,26 +1097,26 @@
   gap: 7px;
   padding: 9px 18px;
   background: none;
-  border: 1.5px solid rgb(185, 174, 167);
+  border: 1.5px solid rgb(196, 173, 150);
   border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
   cursor: pointer;
   transition: all 0.2s;
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.hg-pm-bookmark-btn:hover { background: rgb(223, 205, 192); }
+.hg-pm-bookmark-btn:hover { background: rgb(245, 239, 230); }
 
 .hg-pm-bookmark-active {
-  background: rgb(47, 28, 15) !important;
-  border-color: rgb(47, 28, 15) !important;
-  color: rgb(254, 251, 245) !important;
+  background: rgb(44, 26, 14) !important;
+  border-color: rgb(44, 26, 14) !important;
+  color: rgb(249, 245, 240) !important;
 }
 
 .hg-pm-divider {
-  border-top: 1px solid rgb(185, 174, 167);
+  border-top: 1px solid rgb(196, 173, 150);
 }
 
 .hg-pm-comment-section {
@@ -1129,7 +1128,7 @@
 .hg-pm-comment-title {
   font-size: 15px;
   font-weight: 700;
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
   font-family: 'Times New Roman', Times, serif;
 }
 
@@ -1137,7 +1136,7 @@
 
 .hg-star {
   font-size: 20px;
-  color: rgb(185, 174, 167);
+  color: rgb(196, 173, 150);
   cursor: pointer;
   transition: color 0.15s;
 }
@@ -1147,24 +1146,24 @@
 .hg-pm-textarea {
   width: 100%;
   padding: 10px 14px;
-  border: 1.5px solid rgb(185, 174, 167);
+  border: 1.5px solid rgb(196, 173, 150);
   border-radius: 12px;
   font-size: 14px;
   font-family: Arial, Helvetica, sans-serif;
-  color: rgb(47, 28, 15);
-  background: rgb(254, 251, 245);
+  color: rgb(44, 26, 14);
+  background: rgb(249, 245, 240);
   outline: none;
   resize: vertical;
   transition: border-color 0.2s;
 }
 
-.hg-pm-textarea:focus { border-color: rgb(104, 68, 42); }
+.hg-pm-textarea:focus { border-color: rgb(122, 78, 45); }
 
 .hg-pm-submit-btn {
   align-self: flex-end;
   padding: 8px 20px;
-  background: rgb(164, 132, 109);
-  color: rgb(254, 251, 245);
+  background: rgb(160, 120, 80);
+  color: rgb(249, 245, 240);
   border: none;
   border-radius: 20px;
   font-size: 13px;
@@ -1174,7 +1173,7 @@
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.hg-pm-submit-btn:hover { background: rgb(104, 68, 42); }
+.hg-pm-submit-btn:hover { background: rgb(122, 78, 45); }
 
 .hg-pm-comments-list {
   display: flex;
@@ -1183,7 +1182,7 @@
 }
 
 .hg-pm-comment {
-  background: rgb(243, 236, 229);
+  background: rgb(237, 229, 218);
   border-radius: 12px;
   padding: 12px 14px;
   display: flex;
@@ -1206,12 +1205,12 @@
 
 .hg-pm-comment-date {
   font-size: 11px;
-  color: rgb(164, 132, 109);
+  color: rgb(160, 120, 80);
 }
 
 .hg-pm-comment-text {
   font-size: 13px;
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
   line-height: 1.5;
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -1231,19 +1230,19 @@
   align-items: center;
   gap: 7px;
   background: none;
-  border: 1.5px solid rgb(185, 174, 167);
+  border: 1.5px solid rgb(196, 173, 150);
   border-radius: 20px;
   padding: 7px 14px;
   font-size: 13px;
   font-weight: 600;
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
   cursor: pointer;
   transition: background 0.2s;
   width: fit-content;
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.hg-author-back:hover { background: rgb(223, 205, 192); }
+.hg-author-back:hover { background: rgb(245, 239, 230); }
 
 .hg-author-card-body {
   display: flex;
@@ -1258,30 +1257,30 @@
   height: 90px;
   border-radius: 50%;
   object-fit: cover;
-  border: 4px solid rgb(185, 174, 167);
+  border: 4px solid rgb(196, 173, 150);
 }
 
 .hg-author-card-name {
   font-family: 'Times New Roman', Times, serif;
   font-size: 22px;
   font-weight: 700;
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
 }
 
 .hg-author-card-year {
   font-size: 13px;
-  color: rgb(164, 132, 109);
+  color: rgb(160, 120, 80);
   font-style: italic;
 }
 
 .hg-author-card-bio {
-  background: rgb(243, 236, 229);
-  border-left: 3px solid rgb(185, 174, 167);
+  background: rgb(237, 229, 218);
+  border-left: 3px solid rgb(196, 173, 150);
   border-radius: 8px;
   padding: 10px 14px;
   width: 100%;
   font-size: 14px;
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
   line-height: 1.6;
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -1298,7 +1297,7 @@
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
   font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -1308,27 +1307,26 @@
 .hg-dashboard-btn {
   font-size: 14px;
   font-weight: 600;
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
   text-decoration: none;
   display: flex;
   align-items: center;
   padding: 6px 14px;
   border-radius: 20px;
-  border: 1.5px solid rgb(104, 68, 42);
+  border: 1.5px solid rgb(122, 78, 45);
   transition: background 0.2s, color 0.2s;
   font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 
 .hg-dashboard-btn:hover {
-  background: rgb(104, 68, 42);
-  color: rgb(254, 251, 245);
+  background: rgb(122, 78, 45);
+  color: rgb(249, 245, 240);
 }
 
 .hg-dashboard-btn-active {
-  background: rgb(104, 68, 42);
-  color: rgb(254, 251, 245) !important;
+  background: rgb(122, 78, 45);
+  color: rgb(249, 245, 240) !important;
 }
-
 
 /* =============================================
    RESPONSIVE — TABLET  (≤ 900px)
@@ -1338,12 +1336,10 @@
     padding: 0 16px;
   }
 
-  /* Show hamburger, hide desktop nav links */
   .hg-hamburger {
     display: flex;
   }
 
-  /* Show mobile bell */
   .hg-mobile-bell-wrapper {
     display: block;
   }
@@ -1352,12 +1348,10 @@
     display: none;
   }
 
-  /* Hide upload button — it's in the sidebar */
   .hg-upload-btn {
     display: none;
   }
 
-  /* Hide dashboard button from navbar — it's in the sidebar */
   .hg-dashboard-btn {
     display: none;
   }
@@ -1366,13 +1360,11 @@
     padding: 24px 16px;
   }
 
-  /* 2-column grid */
   .hg-projects-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
   }
 
-  /* Search wrapper: stack on two lines */
   .hg-search-wrapper {
     flex-wrap: wrap;
     gap: 10px;
@@ -1388,13 +1380,11 @@
     justify-content: flex-start;
   }
 
-  /* Notification dropdown repositioned */
   .hg-notif-dropdown {
     right: -60px;
     width: 300px;
   }
 }
-
 
 /* =============================================
    RESPONSIVE — MOBILE  (≤ 580px)
@@ -1417,18 +1407,15 @@
     padding: 16px 12px;
   }
 
-  /* Single column cards */
   .hg-projects-grid {
     grid-template-columns: 1fr;
     gap: 14px;
   }
 
-  /* Shorter card images */
   .hg-card-image {
     height: 180px;
   }
 
-  /* Search takes full width, All Projects button below */
   .hg-search-wrapper {
     flex-direction: column;
     align-items: stretch;
@@ -1475,7 +1462,6 @@
     font-size: 13px;
   }
 
-  /* Notification dropdown: fixed at top of screen on mobile */
   .hg-notif-dropdown {
     position: fixed;
     top: 56px;
@@ -1485,7 +1471,6 @@
     animation: hg-dropdown-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  /* Modal: slides up from bottom */
   .hg-pm-overlay {
     padding: 0;
     align-items: flex-end;

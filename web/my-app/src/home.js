@@ -370,10 +370,29 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
   const [loading, setLoading] = useState(true);
   const [label, setLabel] = useState("Recommended Projects");
   const [index, setIndex] = useState(0);
-  const containerRef = useRef(null);
+  const [visible, setVisible] = useState(3);
+  const sectionRef = useRef(null);   // ← renamed, now on the <section>
+  const containerRef = useRef(null); // ← stays on the overflow div for wheel
   const scrollAccum = useRef(0);
-  const VISIBLE = 3;
   const GAP = 20;
+
+  const getVisible = (w) => w < 500 ? 1 : w < 760 ? 2 : 3;
+
+  // Observe the section width (not the inner div)
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    setVisible(getVisible(el.offsetWidth));
+    const ro = new ResizeObserver(([entry]) => {
+      setVisible(getVisible(entry.contentRect.width));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    setIndex((i) => Math.min(i, Math.max(0, projects.length - visible)));
+  }, [visible, projects.length]);
 
   useEffect(() => {
     if (!uid) return;
@@ -390,31 +409,25 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
     });
   }, [uid]);
 
-  // Two-finger trackpad scroll
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-
     const handleWheel = (e) => {
-      // Only handle horizontal scrolling (two-finger swipe on trackpad)
       if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) return;
       e.preventDefault();
-
       scrollAccum.current += e.deltaX;
       const threshold = 60;
-
       if (scrollAccum.current > threshold) {
         scrollAccum.current = 0;
-        setIndex(i => Math.min(i + 1, projects.length - VISIBLE));
+        setIndex((i) => Math.min(i + 1, Math.max(0, projects.length - visible)));
       } else if (scrollAccum.current < -threshold) {
         scrollAccum.current = 0;
-        setIndex(i => Math.max(i - 1, 0));
+        setIndex((i) => Math.max(i - 1, 0));
       }
     };
-
     el.addEventListener("wheel", handleWheel, { passive: false });
     return () => el.removeEventListener("wheel", handleWheel);
-  }, [projects.length]);
+  }, [projects.length, visible]);
 
   const handleOpen = (project) => {
     if (uid) trackView(uid, project.id);
@@ -422,19 +435,20 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
   };
 
   const canPrev = index > 0;
-  const canNext = index + VISIBLE < projects.length;
+  const canNext = index + visible < projects.length;
 
-  const cardWidthPercent = 100 / VISIBLE;
-  const translateX = -(index * (cardWidthPercent + (GAP / VISIBLE)));
+  // Simple, accurate pixel translation
+  const cardWidthPct = (100 - GAP * (visible - 1) / (sectionRef.current?.offsetWidth || 1) * 100) / visible;
+  const translateX = index * (100 / visible) + index * (GAP / (sectionRef.current?.offsetWidth || 1) * 100);
 
   return (
-    <section className="hg-section">
+    <section ref={sectionRef} className="hg-section">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
         <h2 className="hg-section-title" style={{ margin: 0 }}>{label}</h2>
-        {projects.length > VISIBLE && (
+        {projects.length > visible && (
           <div style={{ display: "flex", gap: "8px" }}>
             <button
-              onClick={() => canPrev && setIndex(i => i - 1)}
+              onClick={() => canPrev && setIndex((i) => i - 1)}
               disabled={!canPrev}
               style={{
                 width: 34, height: 34, borderRadius: "50%",
@@ -449,7 +463,7 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
               <FaChevronLeft size={12} />
             </button>
             <button
-              onClick={() => canNext && setIndex(i => i + 1)}
+              onClick={() => canNext && setIndex((i) => i + 1)}
               disabled={!canNext}
               style={{
                 width: 34, height: 34, borderRadius: "50%",
@@ -477,21 +491,19 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
             style={{
               display: "flex",
               gap: `${GAP}px`,
-              // Improved spring-like easing
-              transform: `translateX(calc(${translateX}% - ${index * GAP / VISIBLE}px))`,
+              transform: `translateX(calc(-${index * 100 / visible}% - ${index * GAP}px))`,
               transition: "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
               willChange: "transform",
             }}
           >
             {projects.map((p, i) => {
-              // Fade + slightly scale down cards at the edges that are sliding out
-              const distFromView = i < index ? index - i : i - (index + VISIBLE - 1);
-              const isEdge = i < index || i >= index + VISIBLE;
+              const distFromView = i < index ? index - i : i - (index + visible - 1);
+              const isEdge = i < index || i >= index + visible;
               return (
                 <div
                   key={p.id}
                   style={{
-                    flex: `0 0 calc(${100 / VISIBLE}% - ${GAP * (VISIBLE - 1) / VISIBLE}px)`,
+                    flex: `0 0 calc(${100 / visible}% - ${GAP * (visible - 1) / visible}px)`,
                     minWidth: 0,
                     opacity: isEdge ? Math.max(0, 1 - distFromView * 0.5) : 1,
                     transform: isEdge ? `scale(${Math.max(0.94, 1 - distFromView * 0.03)})` : "scale(1)",
@@ -511,9 +523,9 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
         </div>
       )}
 
-      {projects.length > VISIBLE && (
+      {projects.length > visible && (
         <div style={{ display: "flex", justifyContent: "center", gap: "6px", marginTop: "16px" }}>
-          {Array.from({ length: projects.length - VISIBLE + 1 }).map((_, i) => (
+          {Array.from({ length: Math.max(1, projects.length - visible + 1) }).map((_, i) => (
             <div
               key={i}
               onClick={() => setIndex(i)}

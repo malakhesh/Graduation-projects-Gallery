@@ -1,19 +1,20 @@
 .signup-container {
   display: flex;
+  box-shadow: 0 8px 32px rgba(44, 26, 14, 0.13);
   flex-direction: column;
   align-items: flex-start;
-  border: 1px solid rgb(254, 251, 245);
+  border: 1px solid rgb(196, 173, 150);
   border-radius: 10px;
   padding: 40px;
-  background-color: rgb(254, 251, 245);
+  background-color: rgb(255, 252, 247);
   width: 350px;
-  height: auto; /* ← changed from 600px */
-  transition: all 0.3s ease; /* ← smooth expand/shrink */
+  height: auto;
+  transition: all 0.3s ease;
 }
 
 .signup-container h1 {
   margin-top: 25px;
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
   font-size: 40px;
   font-family: 'Times New Roman', Times, serif;
   font-weight: 700;
@@ -21,7 +22,7 @@
 
 .signup-container .l {
   height: 40px;
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
   font-family: Arial, Helvetica, sans-serif;
   font-weight: 550;
   font-size: 14px;
@@ -38,17 +39,15 @@
   padding: 10px;
   padding-right: 35px;
   border-radius: 6px;
-  border: 1px solid rgb(185, 174, 167);
+  border: 1px solid rgb(196, 173, 150);
   box-sizing: border-box;
 }
 
-/* hides on chrome */
 .signup-container .input-password::-webkit-credentials-auto-fill-button,
 .signup-container .input-password::-webkit-textfield-decoration-container {
   display: none;
 }
 
-/* hides on edge */
 .signup-container .input-password::-ms-reveal,
 .signup-container .input-password::-ms-clear {
   display: none;
@@ -61,7 +60,7 @@
 .signup-container .label-email,
 .signup-container .label-pass {
   display: block;
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
   font-family: Arial, Helvetica, sans-serif;
   font-weight: 550;
   font-size: 14px;
@@ -70,7 +69,7 @@
 
 .signup-container .label-pass2 {
   display: block;
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
   font-family: Arial, Helvetica, sans-serif;
   font-weight: 550;
   font-size: 14px;
@@ -94,7 +93,7 @@
   right: 10px;
   cursor: pointer;
   font-size: 16px;
-  color: rgb(104, 68, 42);
+  color: rgb(122, 78, 45);
 }
 
 .signup-container .error-box {
@@ -109,7 +108,7 @@
 .signup-container button {
   width: 80px;
   height: 30px;
-  background-color: rgb(104, 68, 42);
+  background-color: rgb(122, 78, 45);
   color: white;
   border: none;
   border-radius: 20px;
@@ -129,14 +128,14 @@
 
 .signup-container .swapper2 {
   margin-top: 40px;
-  color: rgb(47, 28, 15);
+  color: rgb(44, 26, 14);
   font-family: Arial, Helvetica, sans-serif;
   font-weight: 550;
   font-size: 14px;
 }
 
 .signup-container .swapper2 a {
-  color: rgb(164, 132, 109);
+  color: rgb(160, 120, 80);
   text-decoration: none;
 }
 

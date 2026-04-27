@@ -7,9 +7,11 @@ import { auth } from './firebase.js';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import UploadModal from './UploadModal';
 import { listenNotifs, markAllSeen } from './notifications.js';
+import { getUserProjs, setHidden } from './projects.js';
 import {
   FaGraduationCap, FaUser, FaCog, FaFolderOpen, FaChevronDown,
-  FaUserEdit, FaEnvelope, FaLock, FaTrash, FaBars, FaBell, FaTimes, FaBookmark
+  FaUserEdit, FaEnvelope, FaLock, FaTrash, FaBars, FaBell, FaTimes,
+  FaBookmark, FaEye, FaEyeSlash, FaExternalLinkAlt
 } from "react-icons/fa";
 
 function Navbar({ isAdmin }) {
@@ -30,16 +32,11 @@ function Navbar({ isAdmin }) {
     return () => unsub();
   }, [user]);
 
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [location.pathname]);
+  useEffect(() => { setSidebarOpen(false); }, [location.pathname]);
 
   useEffect(() => {
-    if (sidebarOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    if (sidebarOpen) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
     return () => { document.body.style.overflow = ""; };
   }, [sidebarOpen]);
 
@@ -96,7 +93,6 @@ function Navbar({ isAdmin }) {
           </Link>
         </div>
         <div className="st-navbar-right">
-          {/* Bell — mobile only */}
           <div ref={mobileNotifRef} className="st-mobile-bell-wrapper">
             <button className={`st-mobile-bell${notifOpen ? " st-mobile-bell-active" : ""}`} onClick={handleBellClick} aria-label="Notifications">
               <span className="st-notif-wrapper">
@@ -142,7 +138,6 @@ function Navbar({ isAdmin }) {
         </div>
       </nav>
 
-      {/* Sidebar overlay */}
       {sidebarOpen && <div className="st-sidebar-overlay" onClick={closeSidebar} />}
       <div className={`st-admin-sidebar${sidebarOpen ? " st-sidebar-open" : ""}`}>
         <div className="st-sidebar-header">
@@ -185,11 +180,194 @@ function Navbar({ isAdmin }) {
   );
 }
 
+// ===========================
+// PROJECT MANAGEMENT SECTION
+// ===========================
+function ProjectManagement({ user }) {
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [togglingId, setTogglingId] = useState(null);
+  const [togglingAll, setTogglingAll] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) return;
+    getUserProjs(user.uid).then((data) => {
+      if (Array.isArray(data)) setProjects(data);
+      setLoading(false);
+    });
+  }, [user]);
+
+  const allHidden = projects.length > 0 && projects.every((p) => p.hidden);
+  const anyVisible = projects.some((p) => !p.hidden);
+
+  const toggleOne = async (proj) => {
+    setTogglingId(proj.id);
+    const newHidden = !proj.hidden;
+    await setHidden(proj.id, newHidden);
+    setProjects((prev) => prev.map((p) => p.id === proj.id ? { ...p, hidden: newHidden } : p));
+    setTogglingId(null);
+  };
+
+  const toggleAll = async () => {
+    setTogglingAll(true);
+    const newHidden = anyVisible; // if any are visible, hide all; otherwise show all
+    await Promise.all(projects.map((p) => setHidden(p.id, newHidden)));
+    setProjects((prev) => prev.map((p) => ({ ...p, hidden: newHidden })));
+    setTogglingAll(false);
+  };
+
+  const STATUS_COLORS = {
+    approved: { bg: "rgb(212,237,218)", color: "rgb(21,87,36)", label: "Approved" },
+    pending:  { bg: "rgb(255,243,205)", color: "rgb(133,100,4)", label: "Pending" },
+    rejected: { bg: "rgb(248,215,218)", color: "rgb(114,28,36)", label: "Rejected" },
+  };
+
+  if (loading) return (
+    <div className="st-spinner-wrapper"><div className="st-spinner" /></div>
+  );
+
+  if (projects.length === 0) return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "40px 0", color: "rgb(164,132,109)" }}>
+      <FaFolderOpen style={{ fontSize: 44, opacity: 0.3 }} />
+      <p style={{ fontSize: 14, fontFamily: "Arial, sans-serif" }}>You haven't uploaded any projects yet.</p>
+    </div>
+  );
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+      {/* Header row with Hide All / Show All */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+        <p style={{ fontSize: 13, color: "rgb(104,68,42)", fontFamily: "Arial, sans-serif" }}>
+          {projects.length} project{projects.length !== 1 ? "s" : ""} · hidden projects are only visible to you
+        </p>
+        <button
+          onClick={toggleAll}
+          disabled={togglingAll}
+          style={{
+            display: "flex", alignItems: "center", gap: 7,
+            padding: "7px 16px", borderRadius: 20, border: "1.5px solid rgb(185,174,167)",
+            background: "none", fontSize: 12, fontWeight: 600, cursor: "pointer",
+            color: anyVisible ? "rgb(104,68,42)" : "rgb(60,130,80)",
+            fontFamily: "Arial, sans-serif", transition: "all 0.2s",
+          }}
+        >
+          {togglingAll
+            ? "Updating..."
+            : anyVisible
+              ? <><FaEyeSlash style={{ fontSize: 12 }} /> Hide all</>
+              : <><FaEye style={{ fontSize: 12 }} /> Show all</>
+          }
+        </button>
+      </div>
+
+      {/* Project rows */}
+      {projects.map((proj) => {
+        const statusStyle = STATUS_COLORS[proj.status] || STATUS_COLORS.pending;
+        const isToggling = togglingId === proj.id;
+        const image = proj.imgUrl || proj.image;
+
+        return (
+          <div
+            key={proj.id}
+            style={{
+              display: "flex", alignItems: "center", gap: 12,
+              padding: "10px 14px", borderRadius: 14,
+              border: "1.5px solid rgb(185,174,167)",
+              background: proj.hidden ? "rgb(243,236,229)" : "rgb(254,251,245)",
+              opacity: proj.hidden ? 0.75 : 1,
+              transition: "all 0.2s",
+            }}
+          >
+            {/* Thumbnail */}
+            {image && (
+              <img
+                src={image}
+                alt={proj.title}
+                style={{ width: 52, height: 38, borderRadius: 8, objectFit: "cover", flexShrink: 0, border: "1px solid rgb(185,174,167)" }}
+              />
+            )}
+
+            {/* Title + status */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{
+                fontSize: 14, fontWeight: 600, color: "rgb(47,28,15)",
+                fontFamily: "Arial, sans-serif", whiteSpace: "nowrap",
+                overflow: "hidden", textOverflow: "ellipsis",
+                textDecoration: proj.hidden ? "line-through" : "none",
+                opacity: proj.hidden ? 0.6 : 1,
+              }}>
+                {proj.title}
+              </p>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3, flexWrap: "wrap" }}>
+                <span style={{
+                  fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20,
+                  background: statusStyle.bg, color: statusStyle.color,
+                  fontFamily: "Arial, sans-serif", textTransform: "capitalize",
+                }}>
+                  {statusStyle.label}
+                </span>
+                {proj.hidden && (
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20,
+                    background: "rgb(223,205,192)", color: "rgb(104,68,42)",
+                    fontFamily: "Arial, sans-serif",
+                  }}>
+                    Hidden
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+              {/* Link to project */}
+              <button
+                onClick={() => navigate(`/project/${proj.id}`)}
+                title="View project"
+                style={{
+                  background: "none", border: "1.5px solid rgb(185,174,167)",
+                  borderRadius: "50%", width: 30, height: 30,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: "pointer", color: "rgb(104,68,42)", fontSize: 11,
+                  transition: "all 0.2s",
+                }}
+              >
+                <FaExternalLinkAlt />
+              </button>
+
+              {/* Hide / Show toggle */}
+              <button
+                onClick={() => toggleOne(proj)}
+                disabled={isToggling}
+                title={proj.hidden ? "Show project" : "Hide project"}
+                style={{
+                  background: proj.hidden ? "rgb(104,68,42)" : "none",
+                  border: "1.5px solid rgb(185,174,167)",
+                  borderRadius: "50%", width: 30, height: 30,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: isToggling ? "default" : "pointer",
+                  color: proj.hidden ? "rgb(254,251,245)" : "rgb(104,68,42)",
+                  fontSize: 11, transition: "all 0.2s",
+                }}
+              >
+                {isToggling ? "…" : proj.hidden ? <FaEye /> : <FaEyeSlash />}
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 const SECTIONS = [
-  { key: "name",     label: "Change Name",     icon: <FaUserEdit /> },
-  { key: "email",    label: "Change Email",     icon: <FaEnvelope /> },
-  { key: "password", label: "Change Password",  icon: <FaLock /> },
-  { key: "delete",   label: "Delete Account",   icon: <FaTrash />, danger: true },
+  { key: "projects", label: "Project Management", icon: <FaFolderOpen /> },
+  { key: "name",     label: "Change Name",        icon: <FaUserEdit /> },
+  { key: "email",    label: "Change Email",        icon: <FaEnvelope /> },
+  { key: "password", label: "Change Password",     icon: <FaLock /> },
+  { key: "delete",   label: "Delete Account",      icon: <FaTrash />, danger: true },
 ];
 
 function SectionContent({ sectionKey, user }) {
@@ -202,6 +380,8 @@ function SectionContent({ sectionKey, user }) {
   const [success, setSuccess] = useState("");
 
   const reset = () => { setError(""); setSuccess(""); };
+
+  if (sectionKey === "projects") return <ProjectManagement user={user} />;
 
   if (sectionKey === "name") return (
     <div className="st-form">
