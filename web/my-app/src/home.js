@@ -56,7 +56,6 @@ async function fetchRecommendations(uid) {
 function NotifItem({ notif, uid, onProjectOpen, onWelcomeOpen }) {
   const isUnread = !notif.read;
   const isUnseen = !notif.seen;
-  const bg = isUnseen ? "rgb(243, 232, 220)" : "transparent";
 
   const handleClick = async () => {
     if (!notif.clickable) return;
@@ -79,30 +78,30 @@ function NotifItem({ notif, uid, onProjectOpen, onWelcomeOpen }) {
       onClick={handleClick}
       style={{
         padding: "12px 18px",
-        background: bg,
-        borderBottom: "1px solid rgb(235, 225, 215)",
+        background: isUnseen ? "var(--bg-notif-unread)" : "transparent",
+        borderBottom: "1px solid var(--border)",
         cursor: notif.clickable ? "pointer" : "default",
         transition: "background 0.2s",
         display: "flex",
         flexDirection: "column",
         gap: 4,
       }}
-      onMouseEnter={e => { if (notif.clickable) e.currentTarget.style.background = "rgb(235, 222, 208)"; }}
-      onMouseLeave={e => { e.currentTarget.style.background = bg; }}
+      onMouseEnter={e => { if (notif.clickable) e.currentTarget.style.background = "var(--bg-hover)"; }}
+      onMouseLeave={e => { e.currentTarget.style.background = isUnseen ? "var(--bg-notif-unread)" : "transparent"; }}
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-        <span style={{ fontSize: 10, fontWeight: 700, color: "rgb(164, 132, 109)", textTransform: "uppercase", letterSpacing: 0.8, fontFamily: "Arial, Helvetica, sans-serif" }}>
+        <span style={{ fontSize: 10, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.8, fontFamily: "Arial, Helvetica, sans-serif" }}>
           {typeLabel}
         </span>
         {isUnread && notif.clickable && (
-          <span style={{ width: 7, height: 7, borderRadius: "50%", background: "rgb(164, 132, 109)", flexShrink: 0 }} />
+          <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--text-muted)", flexShrink: 0 }} />
         )}
       </div>
-      <p style={{ fontSize: 13, color: "rgb(47, 28, 15)", margin: 0, lineHeight: 1.5, fontFamily: "Arial, Helvetica, sans-serif", fontWeight: isUnread ? 600 : 400 }}>
+      <p style={{ fontSize: 13, color: "var(--text-primary)", margin: 0, lineHeight: 1.5, fontFamily: "Arial, Helvetica, sans-serif", fontWeight: isUnread ? 600 : 400 }}>
         {notif.message}
       </p>
       {notif.createdAt && (
-        <span style={{ fontSize: 11, color: "rgb(164, 132, 109)", fontFamily: "Arial, Helvetica, sans-serif" }}>
+        <span style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "Arial, Helvetica, sans-serif" }}>
           {notif.createdAt.toDate?.().toLocaleDateString() || ""}
         </span>
       )}
@@ -219,7 +218,7 @@ export function Navbar({ isAdmin }) {
                     <p className="hg-notif-empty-sub">When someone interacts with<br />your projects, you'll see it here.</p>
                   </div>
                 ) : (
-                  <div style={{ maxHeight: 380, overflowY: "auto", scrollbarWidth: "thin", scrollbarColor: "rgb(164,132,109) rgb(223,205,192)" }}>
+                  <div style={{ maxHeight: 380, overflowY: "auto", scrollbarWidth: "thin", scrollbarColor: "var(--scrollbar-thumb) var(--scrollbar-track)" }}>
                     {notifs.map((n) => (
                       <NotifItem key={n.id} notif={n} uid={user.uid} onProjectOpen={handleProjectOpen} onWelcomeOpen={handleWelcomeOpen} />
                     ))}
@@ -248,7 +247,7 @@ export function Navbar({ isAdmin }) {
                     <p className="hg-notif-empty-sub">When someone interacts with<br />your projects, you'll see it here.</p>
                   </div>
                 ) : (
-                  <div style={{ maxHeight: 380, overflowY: "auto", scrollbarWidth: "thin", scrollbarColor: "rgb(164,132,109) rgb(223,205,192)" }}>
+                  <div style={{ maxHeight: 380, overflowY: "auto", scrollbarWidth: "thin", scrollbarColor: "var(--scrollbar-thumb) var(--scrollbar-track)" }}>
                     {notifs.map((n) => (
                       <NotifItem key={n.id} notif={n} uid={user.uid} onProjectOpen={handleProjectOpen} onWelcomeOpen={handleWelcomeOpen} />
                     ))}
@@ -279,7 +278,7 @@ export function Navbar({ isAdmin }) {
       <div className={`hg-admin-sidebar${sidebarOpen ? " hg-sidebar-open" : ""}`}>
         <div className="hg-sidebar-header">
           <Link to="/home" className="hg-sidebar-title" onClick={closeSidebar}>Graduation Gallery</Link>
-          <button onClick={closeSidebar} style={{ marginLeft: "auto", background: "none", border: "none", fontSize: 18, color: "rgb(104, 68, 42)", cursor: "pointer", padding: "4px 6px", borderRadius: 8 }}>
+          <button onClick={closeSidebar} style={{ marginLeft: "auto", background: "none", border: "none", fontSize: 18, color: "var(--accent-dark)", cursor: "pointer", padding: "4px 6px", borderRadius: 8 }}>
             <FaTimes />
           </button>
         </div>
@@ -290,7 +289,7 @@ export function Navbar({ isAdmin }) {
           <li className={`hg-sidebar-item${location.pathname === "/bookmarks" ? " hg-sidebar-item-active" : ""}`} onClick={() => { closeSidebar(); navigate("/bookmarks"); }}>
             <FaBookmark style={{ marginRight: 10 }} /> Bookmarks
           </li>
-          <li style={{ height: 1, background: "rgb(185, 174, 167)", margin: "8px 0", listStyle: "none" }} />
+          <li style={{ height: 1, background: "var(--border)", margin: "8px 0", listStyle: "none" }} />
           <li className="hg-sidebar-item" onClick={() => { closeSidebar(); setShowUpload(true); }}>
             <span style={{ marginRight: 10, fontSize: 15 }}>＋</span> Upload Project
           </li>
@@ -305,8 +304,8 @@ export function Navbar({ isAdmin }) {
               Dashboard
             </li>
           )}
-          <li style={{ height: 1, background: "rgb(185, 174, 167)", margin: "8px 0", listStyle: "none" }} />
-          <li className="hg-sidebar-item" style={{ color: "rgb(180, 60, 60)" }} onClick={async () => { closeSidebar(); await logOut(); navigate("/"); }}>
+          <li style={{ height: 1, background: "var(--border)", margin: "8px 0", listStyle: "none" }} />
+          <li className="hg-sidebar-item" style={{ color: "var(--danger)" }} onClick={async () => { closeSidebar(); await logOut(); navigate("/"); }}>
             Log Out
           </li>
         </ul>
@@ -339,12 +338,12 @@ function SearchBar({ search, setSearch, filtersOpen, setFiltersOpen, hasActiveFi
           className="hg-filter-btn"
           onClick={() => setFiltersOpen((o) => !o)}
           style={{
-            color: filtersOpen || hasActiveFilters ? "rgb(104, 68, 42)" : undefined,
+            color: filtersOpen || hasActiveFilters ? "var(--accent-dark)" : undefined,
             fontWeight: hasActiveFilters || filtersOpen ? 700 : undefined,
-            background: filtersOpen ? "rgb(223, 205, 192)" : undefined,
+            background: filtersOpen ? "var(--accent-light)" : undefined,
             padding: "6px 14px",
             borderRadius: 50,
-            border: `1.5px solid ${filtersOpen ? "rgb(164, 132, 109)" : "transparent"}`,
+            border: `1.5px solid ${filtersOpen ? "var(--border)" : "transparent"}`,
             transition: "all 0.2s",
           }}
         >
@@ -364,21 +363,19 @@ function SearchBar({ search, setSearch, filtersOpen, setFiltersOpen, hasActiveFi
   );
 }
 
-// ── True sliding carousel — all cards laid out in one track ──
 function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProject }) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [label, setLabel] = useState("Recommended Projects");
   const [index, setIndex] = useState(0);
   const [visible, setVisible] = useState(3);
-  const sectionRef = useRef(null);   // ← renamed, now on the <section>
-  const containerRef = useRef(null); // ← stays on the overflow div for wheel
+  const sectionRef = useRef(null);
+  const containerRef = useRef(null);
   const scrollAccum = useRef(0);
   const GAP = 20;
 
   const getVisible = (w) => w < 500 ? 1 : w < 760 ? 2 : 3;
 
-  // Observe the section width (not the inner div)
   useEffect(() => {
     const el = sectionRef.current;
     if (!el) return;
@@ -437,10 +434,6 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
   const canPrev = index > 0;
   const canNext = index + visible < projects.length;
 
-  // Simple, accurate pixel translation
-  const cardWidthPct = (100 - GAP * (visible - 1) / (sectionRef.current?.offsetWidth || 1) * 100) / visible;
-  const translateX = index * (100 / visible) + index * (GAP / (sectionRef.current?.offsetWidth || 1) * 100);
-
   return (
     <section ref={sectionRef} className="hg-section">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
@@ -452,9 +445,9 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
               disabled={!canPrev}
               style={{
                 width: 34, height: 34, borderRadius: "50%",
-                border: "1.5px solid rgba(111,78,55,0.3)",
-                backgroundColor: canPrev ? "#6F4E37" : "rgba(255,255,255,0.4)",
-                color: canPrev ? "#fff" : "#b09070",
+                border: "1.5px solid var(--border)",
+                backgroundColor: canPrev ? "var(--carousel-btn-bg)" : "var(--carousel-btn-disabled)",
+                color: canPrev ? "var(--carousel-btn-color)" : "var(--carousel-btn-muted)",
                 cursor: canPrev ? "pointer" : "not-allowed",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 transition: "all 0.2s", flexShrink: 0,
@@ -467,9 +460,9 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
               disabled={!canNext}
               style={{
                 width: 34, height: 34, borderRadius: "50%",
-                border: "1.5px solid rgba(111,78,55,0.3)",
-                backgroundColor: canNext ? "#6F4E37" : "rgba(255,255,255,0.4)",
-                color: canNext ? "#fff" : "#b09070",
+                border: "1.5px solid var(--border)",
+                backgroundColor: canNext ? "var(--carousel-btn-bg)" : "var(--carousel-btn-disabled)",
+                color: canNext ? "var(--carousel-btn-color)" : "var(--carousel-btn-muted)",
                 cursor: canNext ? "pointer" : "not-allowed",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 transition: "all 0.2s", flexShrink: 0,
@@ -533,7 +526,7 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
                 width: i === index ? "20px" : "8px",
                 height: "8px",
                 borderRadius: "4px",
-                backgroundColor: i === index ? "#6F4E37" : "rgba(111,78,55,0.25)",
+                backgroundColor: i === index ? "var(--carousel-dot-active)" : "var(--carousel-dot-inactive)",
                 cursor: "pointer",
                 transition: "all 0.25s ease",
               }}
@@ -544,7 +537,6 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
     </section>
   );
 }
-// ────────────────────────────────────────────────────────────
 
 function ExploreTags({ selectedTag, onSelectTag }) {
   return (

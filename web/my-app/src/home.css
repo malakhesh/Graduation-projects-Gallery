@@ -43,7 +43,7 @@
    NAVBAR
 =========================== */
 .hg-navbar {
-  background: var(--bg-surface);
+  background: var(--bg-nav);
   border-bottom: 1px solid var(--border);
   padding: 0 40px 0 16px;
   height: 64px;

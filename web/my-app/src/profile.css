@@ -3,9 +3,9 @@
 =========================== */
 .pf-page {
   min-height: 100vh;
-  background: rgb(245, 239, 230);
+  background: var(--bg-page);
   font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  color: rgb(44, 26, 14);
+  color: var(--text-primary);
 }
 
 .pf-page *,
@@ -35,8 +35,8 @@
    NAVBAR
 =========================== */
 .pf-navbar {
-  background: rgb(249, 245, 240);
-  border-bottom: 1px solid rgb(196, 173, 150);
+  background: var(--bg-nav);
+  border-bottom: 1px solid var(--border);
   padding: 0 40px 0 16px;
   height: 64px;
   display: flex;
@@ -45,7 +45,7 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 1px 6px rgba(47, 28, 15, 0.08);
+  box-shadow: 0 1px 6px var(--border-subtle);
 }
 
 .pf-navbar-logo {
@@ -53,11 +53,11 @@
   align-items: center;
   gap: 4px;
   font-size: 18px;
-  color: rgb(122, 78, 45);
+  color: var(--accent-dark);
   text-decoration: none;
 }
 
-.pf-logo-icon { font-size: 22px; color: rgb(122, 78, 45); }
+.pf-logo-icon { font-size: 22px; color: var(--accent-dark); }
 .pf-logo-text strong { font-weight: 700; }
 
 .pf-navbar-links {
@@ -68,7 +68,7 @@
 
 .pf-nav-link {
   font-size: 14px;
-  color: rgb(160, 120, 80);
+  color: var(--accent);
   font-weight: 500;
   transition: color 0.2s, background 0.2s;
   text-decoration: none;
@@ -80,13 +80,13 @@
 }
 
 .pf-nav-link:hover {
-  color: rgb(249, 245, 240);
-  background: rgb(160, 120, 80);
+  color: var(--bg-surface);
+  background: var(--accent);
 }
 
 .pf-nav-link-active {
-  color: rgb(249, 245, 240) !important;
-  background: rgb(160, 120, 80) !important;
+  color: var(--bg-surface) !important;
+  background: var(--accent) !important;
   font-weight: 600;
 }
 
@@ -95,8 +95,8 @@
 .pf-navbar-right { display: flex; align-items: center; }
 
 .pf-upload-btn {
-  background: rgb(160, 120, 80);
-  color: rgb(249, 245, 240);
+  background: var(--accent);
+  color: var(--bg-surface);
   border: none;
   padding: 8px 18px;
   border-radius: 20px;
@@ -106,7 +106,7 @@
   transition: background 0.2s;
 }
 
-.pf-upload-btn:hover { background: rgb(122, 78, 45); }
+.pf-upload-btn:hover { background: var(--accent-dark); }
 
 /* ===========================
    HAMBURGER
@@ -115,14 +115,14 @@
   background: none;
   border: none;
   font-size: 20px;
-  color: rgb(122, 78, 45);
+  color: var(--accent-dark);
   cursor: pointer;
   padding: 6px 8px;
   border-radius: 8px;
   transition: background 0.2s;
 }
 
-.pf-hamburger:hover { background: rgb(245, 239, 230); }
+.pf-hamburger:hover { background: var(--bg-page); }
 
 /* ===========================
    ADMIN SIDEBAR
@@ -130,7 +130,7 @@
 .pf-sidebar-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--sidebar-overlay);
   z-index: 200;
 }
 
@@ -140,15 +140,15 @@
   left: -280px;
   width: 260px;
   height: 100vh;
-  background-color: rgb(249, 245, 240);
-  border-right: 1px solid rgb(196, 173, 150);
+  background-color: var(--bg-surface);
+  border-right: 1px solid var(--border);
   border-radius: 0 10px 10px 0;
   padding: 40px 20px;
   display: flex;
   flex-direction: column;
   z-index: 300;
   transition: left 0.3s ease;
-  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 4px 0 16px var(--shadow-sm);
 }
 
 .pf-sidebar-open { left: 0; }
@@ -161,7 +161,7 @@
 }
 
 .pf-sidebar-title {
-  color: rgb(44, 26, 14);
+  color: var(--text-primary);
   font-size: clamp(18px, 8%, 28px);
   font-family: 'Times New Roman', Times, serif;
   font-weight: 700;
@@ -172,7 +172,7 @@
   text-overflow: ellipsis;
 }
 
-.pf-sidebar-title:hover { color: rgb(122, 78, 45); }
+.pf-sidebar-title:hover { color: var(--accent-dark); }
 
 .pf-sidebar-links {
   list-style: none;
@@ -185,7 +185,7 @@
 .pf-sidebar-item {
   padding: 10px 12px;
   cursor: pointer;
-  color: rgb(122, 78, 45);
+  color: var(--accent-dark);
   border-radius: 15px;
   font-size: 14px;
   font-family: Arial, Helvetica, sans-serif;
@@ -194,8 +194,8 @@
 }
 
 .pf-sidebar-item:hover {
-  background-color: rgb(160, 120, 80);
-  color: rgb(249, 245, 240);
+  background-color: var(--accent);
+  color: var(--bg-surface);
   font-weight: 600;
 }
 
@@ -203,13 +203,13 @@
    PROFILE CARD
 =========================== */
 .pf-card {
-  background: rgb(249, 245, 240);
-  border: 1px solid rgb(196, 173, 150);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: 20px;
   padding: 48px 56px;
   width: 100%;
   max-width: 780px;
-  box-shadow: 0 4px 24px rgba(47, 28, 15, 0.09);
+  box-shadow: 0 4px 24px var(--shadow-sm);
   display: flex;
   flex-direction: row;
   align-items: flex-start;
@@ -228,7 +228,7 @@
 
 .pf-icon-btn {
   background: none;
-  border: 1.5px solid rgb(196, 173, 150);
+  border: 1.5px solid var(--border);
   border-radius: 50%;
   width: 34px;
   height: 34px;
@@ -236,29 +236,29 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: rgb(122, 78, 45);
+  color: var(--accent-dark);
   font-size: 12px;
   transition: background 0.2s, border-color 0.2s;
 }
 
 .pf-icon-btn:hover {
-  background: rgb(245, 239, 230);
-  border-color: rgb(122, 78, 45);
+  background: var(--bg-page);
+  border-color: var(--accent-dark);
 }
 
 .pf-icon-btn-save {
-  color: rgb(60, 130, 80);
-  border-color: rgb(60, 130, 80);
+  color: var(--success);
+  border-color: var(--success);
 }
 
-.pf-icon-btn-save:hover { background: rgb(220, 240, 225); }
+.pf-icon-btn-save:hover { background: var(--success-bg); }
 
 .pf-icon-btn-cancel {
-  color: rgb(180, 60, 60);
-  border-color: rgb(180, 60, 60);
+  color: var(--danger);
+  border-color: var(--danger);
 }
 
-.pf-icon-btn-cancel:hover { background: rgb(245, 220, 220); }
+.pf-icon-btn-cancel:hover { background: var(--danger-bg); }
 
 /* Left column */
 .pf-card-left {
@@ -274,20 +274,20 @@
   height: 120px;
   border-radius: 50%;
   object-fit: cover;
-  border: 4px solid rgb(196, 173, 150);
+  border: 4px solid var(--border);
 }
 
 .pf-avatar-placeholder {
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: rgb(245, 239, 230);
-  border: 4px solid rgb(196, 173, 150);
+  background: var(--bg-page);
+  border: 4px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 48px;
-  color: rgb(122, 78, 45);
+  color: var(--accent-dark);
 }
 
 /* Right column */
@@ -302,19 +302,19 @@
   font-family: 'Times New Roman', Times, serif;
   font-size: 26px;
   font-weight: 700;
-  color: rgb(44, 26, 14);
+  color: var(--text-primary);
 }
 
 .pf-tagline {
   font-size: 14px;
-  color: rgb(160, 120, 80);
+  color: var(--accent);
   font-style: italic;
   font-family: Arial, Helvetica, sans-serif;
 }
 
 .pf-placeholder-text {
   font-size: 13px;
-  color: rgb(196, 173, 150);
+  color: var(--border);
   font-family: Arial, Helvetica, sans-serif;
   font-style: italic;
 }
@@ -322,7 +322,7 @@
 .pf-divider {
   width: 40px;
   height: 3px;
-  background: rgb(196, 173, 150);
+  background: var(--border);
   border-radius: 2px;
 }
 
@@ -338,26 +338,26 @@
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  color: rgb(122, 78, 45);
+  color: var(--accent-dark);
   font-family: Arial, Helvetica, sans-serif;
 }
 
 .pf-detail-icon {
   font-size: 13px;
-  color: rgb(160, 120, 80);
+  color: var(--accent);
   flex-shrink: 0;
 }
 
 /* Bio */
 .pf-bio {
-  background: rgb(243, 236, 229);
-  border-left: 3px solid rgb(196, 173, 150);
+  background: var(--bg-active);
+  border-left: 3px solid var(--border);
   border-radius: 8px;
   padding: 12px 16px;
 }
 
 .pf-bio-quote {
-  color: rgb(196, 173, 150);
+  color: var(--border);
   font-size: 11px;
   margin-bottom: 6px;
   display: block;
@@ -365,7 +365,7 @@
 
 .pf-bio p {
   font-size: 14px;
-  color: rgb(122, 78, 45);
+  color: var(--accent-dark);
   line-height: 1.6;
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -382,54 +382,54 @@
   align-items: center;
   gap: 6px;
   padding: 7px 14px;
-  border: 1.5px solid rgb(196, 173, 150);
+  border: 1.5px solid var(--border);
   border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
-  color: rgb(122, 78, 45);
-  background: rgb(249, 245, 240);
+  color: var(--accent-dark);
+  background: var(--bg-surface);
   text-decoration: none;
   transition: background 0.2s, color 0.2s, border-color 0.2s;
   font-family: Arial, Helvetica, sans-serif;
 }
 
 .pf-social-btn:hover {
-  background: rgb(122, 78, 45);
-  color: rgb(249, 245, 240);
-  border-color: rgb(122, 78, 45);
+  background: var(--accent-dark);
+  color: var(--bg-surface);
+  border-color: var(--accent-dark);
 }
 
 /* Edit inputs */
 .pf-input {
   width: 100%;
   padding: 8px 12px;
-  border: 1.5px solid rgb(196, 173, 150);
+  border: 1.5px solid var(--border);
   border-radius: 10px;
   font-size: 14px;
   font-family: Arial, Helvetica, sans-serif;
-  color: rgb(44, 26, 14);
-  background: rgb(249, 245, 240);
+  color: var(--text-primary);
+  background: var(--bg-surface);
   outline: none;
   transition: border-color 0.2s;
 }
 
-.pf-input:focus { border-color: rgb(122, 78, 45); }
+.pf-input:focus { border-color: var(--accent-dark); }
 
 .pf-textarea {
   width: 100%;
   padding: 10px 12px;
-  border: 1.5px solid rgb(196, 173, 150);
+  border: 1.5px solid var(--border);
   border-radius: 10px;
   font-size: 14px;
   font-family: Arial, Helvetica, sans-serif;
-  color: rgb(44, 26, 14);
-  background: rgb(249, 245, 240);
+  color: var(--text-primary);
+  background: var(--bg-surface);
   outline: none;
   resize: vertical;
   transition: border-color 0.2s;
 }
 
-.pf-textarea:focus { border-color: rgb(122, 78, 45); }
+.pf-textarea:focus { border-color: var(--accent-dark); }
 
 .pf-social-inputs {
   display: flex;
@@ -445,7 +445,7 @@
 
 .pf-social-icon {
   font-size: 17px;
-  color: rgb(160, 120, 80);
+  color: var(--accent);
   flex-shrink: 0;
 }
 
@@ -462,8 +462,8 @@
 .pf-spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid rgb(196, 173, 150);
-  border-top-color: rgb(122, 78, 45);
+  border: 4px solid var(--border);
+  border-top-color: var(--accent-dark);
   border-radius: 50%;
   animation: pf-spin 0.8s linear infinite;
 }
@@ -501,7 +501,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgb(160, 120, 80);
+  background: var(--accent);
   border-radius: 50px;
   padding: 4px 12px 4px 4px;
   cursor: pointer;
@@ -510,7 +510,7 @@
 }
 
 .pf-avatar-pill:hover {
-  background: rgb(122, 78, 45);
+  background: var(--accent-dark);
 }
 
 .pf-nav-avatar {
@@ -518,25 +518,25 @@
   height: 30px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid rgb(196, 173, 150);
+  border: 2px solid var(--border);
 }
 
 .pf-nav-avatar-placeholder {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: rgb(245, 239, 230);
-  border: 2px solid rgb(196, 173, 150);
+  background: var(--bg-page);
+  border: 2px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 13px;
-  color: rgb(122, 78, 45);
+  color: var(--accent-dark);
 }
 
 .pf-dropdown-arrow {
   font-size: 10px;
-  color: rgb(249, 245, 240);
+  color: var(--bg-surface);
   transition: transform 0.2s ease;
 }
 
@@ -548,12 +548,12 @@
   position: absolute;
   top: 44px;
   right: 0;
-  background: rgb(249, 245, 240);
-  border: 1px solid rgb(196, 173, 150);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 8px 0;
   width: 140px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--shadow-sm);
   z-index: 200;
 }
 
@@ -569,33 +569,33 @@
   background: none;
   border: none;
   text-align: left;
-  color: rgb(44, 26, 14);
+  color: var(--text-primary);
   font-family: Arial, Helvetica, sans-serif;
   transition: background 0.2s;
 }
 
 .pf-dropdown-item:hover {
-  background: rgb(245, 239, 230);
+  background: var(--bg-page);
 }
 
 .pf-dropdown-divider {
-  border-top: 1px solid rgb(196, 173, 150);
+  border-top: 1px solid var(--border);
   margin: 4px 0;
 }
 
 .pf-dropdown-logout {
-  color: rgb(180, 60, 60);
+  color: var(--danger);
 }
 
 .pf-dropdown-item-active {
-  background: rgb(245, 239, 230);
-  color: rgb(44, 26, 14);
+  background: var(--bg-page);
+  color: var(--text-primary);
   font-weight: 700;
   cursor: default;
 }
 
 .pf-dropdown-item-active:hover {
-  background: rgb(245, 239, 230);
+  background: var(--bg-page);
 }
 
 /* ===========================
@@ -613,9 +613,9 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: rgb(122, 78, 45);
-  color: rgb(249, 245, 240);
-  border: 2px solid rgb(249, 245, 240);
+  background: var(--accent-dark);
+  color: var(--bg-surface);
+  border: 2px solid var(--bg-surface);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -625,31 +625,31 @@
 }
 
 .pf-avatar-edit-btn:hover {
-  background: rgb(44, 26, 14);
+  background: var(--text-primary);
 }
 
 .hg-dashboard-btn {
   font-size: 14px;
   font-weight: 600;
-  color: rgb(122, 78, 45);
+  color: var(--accent-dark);
   text-decoration: none;
   display: flex;
   align-items: center;
   padding: 6px 14px;
   border-radius: 20px;
-  border: 1.5px solid rgb(122, 78, 45);
+  border: 1.5px solid var(--accent-dark);
   transition: background 0.2s, color 0.2s;
   font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 
 .hg-dashboard-btn:hover {
-  background: rgb(122, 78, 45);
-  color: rgb(249, 245, 240);
+  background: var(--accent-dark);
+  color: var(--bg-surface);
 }
 
 .hg-dashboard-btn-active {
-  background: rgb(122, 78, 45);
-  color: rgb(249, 245, 240) !important;
+  background: var(--accent-dark);
+  color: var(--bg-surface) !important;
 }
 /* ===========================
    HAMBURGER (mobile only)
@@ -659,7 +659,7 @@
   background: none;
   border: none;
   font-size: 18px;
-  color: rgb(122, 78, 45);
+  color: var(--accent-dark);
   cursor: pointer;
   padding: 6px 8px;
   border-radius: 8px;
@@ -668,7 +668,7 @@
   justify-content: center;
   flex-shrink: 0;
 }
-.pf-hamburger:hover { background: rgb(245, 239, 230); }
+.pf-hamburger:hover { background: var(--bg-page); }
 
 /* ===========================
    MOBILE BELL (mobile only)
@@ -681,7 +681,7 @@
   background: none;
   border: none;
   font-size: 18px;
-  color: rgb(122, 78, 45);
+  color: var(--accent-dark);
   cursor: pointer;
   padding: 6px 8px;
   border-radius: 8px;
@@ -690,15 +690,15 @@
   justify-content: center;
   transition: background 0.2s;
 }
-.pf-mobile-bell:hover, .pf-mobile-bell-active { background: rgb(245, 239, 230); }
+.pf-mobile-bell:hover, .pf-mobile-bell-active { background: var(--bg-page); }
 .pf-notif-wrapper { position: relative; display: inline-flex; align-items: center; }
 .pf-notif-dot {
   position: absolute;
   top: -3px; right: -4px;
   width: 7px; height: 7px;
-  background: rgb(180, 60, 40);
+  background: var(--danger);
   border-radius: 50%;
-  border: 1.5px solid rgb(249, 245, 240);
+  border: 1.5px solid var(--bg-surface);
 }
 
 /* ===========================
@@ -707,7 +707,7 @@
 .pf-sidebar-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--sidebar-overlay);
   z-index: 200;
 }
 
@@ -720,15 +720,15 @@
   left: -280px;
   width: 260px;
   height: 100vh;
-  background-color: rgb(249, 245, 240);
-  border-right: 1px solid rgb(196, 173, 150);
+  background-color: var(--bg-surface);
+  border-right: 1px solid var(--border);
   border-radius: 0 14px 14px 0;
   padding: 24px 16px 32px;
   display: flex;
   flex-direction: column;
   z-index: 300;
   transition: left 0.3s ease;
-  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.12);
+  box-shadow: 4px 0 20px var(--shadow-md);
   overflow-y: auto;
 }
 .pf-sidebar-open { left: 0; }
@@ -739,10 +739,10 @@
   justify-content: space-between;
   margin-bottom: 28px;
   padding-bottom: 16px;
-  border-bottom: 1px solid rgb(196, 173, 150);
+  border-bottom: 1px solid var(--border);
 }
 .pf-sidebar-title {
-  color: rgb(44, 26, 14);
+  color: var(--text-primary);
   font-size: 17px;
   font-family: 'Times New Roman', Times, serif;
   font-weight: 700;
@@ -751,7 +751,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.pf-sidebar-title:hover { color: rgb(122, 78, 45); }
+.pf-sidebar-title:hover { color: var(--accent-dark); }
 
 .pf-sidebar-links {
   list-style: none;
@@ -765,16 +765,16 @@
   align-items: center;
   padding: 11px 14px;
   cursor: pointer;
-  color: rgb(44, 26, 14);
+  color: var(--text-primary);
   border-radius: 12px;
   font-size: 14px;
   font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   font-weight: 500;
   transition: background 0.2s, color 0.2s;
 }
-.pf-sidebar-item:hover { background-color: rgb(245, 239, 230); font-weight: 600; }
-.pf-sidebar-item-active { background-color: rgb(160, 120, 80); color: rgb(249, 245, 240) !important; font-weight: 600; }
-.pf-sidebar-item-active:hover { background-color: rgb(122, 78, 45); }
+.pf-sidebar-item:hover { background-color: var(--bg-page); font-weight: 600; }
+.pf-sidebar-item-active { background-color: var(--accent); color: var(--bg-surface) !important; font-weight: 600; }
+.pf-sidebar-item-active:hover { background-color: var(--accent-dark); }
 
 /* ===========================
    NOTIFICATION DROPDOWN
@@ -785,10 +785,10 @@
   left: 12px;
   right: 12px;
   width: auto;
-  background: rgb(249, 245, 240);
-  border: 1px solid rgb(196, 173, 150);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(47, 28, 15, 0.12);
+  box-shadow: 0 8px 24px var(--shadow-md);
   z-index: 200;
   overflow: hidden;
   animation: pf-dropdown-in 0.18s cubic-bezier(0.22, 1, 0.36, 1);
@@ -801,9 +801,9 @@
   padding: 14px 18px 10px;
   font-size: 14px;
   font-weight: 700;
-  color: rgb(44, 26, 14);
+  color: var(--text-primary);
   font-family: 'Times New Roman', Times, serif;
-  border-bottom: 1px solid rgb(196, 173, 150);
+  border-bottom: 1px solid var(--border);
 }
 .pf-notif-empty {
   display: flex;

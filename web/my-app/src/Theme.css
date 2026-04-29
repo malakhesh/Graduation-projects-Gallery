@@ -76,148 +76,162 @@
   --carousel-dot-inactive: rgba(111, 78, 55, 0.25);
 }
 
-/* ── CARAMEL / TOFFEE (true mid-tone — warm honey-brown) ── */
+
+/* ── CARAMEL — Soft sand / linen ── */
 [data-theme="caramel"] {
   /* Backgrounds */
-  --bg-page:           rgb(168, 126, 90);
-  --bg-surface:        rgb(184, 140, 102);
-  --bg-card:           rgb(184, 140, 102);
-  --bg-hover:          rgb(175, 132, 95);
-  --bg-active:         rgb(158, 118, 82);
-  --bg-input:          rgb(176, 133, 96);
-  --bg-tag:            rgb(162, 121, 84);
-  --bg-notif-unread:   rgb(158, 118, 82);
-  --bg-sidebar:        rgb(160, 120, 85);
+  --bg-page:           rgb(232, 220, 200);
+  --bg-surface:        rgb(240, 230, 212);
+  --bg-card:           rgb(255, 253, 248);
+  --bg-hover:          rgb(242, 232, 216);
+  --bg-active:         rgb(228, 216, 196);
+  --bg-input:          rgb(255, 253, 248);
+  --bg-tag:            rgb(224, 210, 188);
+  --bg-notif-unread:   rgb(238, 224, 202);
+  --bg-sidebar:        rgb(236, 224, 204);
 
   /* Borders */
-  --border:            rgb(122, 90, 58);
-  --border-strong:     rgb(61, 36, 16);
-  --border-subtle:     rgba(40, 22, 8, 0.20);
+  --border:            rgba(140, 100, 58, 0.22);
+  --border-strong:     rgba(120, 82, 40, 0.55);
+  --border-subtle:     rgba(140, 100, 58, 0.10);
 
   /* Text */
-  --text-primary:      rgb(40, 22, 8);
-  --text-secondary:    rgb(65, 38, 16);
-  --text-muted:        rgb(95, 62, 32);
-  --text-faint:        rgb(128, 92, 56);
-  --text-inverse:      rgb(248, 238, 224);
+  --text-primary:      rgb(52, 32, 12);
+  --text-secondary:    rgb(100, 68, 32);
+  --text-muted:        rgb(148, 108, 62);
+  --text-faint:        rgb(185, 155, 112);
+  --text-inverse:      rgb(248, 240, 224);
 
-  /* Accent / Brand */
-  --accent:            rgb(80, 48, 20);
-  --accent-dark:       rgb(62, 36, 14);
-  --accent-darker:     rgb(48, 26, 8);
-  --accent-darkest:    rgb(34, 18, 4);
-  --accent-light:      rgb(210, 180, 148);
+  /* Accent */
+  --accent:            rgb(162, 112, 52);
+  --accent-dark:       rgb(128, 84, 30);
+  --accent-darker:     rgb(92, 58, 18);
+  --accent-darkest:    rgb(52, 32, 12);
+  --accent-light:      rgb(220, 200, 168);
 
   /* Status */
-  --danger:            rgb(170, 50, 30);
-  --danger-dark:       rgb(130, 34, 18);
-  --danger-bg:         rgb(218, 168, 155);
-  --danger-text:       rgb(80, 16, 8);
-  --danger-border:     rgb(192, 130, 118);
+  --danger:            rgb(172, 52, 36);
+  --danger-dark:       rgb(138, 36, 22);
+  --danger-bg:         rgb(248, 220, 215);
+  --danger-text:       rgb(110, 24, 14);
+  --danger-border:     rgb(238, 195, 188);
 
-  --success:           rgb(34, 100, 54);
-  --success-bg:        rgb(148, 202, 166);
-  --success-text:      rgb(14, 62, 30);
+  --success:           rgb(52, 122, 68);
+  --success-bg:        rgb(210, 238, 218);
+  --success-text:      rgb(18, 82, 34);
 
-  --warning-bg:        rgb(218, 192, 118);
-  --warning-text:      rgb(72, 48, 2);
+  --warning-bg:        rgb(252, 240, 200);
+  --warning-text:      rgb(120, 88, 4);
 
-  /* Shadows / Overlays */
-  --shadow-sm:         rgba(40, 22, 8, 0.14);
-  --shadow-md:         rgba(40, 22, 8, 0.24);
-  --shadow-lg:         rgba(40, 22, 8, 0.38);
-  --overlay:           rgba(40, 22, 8, 0.52);
-  --sidebar-overlay:   rgba(0, 0, 0, 0.42);
+  /* Shadows */
+  --shadow-sm:         rgba(52, 32, 12, 0.08);
+  --shadow-md:         rgba(52, 32, 12, 0.14);
+  --shadow-lg:         rgba(52, 32, 12, 0.24);
+  --overlay:           rgba(52, 32, 12, 0.48);
+  --sidebar-overlay:   rgba(0, 0, 0, 0.30);
 
   /* Scrollbar */
-  --scrollbar-thumb:   rgb(105, 72, 40);
-  --scrollbar-track:   rgb(168, 126, 90);
+  --scrollbar-thumb:   rgb(162, 128, 82);
+  --scrollbar-track:   rgb(232, 220, 200);
 
   /* Spinner */
-  --spinner-track:     rgb(130, 95, 60);
-  --spinner-head:      rgb(55, 32, 12);
+  --spinner-track:     rgb(200, 178, 145);
+  --spinner-head:      rgb(128, 84, 30);
 
   /* Notif dot */
-  --notif-dot:         rgb(170, 50, 30);
+  --notif-dot:         rgb(172, 52, 36);
 
   /* Carousel nav */
-  --carousel-btn-bg:       rgb(80, 48, 20);
-  --carousel-btn-disabled: rgba(160, 120, 85, 0.5);
-  --carousel-btn-color:    rgb(248, 238, 224);
-  --carousel-btn-muted:    rgb(128, 92, 56);
-  --carousel-dot-active:   rgb(55, 32, 12);
-  --carousel-dot-inactive: rgba(55, 32, 12, 0.30);
+  --carousel-btn-bg:       rgb(128, 84, 30);
+  --carousel-btn-disabled: rgba(255, 255, 255, 0.4);
+  --carousel-btn-color:    rgb(248, 240, 224);
+  --carousel-btn-muted:    rgb(162, 128, 82);
+  --carousel-dot-active:   rgb(128, 84, 30);
+  --carousel-dot-inactive: rgba(128, 84, 30, 0.25);
 }
 
-/* ── DARK / ESPRESSO (near-black warm brown + amber accents) ── */
+
+/* ── DARK — warm brown DNA, real contrast ── */
 [data-theme="dark"] {
   /* Backgrounds */
-  --bg-page:           rgb(18, 12, 8);
-  --bg-surface:        rgb(30, 20, 16);
-  --bg-card:           rgb(30, 20, 16);
-  --bg-hover:          rgb(46, 30, 20);
-  --bg-active:         rgb(62, 42, 28);
-  --bg-input:          rgb(36, 24, 16);
-  --bg-tag:            rgb(56, 38, 24);
-  --bg-notif-unread:   rgb(62, 42, 28);
-  --bg-sidebar:        rgb(24, 16, 10);
+  --bg-page:           rgb(10, 6, 2);
+  --bg-surface:        rgb(38, 28, 18);    /* navbar — stays deep */
+  --bg-card:           rgb(75, 57, 38);    /* cards, panels, settings */
+  --bg-hover:          rgb(88, 68, 46);
+  --bg-active:         rgb(62, 46, 30);
+  --bg-input:          rgb(75, 57, 38);    /* search, inputs match card */
+  --bg-tag:            rgb(60, 45, 28);
+  --bg-notif-unread:   rgb(82, 62, 42);
+  --bg-sidebar:        rgb(20, 14, 8);
 
   /* Borders */
-  --border:            rgb(72, 52, 36);
-  --border-strong:     rgb(180, 140, 96);
-  --border-subtle:     rgba(180, 140, 96, 0.14);
+  --border:            rgba(225, 212, 195, 0.28);
+  --border-strong:     rgba(238, 228, 215, 0.58);
+  --border-subtle:     rgba(225, 212, 195, 0.12);
 
   /* Text */
-  --text-primary:      rgb(224, 208, 188);
-  --text-secondary:    rgb(180, 140, 96);
-  --text-muted:        rgb(138, 104, 70);
-  --text-faint:        rgb(88, 66, 46);
-  --text-inverse:      rgb(20, 12, 8);
+  --text-primary:      rgb(238, 230, 218);
+  --text-secondary:    rgb(200, 185, 165);
+  --text-muted:        rgb(148, 128, 105);
+  --text-faint:        rgb(98, 78, 58);
+  --text-inverse:      rgb(10, 6, 2);
 
-  /* Accent / Brand */
-  --accent:            rgb(180, 140, 96);
-  --accent-dark:       rgb(200, 162, 114);
-  --accent-darker:     rgb(220, 186, 140);
-  --accent-darkest:    rgb(224, 208, 188);
-  --accent-light:      rgb(62, 44, 28);
+  /* Accent */
+  --accent:            rgb(210, 195, 175);
+  --accent-dark:       rgb(225, 212, 195);
+  --accent-darker:     rgb(235, 224, 210);
+  --accent-darkest:    rgb(238, 230, 218);
+  --accent-light:      rgba(210, 195, 175, 0.16);
 
   /* Status */
-  --danger:            rgb(218, 78, 68);
-  --danger-dark:       rgb(178, 52, 42);
-  --danger-bg:         rgb(52, 20, 16);
-  --danger-text:       rgb(238, 148, 142);
-  --danger-border:     rgb(92, 34, 28);
+  --danger:            rgb(225, 70, 58);
+  --danger-dark:       rgb(185, 46, 36);
+  --danger-bg:         rgb(55, 16, 12);
+  --danger-text:       rgb(242, 148, 138);
+  --danger-border:     rgb(96, 28, 22);
 
-  --success:           rgb(78, 178, 108);
-  --success-bg:        rgb(18, 46, 26);
-  --success-text:      rgb(98, 198, 128);
+  --success:           rgb(68, 185, 105);
+  --success-bg:        rgb(12, 46, 22);
+  --success-text:      rgb(92, 205, 128);
 
-  --warning-bg:        rgb(50, 38, 12);
-  --warning-text:      rgb(212, 168, 78);
+  --warning-bg:        rgb(48, 35, 6);
+  --warning-text:      rgb(228, 214, 192);
 
-  /* Shadows / Overlays */
-  --shadow-sm:         rgba(0, 0, 0, 0.28);
-  --shadow-md:         rgba(0, 0, 0, 0.40);
-  --shadow-lg:         rgba(0, 0, 0, 0.56);
-  --overlay:           rgba(0, 0, 0, 0.64);
-  --sidebar-overlay:   rgba(0, 0, 0, 0.64);
+  /* Shadows */
+  --shadow-sm:         rgba(0, 0, 0, 0.42);
+  --shadow-md:         rgba(0, 0, 0, 0.58);
+  --shadow-lg:         rgba(0, 0, 0, 0.74);
+  --overlay:           rgba(0, 0, 0, 0.72);
+  --sidebar-overlay:   rgba(0, 0, 0, 0.72);
 
   /* Scrollbar */
-  --scrollbar-thumb:   rgb(92, 66, 42);
-  --scrollbar-track:   rgb(18, 12, 8);
+  --scrollbar-thumb:   rgb(108, 88, 65);
+  --scrollbar-track:   rgb(10, 6, 2);
 
   /* Spinner */
-  --spinner-track:     rgb(62, 44, 28);
-  --spinner-head:      rgb(180, 140, 96);
+  --spinner-track:     rgba(210, 195, 175, 0.20);
+  --spinner-head:      rgb(210, 195, 175);
 
   /* Notif dot */
-  --notif-dot:         rgb(218, 78, 68);
+  --notif-dot:         rgb(225, 70, 58);
 
   /* Carousel nav */
-  --carousel-btn-bg:       rgb(142, 106, 72);
-  --carousel-btn-disabled: rgba(42, 28, 18, 0.6);
-  --carousel-btn-color:    rgb(224, 208, 188);
-  --carousel-btn-muted:    rgb(88, 66, 46);
-  --carousel-dot-active:   rgb(180, 140, 96);
-  --carousel-dot-inactive: rgba(180, 140, 96, 0.25);
+  --carousel-btn-bg:       rgb(165, 142, 112);
+  --carousel-btn-disabled: rgba(28, 18, 8, 0.6);
+  --carousel-btn-color:    rgb(238, 230, 218);
+  --carousel-btn-muted:    rgb(108, 88, 65);
+  --carousel-dot-active:   rgb(210, 195, 175);
+  --carousel-dot-inactive: rgba(210, 195, 175, 0.28);
+}
+
+
+/* ── AUTH INPUT (login, register, forgot) ── */
+:root {
+  --bg-auth-input: rgb(249, 245, 240);
+}
+[data-theme="caramel"] {
+  --bg-auth-input: rgb(255, 253, 248);
+}
+[data-theme="dark"] {
+  --bg-auth-input: rgb(52, 38, 24);
 }

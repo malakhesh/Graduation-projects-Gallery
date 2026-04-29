@@ -107,13 +107,19 @@ function Navbar({ isAdmin }) {
                 <div className="st-notif-dropdown-header">Notifications</div>
                 {notifs.length === 0 ? (
                   <div className="st-notif-empty">
-                    <FaBell style={{ fontSize: 36, color: "rgb(185,174,167)" }} />
-                    <p style={{ fontSize: 14, fontWeight: 600, color: "rgb(104,68,42)" }}>No notifications yet</p>
+                    <FaBell style={{ fontSize: 36, color: "var(--text-faint)" }} />
+                    <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-secondary)" }}>No notifications yet</p>
                   </div>
                 ) : (
                   <div style={{ maxHeight: 340, overflowY: "auto" }}>
                     {notifs.map((n) => (
-                      <div key={n.id} style={{ padding: "12px 18px", borderBottom: "1px solid rgb(235,225,215)", fontSize: 13, color: "rgb(47,28,15)", background: n.seen ? "transparent" : "rgb(243,232,220)" }}>
+                      <div key={n.id} style={{
+                        padding: "12px 18px",
+                        borderBottom: "1px solid var(--border)",
+                        fontSize: 13,
+                        color: "var(--text-primary)",
+                        background: n.seen ? "transparent" : "var(--bg-notif-unread)",
+                      }}>
                         {n.message}
                       </div>
                     ))}
@@ -144,7 +150,11 @@ function Navbar({ isAdmin }) {
       <div className={`st-admin-sidebar${sidebarOpen ? " st-sidebar-open" : ""}`}>
         <div className="st-sidebar-header">
           <Link to="/home" className="st-sidebar-title" onClick={closeSidebar}>Graduation Gallery</Link>
-          <button onClick={closeSidebar} style={{ marginLeft: "auto", background: "none", border: "none", fontSize: 18, color: "rgb(104,68,42)", cursor: "pointer", padding: "4px 6px", borderRadius: 8 }}>
+          <button onClick={closeSidebar} style={{
+            marginLeft: "auto", background: "none", border: "none",
+            fontSize: 18, color: "var(--accent-dark)", cursor: "pointer",
+            padding: "4px 6px", borderRadius: 8,
+          }}>
             <FaTimes />
           </button>
         </div>
@@ -161,7 +171,7 @@ function Navbar({ isAdmin }) {
           <li className={`st-sidebar-item${location.pathname === '/settings' ? ' st-sidebar-item-active' : ''}`} onClick={() => { closeSidebar(); navigate('/settings'); }}>
             <FaCog style={{ marginRight: 10 }} /> Settings
           </li>
-          <li style={{ height: 1, background: "rgb(185,174,167)", margin: "8px 0", listStyle: "none" }} />
+          <li style={{ height: 1, background: "var(--border)", margin: "8px 0", listStyle: "none" }} />
           <li className="st-sidebar-item" onClick={() => { closeSidebar(); setShowUpload(true); }}>
             <span style={{ marginRight: 10 }}>＋</span> Upload Project
           </li>
@@ -170,8 +180,8 @@ function Navbar({ isAdmin }) {
               Dashboard
             </li>
           )}
-          <li style={{ height: 1, background: "rgb(185,174,167)", margin: "8px 0", listStyle: "none" }} />
-          <li className="st-sidebar-item" style={{ color: "rgb(180,60,60)" }} onClick={async () => { closeSidebar(); await logOut(); navigate('/'); }}>
+          <li style={{ height: 1, background: "var(--border)", margin: "8px 0", listStyle: "none" }} />
+          <li className="st-sidebar-item" style={{ color: "var(--danger)" }} onClick={async () => { closeSidebar(); await logOut(); navigate('/'); }}>
             Log Out
           </li>
         </ul>
@@ -220,9 +230,9 @@ function ProjectManagement({ user }) {
   };
 
   const STATUS_COLORS = {
-    approved: { bg: "rgb(212,237,218)", color: "rgb(21,87,36)", label: "Approved" },
-    pending:  { bg: "rgb(255,243,205)", color: "rgb(133,100,4)", label: "Pending" },
-    rejected: { bg: "rgb(248,215,218)", color: "rgb(114,28,36)", label: "Rejected" },
+    approved: { bg: "var(--success-bg)",  color: "var(--success-text)", label: "Approved" },
+    pending:  { bg: "var(--warning-bg)",  color: "var(--warning-text)", label: "Pending" },
+    rejected: { bg: "var(--danger-bg)",   color: "var(--danger-text)",  label: "Rejected" },
   };
 
   if (loading) return (
@@ -230,7 +240,7 @@ function ProjectManagement({ user }) {
   );
 
   if (projects.length === 0) return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "40px 0", color: "rgb(164,132,109)" }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "40px 0", color: "var(--text-muted)" }}>
       <FaFolderOpen style={{ fontSize: 44, opacity: 0.3 }} />
       <p style={{ fontSize: 14, fontFamily: "Arial, sans-serif" }}>You haven't uploaded any projects yet.</p>
     </div>
@@ -239,7 +249,7 @@ function ProjectManagement({ user }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-        <p style={{ fontSize: 13, color: "rgb(104,68,42)", fontFamily: "Arial, sans-serif" }}>
+        <p style={{ fontSize: 13, color: "var(--text-secondary)", fontFamily: "Arial, sans-serif" }}>
           {projects.length} project{projects.length !== 1 ? "s" : ""} · hidden projects are only visible to you
         </p>
         <button
@@ -247,9 +257,10 @@ function ProjectManagement({ user }) {
           disabled={togglingAll}
           style={{
             display: "flex", alignItems: "center", gap: 7,
-            padding: "7px 16px", borderRadius: 20, border: "1.5px solid rgb(185,174,167)",
+            padding: "7px 16px", borderRadius: 20,
+            border: "1.5px solid var(--border)",
             background: "none", fontSize: 12, fontWeight: 600, cursor: "pointer",
-            color: anyVisible ? "rgb(104,68,42)" : "rgb(60,130,80)",
+            color: anyVisible ? "var(--text-secondary)" : "var(--success)",
             fontFamily: "Arial, sans-serif", transition: "all 0.2s",
           }}
         >
@@ -273,8 +284,8 @@ function ProjectManagement({ user }) {
             style={{
               display: "flex", alignItems: "center", gap: 12,
               padding: "10px 14px", borderRadius: 14,
-              border: "1.5px solid rgb(185,174,167)",
-              background: proj.hidden ? "rgb(243,236,229)" : "rgb(254,251,245)",
+              border: "1.5px solid var(--border)",
+              background: proj.hidden ? "var(--bg-active)" : "var(--bg-card)",
               opacity: proj.hidden ? 0.75 : 1,
               transition: "all 0.2s",
             }}
@@ -283,12 +294,12 @@ function ProjectManagement({ user }) {
               <img
                 src={image}
                 alt={proj.title}
-                style={{ width: 52, height: 38, borderRadius: 8, objectFit: "cover", flexShrink: 0, border: "1px solid rgb(185,174,167)" }}
+                style={{ width: 52, height: 38, borderRadius: 8, objectFit: "cover", flexShrink: 0, border: "1px solid var(--border)" }}
               />
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{
-                fontSize: 14, fontWeight: 600, color: "rgb(47,28,15)",
+                fontSize: 14, fontWeight: 600, color: "var(--text-primary)",
                 fontFamily: "Arial, sans-serif", whiteSpace: "nowrap",
                 overflow: "hidden", textOverflow: "ellipsis",
                 textDecoration: proj.hidden ? "line-through" : "none",
@@ -307,7 +318,7 @@ function ProjectManagement({ user }) {
                 {proj.hidden && (
                   <span style={{
                     fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20,
-                    background: "rgb(223,205,192)", color: "rgb(104,68,42)",
+                    background: "var(--bg-tag)", color: "var(--text-secondary)",
                     fontFamily: "Arial, sans-serif",
                   }}>
                     Hidden
@@ -320,10 +331,10 @@ function ProjectManagement({ user }) {
                 onClick={() => navigate(`/project/${proj.id}`)}
                 title="View project"
                 style={{
-                  background: "none", border: "1.5px solid rgb(185,174,167)",
+                  background: "none", border: "1.5px solid var(--border)",
                   borderRadius: "50%", width: 30, height: 30,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  cursor: "pointer", color: "rgb(104,68,42)", fontSize: 11,
+                  cursor: "pointer", color: "var(--text-secondary)", fontSize: 11,
                   transition: "all 0.2s",
                 }}
               >
@@ -334,12 +345,12 @@ function ProjectManagement({ user }) {
                 disabled={isToggling}
                 title={proj.hidden ? "Show project" : "Hide project"}
                 style={{
-                  background: proj.hidden ? "rgb(104,68,42)" : "none",
-                  border: "1.5px solid rgb(185,174,167)",
+                  background: proj.hidden ? "var(--accent-dark)" : "none",
+                  border: "1.5px solid var(--border)",
                   borderRadius: "50%", width: 30, height: 30,
                   display: "flex", alignItems: "center", justifyContent: "center",
                   cursor: isToggling ? "default" : "pointer",
-                  color: proj.hidden ? "rgb(254,251,245)" : "rgb(104,68,42)",
+                  color: proj.hidden ? "var(--text-inverse)" : "var(--text-secondary)",
                   fontSize: 11, transition: "all 0.2s",
                 }}
               >
@@ -365,18 +376,18 @@ const THEME_OPTIONS = [
     preview: { bg: "#fffbf5", accent: "rgb(104,68,42)", dot: "#f3e8dc" },
   },
   {
-    value: "dark",
-    label: "Dark",
-    desc: "Always use dark mode",
-    icon: <FaMoon />,
-    preview: { bg: "#1a1210", accent: "#c4a882", dot: "#2a1f18" },
-  },
-  {
     value: "caramel",
     label: "Caramel",
     desc: "Warm amber tones, easier on the eyes",
     icon: <FaMoon style={{ color: "#d29a58" }} />,
     preview: { bg: "#2c1800", accent: "#d29a58", dot: "#3d2510" },
+  },
+  {
+    value: "dark",
+    label: "Dark",
+    desc: "Always use dark mode",
+    icon: <FaMoon />,
+    preview: { bg: "#1a1210", accent: "#c4a882", dot: "#2a1f18" },
   },
   {
     value: "auto",
@@ -403,7 +414,6 @@ function ThemeSection() {
     applyTheme(val);
   };
 
-  // Live preview of what time-based means right now
   const hour = new Date().getHours();
   const autoCurrently = hour >= 6 && hour < 18 ? "light" : "dark";
 
@@ -426,21 +436,21 @@ function ThemeSection() {
                 gap: 14,
                 padding: "13px 16px",
                 borderRadius: 14,
-                border: isActive ? "2px solid rgb(104,68,42)" : "1.5px solid rgb(185,174,167)",
-                background: isActive ? "rgb(243,232,220)" : "rgb(254,251,245)",
+                border: isActive ? "2px solid var(--border-strong)" : "1.5px solid var(--border)",
+                background: isActive ? "var(--bg-active)" : "var(--bg-card)",
                 cursor: "pointer",
                 transition: "all 0.2s",
                 textAlign: "left",
                 width: "100%",
               }}
             >
-              {/* Mini color preview swatch */}
+              {/* Mini color preview swatch — keeps hardcoded colors intentionally for preview accuracy */}
               <div style={{
                 width: 36,
                 height: 36,
                 borderRadius: 10,
                 background: opt.preview.bg,
-                border: "1.5px solid rgb(185,174,167)",
+                border: "1.5px solid var(--border)",
                 flexShrink: 0,
                 display: "flex",
                 alignItems: "center",
@@ -452,21 +462,19 @@ function ThemeSection() {
                 {opt.icon}
               </div>
 
-              {/* Label + description */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{
                   fontSize: 14, fontWeight: 600,
-                  color: "rgb(47,28,15)",
+                  color: "var(--text-primary)",
                   margin: 0, fontFamily: "Arial, sans-serif",
                 }}>
                   {opt.label}
-                  {/* Show live status for auto */}
                   {opt.value === "auto" && (
                     <span style={{
                       marginLeft: 8, fontSize: 10, fontWeight: 700,
                       padding: "2px 8px", borderRadius: 20,
-                      background: autoCurrently === "light" ? "rgb(255,243,205)" : "rgb(40,30,20)",
-                      color: autoCurrently === "light" ? "rgb(133,100,4)" : "rgb(185,155,130)",
+                      background: autoCurrently === "light" ? "var(--warning-bg)" : "var(--bg-tag)",
+                      color: autoCurrently === "light" ? "var(--warning-text)" : "var(--text-secondary)",
                       verticalAlign: "middle",
                     }}>
                       {autoCurrently === "light" ? "☀ Light now" : "🌙 Dark now"}
@@ -474,18 +482,17 @@ function ThemeSection() {
                   )}
                 </p>
                 <p style={{
-                  fontSize: 12, color: "rgb(104,68,42)",
+                  fontSize: 12, color: "var(--text-secondary)",
                   margin: "2px 0 0", fontFamily: "Arial, sans-serif",
                 }}>
                   {opt.desc}
                 </p>
               </div>
 
-              {/* Checkmark */}
               <div style={{
                 width: 20, height: 20, borderRadius: "50%",
-                border: isActive ? "none" : "1.5px solid rgb(185,174,167)",
-                background: isActive ? "rgb(104,68,42)" : "transparent",
+                border: isActive ? "none" : "1.5px solid var(--border)",
+                background: isActive ? "var(--accent-dark)" : "transparent",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 flexShrink: 0, transition: "all 0.2s",
               }}>
@@ -500,9 +507,8 @@ function ThemeSection() {
         })}
       </div>
 
-      {/* Current status line */}
       <p style={{
-        fontSize: 12, color: "rgb(164,132,109)", marginTop: 16,
+        fontSize: 12, color: "var(--text-muted)", marginTop: 16,
         fontFamily: "Arial, sans-serif", textAlign: "center",
       }}>
         {theme === "system"
@@ -522,12 +528,12 @@ function ThemeSection() {
 // SECTIONS CONFIG
 // ===========================
 const SECTIONS = [
-  { key: "theme",    label: "Appearance",       icon: <FaPalette /> },
-  { key: "projects", label: "Project Management",icon: <FaFolderOpen /> },
-  { key: "name",     label: "Change Name",       icon: <FaUserEdit /> },
-  { key: "email",    label: "Change Email",      icon: <FaEnvelope /> },
-  { key: "password", label: "Change Password",   icon: <FaLock /> },
-  { key: "delete",   label: "Delete Account",    icon: <FaTrash />, danger: true },
+  { key: "theme",    label: "Appearance",        icon: <FaPalette /> },
+  { key: "projects", label: "Project Management", icon: <FaFolderOpen /> },
+  { key: "name",     label: "Change Name",        icon: <FaUserEdit /> },
+  { key: "email",    label: "Change Email",       icon: <FaEnvelope /> },
+  { key: "password", label: "Change Password",    icon: <FaLock /> },
+  { key: "delete",   label: "Delete Account",     icon: <FaTrash />, danger: true },
 ];
 
 function SectionContent({ sectionKey, user }) {
