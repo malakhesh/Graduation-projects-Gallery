@@ -1,37 +1,20 @@
 import React, { useState, useEffect } from "react"
 import { db, auth } from "./firebase.js"
-import { doc, getDoc, setDoc } from "firebase/firestore"
+import { doc, getDoc } from "firebase/firestore"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { getUploadOptions, addOption, removeOption } from "./configs.js"
-
-const SETTINGS_REF = () => doc(db, "settings", "siteConfig")
-
-async function loadSettings() {
-  try {
-    const snap = await getDoc(SETTINGS_REF())
-    if (snap.exists()) return snap.data()
-    return null
-  } catch { return null }
-}
-
-async function saveSettings(data) {
-  try {
-    await setDoc(SETTINGS_REF(), data, { merge: true })
-    return "ok"
-  } catch { return "fail" }
-}
+import { getSettings, updateSettings } from "./DashSettings.js"
 
 const DEFAULTS = {
-  siteName: "",
+  siteName: "Graduation Gallery",
   maintenanceMode: false,
   registrationOpen: true,
   projectUploadOpen: true,
   autoApprove: false,
   maxProjectsPerUser: 3,
-  notifyOnNewProject: true,
-  notifyOnNewUser: true,
-  notifyOnReport: true,
   contactOpen: true,
+  suspensionDuration: 7,
+  suspensionUnit: "days",
 }
 
 function SectionCard({ icon, title, children }) {
@@ -140,6 +123,120 @@ function TextInput({ label, sublabel, value, onChange, placeholder }) {
     </div>
   )
 }
+
+// ─── Suspension Duration Picker ───────────────────────────────────────────────
+const UNIT_OPTIONS = [
+  { value: "seconds", label: "Seconds" },
+  { value: "minutes", label: "Minutes" },
+  { value: "hours",   label: "Hours"   },
+  { value: "days",    label: "Days"    },
+]
+
+function SuspensionDurationPicker({ duration, unit, onDurationChange, onUnitChange }) {
+  const inputStyle = {
+    padding: "10px 14px",
+    borderRadius: "10px",
+    border: "1.5px solid rgba(180,130,80,0.35)",
+    backgroundColor: "rgba(255,255,255,0.6)",
+    fontSize: "14px", color: "#3B2F2F",
+    outline: "none", boxSizing: "border-box",
+    fontFamily: "'Poppins', sans-serif",
+    transition: "border-color 0.2s",
+  }
+
+  const previewLabel = () => {
+    const n = Number(duration)
+    if (!n || n <= 0) return null
+    if (unit === "seconds") return n < 60 ? `${n}s` : `${(n/60).toFixed(1)} min`
+    if (unit === "minutes") return n < 60 ? `${n} min` : `${(n/60).toFixed(1)} hr`
+    if (unit === "hours")   return n < 24 ? `${n} hr` : `${(n/24).toFixed(1)} days`
+    if (unit === "days")    return `${n} day${n !== 1 ? "s" : ""}`
+    return null
+  }
+
+  const preview = previewLabel()
+
+  return (
+    <div>
+      <label style={{
+        display: "block", fontSize: "13px",
+        fontWeight: "700", color: "#5a3825",
+        marginBottom: "4px", letterSpacing: "0.3px",
+      }}>Default Suspension Duration</label>
+      <div style={{ fontSize: "11px", color: "#9a7050", marginBottom: "10px" }}>
+        Applied to <strong>new suspensions only</strong>. Existing suspensions keep their original end time.
+      </div>
+
+      <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+        {/* Number input */}
+        <input
+          type="number"
+          min="1"
+          max="9999"
+          value={duration}
+          onChange={(e) => {
+            const val = Math.max(1, Math.min(9999, Number(e.target.value) || 1))
+            onDurationChange(val)
+          }}
+          style={{ ...inputStyle, width: "100px" }}
+          onFocus={(e) => e.target.style.borderColor = "#6F4E37"}
+          onBlur={(e) => e.target.style.borderColor = "rgba(180,130,80,0.35)"}
+        />
+
+        {/* Unit selector — styled pill buttons */}
+        <div style={{
+          display: "flex", gap: "6px", flexWrap: "wrap",
+        }}>
+          {UNIT_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => onUnitChange(opt.value)}
+              style={{
+                padding: "8px 14px",
+                borderRadius: "20px",
+                border: unit === opt.value
+                  ? "1.5px solid #6F4E37"
+                  : "1.5px solid rgba(180,130,80,0.35)",
+                backgroundColor: unit === opt.value ? "#6F4E37" : "rgba(255,255,255,0.6)",
+                color: unit === opt.value ? "#fff" : "#5a3825",
+                fontWeight: "600", fontSize: "12px",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                fontFamily: "'Poppins', sans-serif",
+              }}
+              onMouseEnter={(e) => {
+                if (unit !== opt.value) e.currentTarget.style.backgroundColor = "#e8d5bf"
+              }}
+              onMouseLeave={(e) => {
+                if (unit !== opt.value) e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Live preview */}
+      {preview && (
+        <div style={{
+          marginTop: "12px",
+          padding: "10px 14px",
+          borderRadius: "10px",
+          backgroundColor: "rgba(111,78,55,0.07)",
+          border: "1px solid rgba(111,78,55,0.18)",
+          fontSize: "12px",
+          color: "#5a3825",
+          display: "flex", alignItems: "center", gap: "8px",
+        }}>
+          <span style={{ fontSize: "14px" }}>🕐</span>
+          New suspensions will last <strong style={{ marginLeft: "4px" }}>{preview}</strong>.
+        </div>
+      )}
+    </div>
+  )
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 function UploadOptionManager({ label, sublabel, listName, items, role, onItemsChange, showToast }) {
   const [input, setInput] = useState("")
@@ -291,7 +388,6 @@ function DashboardSettings({ onBack }) {
 
   const [uploadOptions, setUploadOptions] = useState({ tags: [], categories: [], techStacks: [] })
 
-  // Fetch role from Firestore using logged-in user's uid
   useEffect(() => {
     if (!user) return
     getDoc(doc(db, "users", user.uid)).then((snap) => {
@@ -307,8 +403,10 @@ function DashboardSettings({ onBack }) {
   }, [])
 
   useEffect(() => {
-    Promise.all([loadSettings(), getUploadOptions()]).then(([siteData, optionsData]) => {
-      if (siteData) setSettings({ ...DEFAULTS, ...siteData })
+    Promise.all([getSettings(), getUploadOptions()]).then(([siteData, optionsData]) => {
+      if (siteData && siteData !== "settings-fail") {
+        setSettings({ ...DEFAULTS, ...siteData })
+      }
       if (optionsData && optionsData !== "get-options-fail") {
         setUploadOptions({
           tags: optionsData.tags || [],
@@ -342,9 +440,11 @@ function DashboardSettings({ onBack }) {
 
   const handleSave = async () => {
     setSaving(true)
-    const result = await saveSettings(settings)
+    if (settings.siteName) document.title = settings.siteName
+    else document.title = "Graduation Gallery"
+    const result = await updateSettings(settings)
     setSaving(false)
-    if (result === "ok") showToast("Settings saved successfully.")
+    if (result === "settings-ok") showToast("Settings saved successfully.")
     else showToast("Failed to save settings.", false)
     if (isMobile) setSidebarOpen(false)
   }
@@ -586,7 +686,7 @@ function DashboardSettings({ onBack }) {
                   sublabel="Shown in the browser tab and header"
                   value={settings.siteName}
                   onChange={(v) => set("siteName", v)}
-                  placeholder="e.g. Graduation Projects Catalog"
+                  placeholder="Graduation Gallery"
                 />
               </SectionCard>
 
@@ -677,6 +777,16 @@ function DashboardSettings({ onBack }) {
                 </div>
               </SectionCard>
 
+              {/* ── Suspension Duration ── */}
+              <SectionCard icon="🚫" title="User Suspension">
+                <SuspensionDurationPicker
+                  duration={settings.suspensionDuration}
+                  unit={settings.suspensionUnit}
+                  onDurationChange={(v) => set("suspensionDuration", v)}
+                  onUnitChange={(v) => set("suspensionUnit", v)}
+                />
+              </SectionCard>
+
               <SectionCard icon="✉️" title="Contact & Messaging">
                 <Toggle
                   checked={settings.contactOpen}
@@ -748,27 +858,6 @@ function DashboardSettings({ onBack }) {
                     />
                   </>
                 )}
-              </SectionCard>
-
-              <SectionCard icon="🔔" title="Admin Notifications">
-                <Toggle
-                  checked={settings.notifyOnNewProject}
-                  onChange={(v) => set("notifyOnNewProject", v)}
-                  label="New Project Submitted"
-                  sublabel="Notify admin when a project is submitted for review"
-                />
-                <Toggle
-                  checked={settings.notifyOnNewUser}
-                  onChange={(v) => set("notifyOnNewUser", v)}
-                  label="New User Registered"
-                  sublabel="Notify admin when a new user signs up"
-                />
-                <Toggle
-                  checked={settings.notifyOnReport}
-                  onChange={(v) => set("notifyOnReport", v)}
-                  label="New Report Filed"
-                  sublabel="Notify admin when a user reports a project or comment"
-                />
               </SectionCard>
 
               <div style={{ display: "flex", justifyContent: "flex-end", paddingBottom: "40px" }}>

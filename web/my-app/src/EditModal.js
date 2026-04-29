@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import "./uploadmodal.css";
+import "./uploadmodal.css"; // reuse the same styles
 import { FaGithub, FaImage, FaChevronLeft, FaChevronRight, FaCheck } from "react-icons/fa";
-import { addProj, getDailyProjCount } from "./projects.js";
-import { getUser } from "./auth.js";
+import { updProj } from "./projects.js";
 import { getUploadOptions } from "./configs.js";
-import { getSettings } from "./DashSettings.js";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "./firebase.js";
 
@@ -14,46 +12,36 @@ const CLOUDINARY_PRESET = "snqtqhha";
 
 const STEPS = ["Basics", "Details", "Media"];
 
-function UploadModal({ onClose }) {
+function EditModal({ project, onClose, onUpdated }) {
   const [user] = useAuthState(auth);
   const [step, setStep] = useState(0);
 
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [github, setGithub] = useState("");
-  const [tag, setTag] = useState("");
-  const [category, setCategory] = useState("");
-  const [techStack, setTechStack] = useState([]);
-  const [image, setImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  // Pre-fill all fields from the existing project
+  const [name, setName] = useState(project.title ?? "");
+  const [description, setDescription] = useState(project.desc ?? "");
+  const [github, setGithub] = useState(project.gitLink ?? "");
+  const [tag, setTag] = useState(project.tags?.[0] ?? "");
+  const [category, setCategory] = useState(project.category ?? "");
+  const [techStack, setTechStack] = useState(project.stack ?? []);
+
+  // Image: keep track of both the existing URL and any new file the user picks
+  const [newImageFile, setNewImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(project.imgUrl ?? null);
 
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [autoApproved, setAutoApproved] = useState(false);
   const fileRef = useRef();
 
-  // Upload allowed check
-  const [uploadAllowed, setUploadAllowed] = useState(true);
-  const [dailyLimitReached, setDailyLimitReached] = useState(false);
-  const [dailyLimit, setDailyLimit] = useState(3);
-  const [checkingSettings, setCheckingSettings] = useState(true);
-
-  // Fetched from Firestore
   const [options, setOptions] = useState({ tags: [], categories: [], techStacks: [] });
   const [loadingOptions, setLoadingOptions] = useState(true);
 
-  // Check projectUploadOpen and daily limit on mount
+  // Ownership guard — silently close if the current user isn't the project owner
   useEffect(() => {
-    if (!user) return;
-    Promise.all([getSettings(), getDailyProjCount(user.uid)]).then(([s, dailyCount]) => {
-      const limit = s?.maxProjectsPerUserPerDay ?? 3;
-      setDailyLimit(limit);
-      setUploadAllowed(s?.projectUploadOpen !== false);
-      if (dailyCount >= limit) setDailyLimitReached(true);
-      setCheckingSettings(false);
-    });
-  }, [user]);
+    if (user && project.userId && user.uid !== project.userId) {
+      onClose();
+    }
+  }, [user, project.userId, onClose]);
 
   useEffect(() => {
     getUploadOptions().then((data) => {
@@ -78,7 +66,7 @@ function UploadModal({ onClose }) {
   const handleImage = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setImage(file);
+      setNewImageFile(file);
       setImagePreview(URL.createObjectURL(file));
     }
   };
@@ -109,9 +97,7 @@ function UploadModal({ onClose }) {
       if (!category) e.category = "Please select a category";
       if (techStack.length === 0) e.techStack = "Select at least one technology";
     }
-    if (s === 2) {
-      if (!image) e.image = "Please add a project image";
-    }
+    // Step 2: image is optional to re-upload — existing imgUrl is kept if no new file
     return e;
   };
 
@@ -128,38 +114,39 @@ function UploadModal({ onClose }) {
   };
 
   const handleSubmit = async () => {
-    const e = validateStep(2);
-    if (Object.keys(e).length > 0) { setErrors(e); return; }
     setSubmitting(true);
     try {
-      const imgUrl = await uploadToCloudinary(image);
-      const userData = await getUser(user.uid);
-      const year = userData?.year ?? null;
+      // Only upload to Cloudinary if the user picked a new image
+      let imgUrl = project.imgUrl;
+      if (newImageFile) {
+        imgUrl = await uploadToCloudinary(newImageFile);
+      }
 
-      const result = await addProj(
-        name, description, user.uid, year, techStack, category, github, imgUrl, [tag]
-      );
+      const result = await updProj(project.id, {
+        title: name,
+        desc: description,
+        gitLink: github,
+        tags: [tag],
+        category,
+        stack: techStack,
+        imgUrl,
+        status: "pending", // triggers admin re-review
+      });
 
-      if (result === "daily-limit-reached") {
-        setDailyLimitReached(true);
-      } else if (result === "uploads-closed") {
-        setErrors({ submit: "Project submissions are currently disabled." });
-      } else if (result === "add-fail") {
-        setErrors({ submit: "Something went wrong. Please try again." });
-      } else {
-        setAutoApproved(result.status === "approved");
+      if (result === "upd-ok") {
         setSuccess(true);
-        setTimeout(() => onClose(), 2000);
+        setTimeout(() => {
+          onUpdated?.(); // let parent know to refetch/refresh
+          onClose();
+        }, 2000);
+      } else {
+        setErrors({ submit: "Something went wrong. Please try again." });
       }
     } catch {
-      setErrors({ submit: "Upload failed. Please try again." });
+      setErrors({ submit: "Update failed. Please try again." });
     }
     setSubmitting(false);
   };
-
-  // Derived: what to show in the body
-  const showDailyLimit = !checkingSettings && uploadAllowed && dailyLimitReached && !success;
-  const showUploadsClosed = !checkingSettings && !uploadAllowed;
 
   return createPortal(
     <div
@@ -170,7 +157,7 @@ function UploadModal({ onClose }) {
 
         {/* Header */}
         <div className="um-header">
-          <h2 className="um-title">Upload Project</h2>
+          <h2 className="um-title">Edit Project</h2>
           <div className="um-stepper">
             {STEPS.map((s, i) => (
               <React.Fragment key={s}>
@@ -192,35 +179,11 @@ function UploadModal({ onClose }) {
 
         {/* Body */}
         <div className="um-body">
-          {checkingSettings ? (
-            <div className="um-options-loading">
-              <div className="um-spinner" />
-              <span>Loading...</span>
-            </div>
-          ) : showUploadsClosed ? (
-            <div className="um-success">
-              <div className="um-success-icon" style={{ backgroundColor: "#c0392b" }}>✕</div>
-              <p className="um-success-title">Uploads are closed</p>
-              <p className="um-success-sub">Project submissions are currently disabled. Please check back later.</p>
-            </div>
-          ) : showDailyLimit ? (
-            <div className="um-success">
-              <div className="um-success-icon" style={{ backgroundColor: "#e67e22" }}>🚫</div>
-              <p className="um-success-title">Daily limit reached</p>
-              <p className="um-success-sub">
-                You've submitted {dailyLimit} project{dailyLimit !== 1 ? "s" : ""} today — that's your daily maximum.
-                Come back tomorrow to upload more!
-              </p>
-            </div>
-          ) : success ? (
+          {success ? (
             <div className="um-success">
               <div className="um-success-icon">✓</div>
-              <p className="um-success-title">Project submitted!</p>
-              <p className="um-success-sub">
-                {autoApproved
-                  ? "Your project is now live."
-                  : "An admin will review it shortly."}
-              </p>
+              <p className="um-success-title">Project updated!</p>
+              <p className="um-success-sub">An admin will re-review it shortly.</p>
             </div>
           ) : (
             <>
@@ -325,9 +288,9 @@ function UploadModal({ onClose }) {
               {step === 2 && (
                 <div className="um-step-content">
                   <div className="um-field">
-                    <label className="um-label"><FaImage className="um-icon" /> Project Image <span className="um-req">*</span></label>
+                    <label className="um-label"><FaImage className="um-icon" /> Project Image</label>
                     <div
-                      className={`um-dropzone ${errors.image ? "um-input-error" : ""}`}
+                      className="um-dropzone"
                       onClick={() => fileRef.current.click()}
                     >
                       {imagePreview ? (
@@ -344,7 +307,9 @@ function UploadModal({ onClose }) {
                       )}
                     </div>
                     <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleImage} />
-                    {errors.image && <span className="um-error">{errors.image}</span>}
+                    {!newImageFile && project.imgUrl && (
+                      <span className="um-hint-text">Current image will be kept if you don't upload a new one.</span>
+                    )}
                   </div>
 
                   <div className="um-summary">
@@ -363,8 +328,8 @@ function UploadModal({ onClose }) {
           )}
         </div>
 
-        {/* Footer — hidden when checking, blocked, daily limit hit, or success */}
-        {!checkingSettings && uploadAllowed && !dailyLimitReached && !success && (
+        {/* Footer */}
+        {!success && (
           <div className="um-footer">
             {step > 0 ? (
               <button className="um-btn-back" onClick={handleBack}>
@@ -379,16 +344,9 @@ function UploadModal({ onClose }) {
               </button>
             ) : (
               <button className="um-btn-submit" onClick={handleSubmit} disabled={submitting}>
-                {submitting ? "Uploading..." : "Submit Project"}
+                {submitting ? "Saving..." : "Save Changes"}
               </button>
             )}
-          </div>
-        )}
-
-        {/* Close button shown on limit/blocked screens */}
-        {!checkingSettings && (showDailyLimit || showUploadsClosed) && (
-          <div className="um-footer">
-            <button className="um-btn-cancel" onClick={onClose}>Close</button>
           </div>
         )}
 
@@ -398,4 +356,4 @@ function UploadModal({ onClose }) {
   );
 }
 
-export default UploadModal;
+export default EditModal;

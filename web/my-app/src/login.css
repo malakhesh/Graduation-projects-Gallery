@@ -1,169 +1,224 @@
+/* ── Page wrapper ── */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-page);
+  padding: clamp(16px, 4vw, 40px) clamp(12px, 4vw, 20px);
+  box-sizing: border-box;
+}
+
+/* ── Card ── */
 .login-container {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  border: 1px solid rgb(254, 251, 245);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 40px;
-  background-color: rgb(254, 251, 245);
-  width: 350px;
-  height: auto; /* ← changed from 450px to fit new buttons */
+  box-shadow: 0 8px 32px var(--shadow-md);
+  padding: clamp(24px, 5vw, 40px) clamp(20px, 5vw, 40px);
+  width: 100%;
+  max-width: 390px;
+  box-sizing: border-box;
 }
 
+/* ── Form fills card width ── */
+.login-container form {
+  width: 100%;
+}
+
+/* ── Heading ── */
 .login-container h1 {
-  margin-top: 25px;
-  color: rgb(47, 28, 15);
-  font-size: 40px;
+  margin: 0 0 4px;
+  color: var(--text-primary);
+  font-size: clamp(28px, 6vw, 40px);
   font-family: 'Times New Roman', Times, serif;
   font-weight: 700;
 }
 
-.login-container .l {
-  height: 40px;
-  color: rgb(104, 68, 42);
-  font-family: Arial, Helvetica, sans-serif;
-  font-weight: 550;
+/* ── Subtitle ── */
+.login-subtitle {
+  color: var(--text-secondary);
   font-size: 14px;
+  font-weight: 550;
+  margin-bottom: 24px;
 }
 
-.login-container .input-email,
-.login-container .input-password {
-  width: 350px;
+/* ── Labels ── */
+.login-label {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 7px;
+  margin-top: 16px;
+}
+
+.login-label:first-of-type {
+  margin-top: 0;
+}
+
+/* ── Inputs ── */
+.login-input {
+  width: 100%;
   height: 40px;
   padding: 10px;
-  padding-right: 35px;
+  padding-right: 36px;
   border-radius: 6px;
-  border: 1px solid rgb(185, 174, 167);
-  box-sizing: border-box;
-}
-
-.login-container .input-password::-webkit-credentials-auto-fill-button,
-.login-container .input-password::-webkit-textfield-decoration-container {
-  display: none;
-}
-
-.login-container .input-password::-ms-reveal,
-.login-container .input-password::-ms-clear {
-  display: none;
-}
-
-.login-container .input-email {
-  margin-bottom: 20px;
-}
-
-.login-container .label-email,
-.login-container .label-pass {
-  display: block;
-  color: rgb(104, 68, 42);
-  font-family: Arial, Helvetica, sans-serif;
-  font-weight: 550;
+  border: 1px solid var(--border);
+  background: var(--bg-auth-input);
+  color: var(--text-primary);
   font-size: 14px;
-  margin-bottom: 7px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s;
 }
 
-.login-container .password-wrapper {
+.login-input:focus {
+  border-color: var(--border-strong);
+}
+
+.login-input::placeholder {
+  color: var(--text-faint);
+}
+
+/* Hide browser built-in password icons */
+.login-input::-webkit-credentials-auto-fill-button,
+.login-input::-webkit-textfield-decoration-container {
+  display: none;
+}
+.login-input::-ms-reveal,
+.login-input::-ms-clear {
+  display: none;
+}
+
+/* ── Password wrapper ── */
+.password-wrapper {
   position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.password-wrapper .login-input {
+  margin-bottom: 0;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
 }
 
-.login-container .input-password {
-  width: 100%;
+.toggle-password:hover {
+  color: var(--text-primary);
 }
 
-.login-container .toggle-password {
-  position: absolute;
-  right: 10px;
-  cursor: pointer;
-  font-size: 16px;
-  color: rgb(104, 68, 42);
+/* ── Forgot / swapper links ── */
+.login-swapper {
+  margin-top: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 550;
 }
 
-.login-container button {
+.login-swapper a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.login-swapper a:hover {
+  color: var(--accent-darker);
+  text-decoration: underline;
+}
+
+/* ── Error message ── */
+.login-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 8px 0 0;
+}
+
+/* ── Submit button ── */
+.login-btn {
   width: 80px;
   height: 30px;
-  background-color: rgb(104, 68, 42);
-  color: white;
+  background: var(--accent-dark);
+  color: var(--text-inverse);
   border: none;
   border-radius: 20px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  margin-top: 20px;
+  margin-top: 16px;
+  transition: background 0.2s;
 }
 
-.login-container button:hover {
-  background-color: rgb(75, 48, 28);
+.login-btn:hover {
+  background: var(--accent-darker);
 }
 
-.login-container button:active {
-  background-color: rgb(50, 30, 15);
+.login-btn:active {
+  background: var(--accent-darkest);
 }
 
-.login-container .swapper {
-  margin-top: 20px;
-  color: rgb(47, 28, 15);
-  font-family: Arial, Helvetica, sans-serif;
-  font-weight: 550;
-  font-size: 14px;
-}
-
-.login-container .swapper a {
-  color: rgb(164, 132, 109);
-  text-decoration: none;
-}
-
-.login-container .swapper a:hover {
-  color: rgb(75, 48, 28);
-  text-decoration: underline;
-}
-
-.login-container .divider {
+/* ── Divider ── */
+.login-divider {
   width: 100%;
   text-align: center;
-  color: rgb(104, 68, 42);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text-muted);
   font-size: 13px;
-  margin-top: 15px;
+  margin-top: 20px;
+  margin-bottom: 10px;
 }
 
-.login-container .social-buttons {
+/* ── Social buttons ── */
+.social-buttons {
   display: flex;
   gap: 10px;
-  margin-top: 10px;
   width: 100%;
 }
 
-.login-container .google-btn,
-.login-container .github-btn {
+.google-btn,
+.github-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: 50%;
+  flex: 1;
   height: 35px;
-  border: 1px solid rgb(185, 174, 167);
   border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  margin-top: 0;
+  border: 1px solid var(--border);
+  transition: background 0.2s;
 }
 
-.login-container .google-btn {
-  background-color: white;
-  color: rgb(47, 28, 15);
+.google-btn {
+  background: var(--bg-surface);
+  color: var(--text-primary);
 }
 
-.login-container .github-btn {
-  background-color: rgb(47, 28, 15);
-  color: white;
+.google-btn:hover {
+  background: var(--bg-hover);
 }
 
-.login-container .google-btn:hover {
-  background-color: rgb(240, 240, 240);
+.github-btn {
+  background: var(--accent-darkest);
+  color: var(--text-inverse);
+  border-color: var(--accent-darkest);
 }
 
-.login-container .github-btn:hover {
-  background-color: rgb(75, 48, 28);
+.github-btn:hover {
+  background: var(--accent-darker);
+  border-color: var(--accent-darker);
 }

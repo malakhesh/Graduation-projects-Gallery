@@ -1,12 +1,35 @@
 import { 
-  collection, addDoc, doc, getDoc, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, query, where, serverTimestamp 
+  collection, addDoc, doc, getDoc, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, query, where, serverTimestamp, Timestamp
 } from "firebase/firestore"
 import { db } from "./firebase.js"
 import { sendNotif } from "./notifications.js"
 import { getUser } from "./auth.js"
+import { getSettings } from "./DashSettings.js"
 
 async function addProj(title, desc, userId, year, stack, category, gitLink, imgUrl, tags) {
   try {
+    // Load site settings to check autoApprove and maxProjectsPerUserPerDay
+    const settings = await getSettings()
+
+    // Check daily project limit
+    const maxPerDay = settings?.maxProjectsPerUserPerDay ?? 3
+    const startOfToday = new Date()
+    startOfToday.setHours(0, 0, 0, 0)
+    const todayTimestamp = Timestamp.fromDate(startOfToday)
+
+    const dailyQuery = query(
+      collection(db, "projects"),
+      where("userId", "==", userId),
+      where("createdAt", ">=", todayTimestamp)
+    )
+    const dailySnap = await getDocs(dailyQuery)
+    if (dailySnap.size >= maxPerDay) {
+      return "daily-limit-reached"
+    }
+
+    // Determine status based on autoApprove
+    const status = settings?.autoApprove === true ? "approved" : "pending"
+
     const r = await addDoc(collection(db, "projects"), {
       title,
       desc,
@@ -20,10 +43,23 @@ async function addProj(title, desc, userId, year, stack, category, gitLink, imgU
       createdAt: serverTimestamp(),
       comments: [],
       ratings: [],
-      status: "pending"
+      status,
+      hidden: false,
     })
-    return r.id
-  } catch {
+
+    // If auto-approved, notify the user immediately
+    if (status === "approved") {
+      await sendNotif(userId, {
+        type: "approved",
+        message: `Your project "${title}" has been approved and is now live.`,
+        projectId: r.id,
+        clickable: true,
+      })
+    }
+
+    return { id: r.id, status }
+  } catch (err) {
+    console.error("[addProj] error:", err)
     return "add-fail"
   }
 }
@@ -43,7 +79,11 @@ async function getApproved() {
     const q = query(collection(db, "projects"), where("status", "==", "approved"))
     const s = await getDocs(q)
     let arr = []
-    s.forEach((d) => arr.push({ id: d.id, ...d.data() }))
+    // Filter hidden in JS — avoids excluding docs where the field doesn't exist yet
+    s.forEach((d) => {
+      const data = d.data()
+      if (data.hidden !== true) arr.push({ id: d.id, ...data })
+    })
     return arr
   } catch {
     return "approved-fail"
@@ -195,25 +235,25 @@ async function addComment(id, c, commenterUid) {
 
 async function addRate(id, r, uid) {
   try {
-    const projectRef = doc(db, "projects", id);
-    const projectSnap = await getDoc(projectRef);
-    if (!projectSnap.exists()) return "rate-fail";
+    const projectRef = doc(db, "projects", id)
+    const projectSnap = await getDoc(projectRef)
+    if (!projectSnap.exists()) return "rate-fail"
 
-    const data = projectSnap.data();
-    const userRatings = data.userRatings || {};
-    const oldRating = userRatings[uid] || null;
-    let ratings = Array.isArray(data.ratings) ? [...data.ratings] : [];
+    const data = projectSnap.data()
+    const userRatings = data.userRatings || {}
+    const oldRating = userRatings[uid] || null
+    let ratings = Array.isArray(data.ratings) ? [...data.ratings] : []
 
     if (oldRating !== null) {
-      const idx = ratings.indexOf(oldRating);
-      if (idx > -1) ratings.splice(idx, 1);
+      const idx = ratings.indexOf(oldRating)
+      if (idx > -1) ratings.splice(idx, 1)
     }
-    ratings.push(r);
+    ratings.push(r)
 
     await updateDoc(projectRef, {
       ratings,
       [`userRatings.${uid}`]: r,
-    });
+    })
 
     const ownerUid = data.userId
     if (ownerUid && ownerUid !== uid) {
@@ -227,27 +267,27 @@ async function addRate(id, r, uid) {
       })
     }
 
-    return "rate-ok";
+    return "rate-ok"
   } catch {
-    return "rate-fail";
+    return "rate-fail"
   }
 }
 
 async function removeRate(id, uid, oldRating) {
   try {
-    const projectRef = doc(db, "projects", id);
-    const projectSnap = await getDoc(projectRef);
-    if (!projectSnap.exists()) return "rate-fail";
-    const data = projectSnap.data();
-    let ratings = Array.isArray(data.ratings) ? [...data.ratings] : [];
-    const idx = ratings.indexOf(oldRating);
-    if (idx > -1) ratings.splice(idx, 1);
-    const userRatings = { ...(data.userRatings || {}) };
-    delete userRatings[uid];
-    await updateDoc(projectRef, { ratings, userRatings });
-    return "rate-removed";
+    const projectRef = doc(db, "projects", id)
+    const projectSnap = await getDoc(projectRef)
+    if (!projectSnap.exists()) return "rate-fail"
+    const data = projectSnap.data()
+    let ratings = Array.isArray(data.ratings) ? [...data.ratings] : []
+    const idx = ratings.indexOf(oldRating)
+    if (idx > -1) ratings.splice(idx, 1)
+    const userRatings = { ...(data.userRatings || {}) }
+    delete userRatings[uid]
+    await updateDoc(projectRef, { ratings, userRatings })
+    return "rate-removed"
   } catch {
-    return "rate-fail";
+    return "rate-fail"
   }
 }
 
@@ -278,6 +318,15 @@ async function updProj(id, data) {
   }
 }
 
+async function setHidden(id, hidden) {
+  try {
+    await updateDoc(doc(db, "projects", id), { hidden })
+    return "hidden-ok"
+  } catch {
+    return "hidden-fail"
+  }
+}
+
 async function notifyBookmark(projectId, bookmarkerUid) {
   try {
     const project = await getProj(projectId)
@@ -296,9 +345,26 @@ async function notifyBookmark(projectId, bookmarkerUid) {
   } catch {}
 }
 
+async function getDailyProjCount(userId) {
+  try {
+    const startOfToday = new Date()
+    startOfToday.setHours(0, 0, 0, 0)
+    const todayTimestamp = Timestamp.fromDate(startOfToday)
+    const q = query(
+      collection(db, "projects"),
+      where("userId", "==", userId),
+      where("createdAt", ">=", todayTimestamp)
+    )
+    const snap = await getDocs(q)
+    return snap.size
+  } catch {
+    return 0
+  }
+}
+
 export { 
   addProj, getProj, getApproved, getPending, getRejected, setStatus, 
   getUserProjs, getByTag, getByCategory, getByStack,
   addComment, addRate, removeRate, delProj, updProj, removeComment,
-  notifyBookmark
+  notifyBookmark, setHidden, getDailyProjCount
 }

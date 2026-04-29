@@ -6,11 +6,12 @@ import { getUser, checkRole } from './auth.js';
 import { auth } from './firebase.js';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { addComment, addRate, removeRate, delProj, removeComment, getProj } from './projects.js';
-import { addReport } from './reports.js'; // adjust path if needed
+import { addReport } from './reports.js';
+import EditModal from './EditModal.js'; // <-- import EditModal
 import {
   FaUser, FaBookmark, FaRegBookmark, FaGithub, FaStar, FaRegStar,
   FaTimes, FaArrowLeft, FaEnvelope, FaLinkedin, FaGlobe, FaGraduationCap,
-  FaShare, FaFlag, FaTrash
+  FaShare, FaFlag, FaTrash, FaEdit // <-- FaEdit added
 } from "react-icons/fa";
 
 // ===========================
@@ -198,19 +199,15 @@ export function AuthorCard({ project, onBack }) {
           alignItems: "flex-start",
           gap: "52px",
         }}>
-          {/* Left: Avatar */}
           <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "8px" }}>
             {avatar
               ? <img src={avatar} alt={name} style={{ width: 120, height: 120, borderRadius: "50%", objectFit: "cover", border: "4px solid rgb(185, 174, 167)" }} />
               : <div style={{ width: 120, height: 120, borderRadius: "50%", background: "rgb(223, 205, 192)", border: "4px solid rgb(185, 174, 167)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48, color: "rgb(104, 68, 42)" }}><FaUser /></div>
             }
           </div>
-
-          {/* Right: Info */}
           <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "18px" }}>
             <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: "26px", fontWeight: 700, color: "rgb(47, 28, 15)", margin: 0 }}>{name}</h2>
             <div style={{ width: 40, height: 3, background: "rgb(185, 174, 167)", borderRadius: 2 }} />
-
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {email && (
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: 15, color: "rgb(104, 68, 42)", fontFamily: "Arial, Helvetica, sans-serif" }}>
@@ -223,13 +220,11 @@ export function AuthorCard({ project, onBack }) {
                 </div>
               )}
             </div>
-
             {bio && (
               <div style={{ background: "rgb(243, 236, 229)", borderLeft: "3px solid rgb(185, 174, 167)", borderRadius: "8px", padding: "14px 18px" }}>
                 <p style={{ fontSize: 15, color: "rgb(104, 68, 42)", lineHeight: 1.7, fontFamily: "Arial, Helvetica, sans-serif", margin: 0 }}>{bio}</p>
               </div>
             )}
-
             {(github || linkedin || portfolio) && (
               <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
                 {github && <a href={github} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 18px", border: "1.5px solid rgb(185, 174, 167)", borderRadius: 20, fontSize: 14, fontWeight: 600, color: "rgb(104, 68, 42)", background: "rgb(254, 251, 245)", textDecoration: "none", fontFamily: "Arial, Helvetica, sans-serif" }}><FaGithub /> GitHub</a>}
@@ -261,10 +256,10 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
   const [userRole, setUserRole] = useState(null);
   const [authorName, setAuthorName] = useState(null);
   const [userRatings, setUserRatings] = useState(project.userRatings || {});
+  const [editOpen, setEditOpen] = useState(false); // <-- edit modal state
 
-  // Report state
   const [reportOpen, setReportOpen] = useState(false);
-  const [reportTarget, setReportTarget] = useState(null); // { type: "project" | "comment", commentIndex: null | number }
+  const [reportTarget, setReportTarget] = useState(null);
   const [submittingReport, setSubmittingReport] = useState(false);
 
   const location = useLocation();
@@ -358,19 +353,15 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
     setSubmittingComment(false);
   };
 
-  // ── UPDATED: save commentText with the report ──
   const handleReportSubmit = async (reason) => {
     if (!reason.trim() || !user) return;
     setSubmittingReport(true);
     const targetId = reportTarget?.type === "comment"
       ? `${project.id}_comment_${reportTarget.commentIndex}`
       : project.id;
-
-    // Save comment text so admin can see it without relying on index
     const commentText = reportTarget?.type === "comment"
       ? (comments[reportTarget.commentIndex]?.text || "")
       : null;
-
     await addReport(targetId, user.uid, reason, commentText);
     setSubmittingReport(false);
     setReportOpen(false);
@@ -408,7 +399,16 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
             <button onClick={handleShare} title="Share project" style={circleBtn}>
               <FaShare />
             </button>
-            {/* Report project button — hidden from owner and admin */}
+            {/* Edit button — only for the project owner */}
+            {isOwner && (
+              <button
+                onClick={() => setEditOpen(true)}
+                title="Edit project"
+                style={circleBtn}
+              >
+                <FaEdit />
+              </button>
+            )}
             {user && !isOwner && !isAdmin && (
               <button
                 onClick={() => { setReportTarget({ type: "project" }); setReportOpen(true); }}
@@ -568,7 +568,6 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
                               </div>
                               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                                 <span className="hg-pm-comment-date">{c.date}</span>
-                                {/* Trash icon — only for comment owner or admin */}
                                 {(isAdmin || (user && c.userId === user.uid)) && (
                                   <button
                                     onClick={async () => {
@@ -581,7 +580,6 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
                                     <FaTrash />
                                   </button>
                                 )}
-                                {/* Report comment — only for other users */}
                                 {user && c.userId !== user.uid && !isAdmin && (
                                   <button
                                     onClick={() => { setReportTarget({ type: "comment", commentIndex: i }); setReportOpen(true); }}
@@ -615,6 +613,18 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
           submitting={submittingReport}
         />
       )}
+
+      {/* Edit Modal — only mounts when open, only for owner */}
+      {editOpen && isOwner && (
+        <EditModal
+          project={project}
+          onClose={() => setEditOpen(false)}
+          onUpdated={() => {
+            setEditOpen(false);
+            onClose(); // close the project modal too so the user sees the pending state
+          }}
+        />
+      )}
     </>,
     document.body
   );
@@ -625,6 +635,8 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
 // ===========================
 export function ProjectCard({ project, onOpen, bookmarked, onToggleBookmark, showStatus }) {
   const [authorName, setAuthorName] = useState("");
+  const [user] = useAuthState(auth); // <-- needed for owner check
+  const [editOpen, setEditOpen] = useState(false);
 
   useEffect(() => {
     const uid = project.userId || project.authorId;
@@ -641,6 +653,13 @@ export function ProjectCard({ project, onOpen, bookmarked, onToggleBookmark, sho
     onToggleBookmark(project.id);
   };
 
+  const handleEditClick = (e) => {
+    e.stopPropagation(); // don't open the project modal
+    setEditOpen(true);
+  };
+
+  const isOwner = user && project.userId === user.uid;
+
   const image = project.image || project.imgUrl;
   const date = project.date || (project.createdAt?.toDate?.().toLocaleDateString()) || "";
   const tag = project.tag || (project.tags && project.tags[0]) || "";
@@ -649,66 +668,90 @@ export function ProjectCard({ project, onOpen, bookmarked, onToggleBookmark, sho
   const cardAvgRating = cardRatings.length > 0 ? (cardRatings.reduce((a, b) => a + b, 0) / cardRatings.length).toFixed(1) : null;
 
   return (
-    <div className="hg-project-card" onClick={() => onOpen(project)}>
-      <div className="hg-card-header">
-        <div className="hg-card-title-row">
-          <h3 className="hg-card-title">{project.title}</h3>
-          {showStatus && <StatusBadge status={project.status} />}
-        </div>
-        <div className="hg-card-author">
-          {project.avatar
-            ? <img src={project.avatar} alt={authorName} className="hg-author-avatar" />
-            : <div className="hg-user-avatar-placeholder" style={{ width: 30, height: 30 }}><FaUser style={{ fontSize: 13 }} /></div>
-          }
-          <div>
-            <p className="hg-author-name">{authorName || "..."}</p>
-            <p className="hg-author-date">{date}</p>
+    <>
+      <div className="hg-project-card" onClick={() => onOpen(project)}>
+        <div className="hg-card-header">
+          <div className="hg-card-title-row">
+            <h3 className="hg-card-title">{project.title}</h3>
+            {showStatus && <StatusBadge status={project.status} />}
+          </div>
+          <div className="hg-card-author">
+            {project.avatar
+              ? <img src={project.avatar} alt={authorName} className="hg-author-avatar" />
+              : <div className="hg-user-avatar-placeholder" style={{ width: 30, height: 30 }}><FaUser style={{ fontSize: 13 }} /></div>
+            }
+            <div>
+              <p className="hg-author-name">{authorName || "..."}</p>
+              <p className="hg-author-date">{date}</p>
+            </div>
           </div>
         </div>
-      </div>
-      <div className="hg-card-image-wrapper">
-        <img src={image} alt={project.title} className="hg-card-image" />
-      </div>
-      <div className="hg-card-footer">
-        <span className="hg-tag hg-tag-brown">{tag}</span>
-        {cardAvgRating && (
-          <span className="hg-tag" style={{ background: "rgb(254, 251, 245)", color: "rgb(104, 68, 42)" }}>
-            ⭐ {cardAvgRating}
-          </span>
-        )}
-        <div style={{ display: "flex", gap: 8, marginLeft: "auto", alignItems: "center" }}>
-          {github && (
-            <a
-              href={github}
-              target="_blank"
-              rel="noreferrer"
-              className="hg-tag hg-tag-github"
-              onClick={e => e.stopPropagation()}
-            >
-              <FaGithub style={{ marginRight: 4 }} /> GitHub
-            </a>
-          )}
-          {(!project.status || project.status === "approved") && (
+        <div className="hg-card-image-wrapper">
+          <img src={image} alt={project.title} className="hg-card-image" />
+          {/* Edit button overlaid on the image — only visible to the owner */}
+          {isOwner && (
             <button
-              className={`hg-card-bookmark${bookmarked ? " hg-card-bookmark-active" : ""}`}
-              onClick={handleBookmark}
+              onClick={handleEditClick}
+              title="Edit project"
+              style={{
+                position: "absolute",
+                top: 8,
+                right: 8,
+                ...circleBtn,
+                background: "rgba(254, 251, 245, 0.92)",
+              }}
             >
-              {bookmarked ? <FaBookmark /> : <FaRegBookmark />}
+              <FaEdit />
             </button>
           )}
         </div>
-      </div>
-      {showStatus && project.status === "rejected" && (
-        <div style={{
-          padding: "8px 14px",
-          background: "rgb(248, 215, 218)",
-          borderTop: "1px solid rgb(245, 198, 203)",
-          fontSize: 12,
-          color: "rgb(114, 28, 36)",
-        }}>
-          Your project was rejected. Please review and resubmit.
+        <div className="hg-card-footer">
+          <span className="hg-tag hg-tag-brown">{tag}</span>
+          {cardAvgRating && (
+            <span className="hg-tag" style={{ background: "rgb(254, 251, 245)", color: "rgb(104, 68, 42)" }}>
+              ⭐ {cardAvgRating}
+            </span>
+          )}
+          <div style={{ display: "flex", gap: 8, marginLeft: "auto", alignItems: "center" }}>
+            {github && (
+              <a
+                href={github}
+                target="_blank"
+                rel="noreferrer"
+                className="hg-tag hg-tag-github"
+                onClick={e => e.stopPropagation()}
+              >
+                <FaGithub style={{ marginRight: 4 }} /> GitHub
+              </a>
+            )}
+            {(!project.status || project.status === "approved") && (
+              <button
+                className={`hg-card-bookmark${bookmarked ? " hg-card-bookmark-active" : ""}`}
+                onClick={handleBookmark}
+              >
+                {bookmarked ? <FaBookmark /> : <FaRegBookmark />}
+              </button>
+            )}
+          </div>
         </div>
+        {showStatus && project.status === "rejected" && (
+          <div style={{
+            padding: "8px 14px",
+            background: "rgb(248, 215, 218)",
+            borderTop: "1px solid rgb(245, 198, 203)",
+            fontSize: 12,
+          }} />
+        )}
+      </div>
+
+      {/* Edit Modal — triggered from the card directly */}
+      {editOpen && isOwner && (
+        <EditModal
+          project={project}
+          onClose={() => setEditOpen(false)}
+          onUpdated={() => setEditOpen(false)}
+        />
       )}
-    </div>
+    </>
   );
 }
