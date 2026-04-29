@@ -1,13 +1,14 @@
 {
   "name": "graduation-projects-gallery",
   "version": "1.0.0",
+  "type": "module",
   "description": "- web\r - mobile\r - dashboard\r - docs",
   "main": "index.js",
   "directories": {
     "doc": "docs"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node backend/server.js"
   },
   "repository": {
     "type": "git",
@@ -22,8 +23,14 @@
   "homepage": "https://github.com/ndosha123mo-lab/Graduation-projects-Gallery#readme",
   "dependencies": {
     "@expo/ngrok": "^4.1.3",
+    "@google/generative-ai": "^0.24.1",
+    "@openrouter/sdk": "^0.12.22",
+    "dotenv": "^17.4.2",
     "expo": "^55.0.15",
-    "firebase": "^12.9.0"
+    "express": "^5.2.1",
+    "firebase": "^12.12.1",
+    "firebase-admin": "^13.8.0",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "@types/react": "~19.2.10",
