@@ -1,28 +1,12 @@
 import React, { useState, useEffect } from "react"
 import { db, auth } from "./firebase.js"
-import { doc, getDoc, setDoc } from "firebase/firestore"
+import { doc, getDoc } from "firebase/firestore"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { getUploadOptions, addOption, removeOption } from "./configs.js"
-
-const SETTINGS_REF = () => doc(db, "settings", "siteConfig")
-
-async function loadSettings() {
-  try {
-    const snap = await getDoc(SETTINGS_REF())
-    if (snap.exists()) return snap.data()
-    return null
-  } catch { return null }
-}
-
-async function saveSettings(data) {
-  try {
-    await setDoc(SETTINGS_REF(), data, { merge: true })
-    return "ok"
-  } catch { return "fail" }
-}
+import { getSettings, updateSettings } from "./DashSettings.js"
 
 const DEFAULTS = {
-  siteName: "",
+  siteName: "Graduation Gallery",
   maintenanceMode: false,
   registrationOpen: true,
   projectUploadOpen: true,
@@ -291,7 +275,7 @@ function DashboardSettings({ onBack }) {
 
   const [uploadOptions, setUploadOptions] = useState({ tags: [], categories: [], techStacks: [] })
 
-  // Fetch role from Firestore using logged-in user's uid
+  // Fetch role
   useEffect(() => {
     if (!user) return
     getDoc(doc(db, "users", user.uid)).then((snap) => {
@@ -306,9 +290,12 @@ function DashboardSettings({ onBack }) {
     return () => window.removeEventListener("resize", checkMobile)
   }, [])
 
+  // Load settings from siteSettings.js + upload options from configs.js
   useEffect(() => {
-    Promise.all([loadSettings(), getUploadOptions()]).then(([siteData, optionsData]) => {
-      if (siteData) setSettings({ ...DEFAULTS, ...siteData })
+    Promise.all([getSettings(), getUploadOptions()]).then(([siteData, optionsData]) => {
+      if (siteData && siteData !== "settings-fail") {
+        setSettings({ ...DEFAULTS, ...siteData })
+      }
       if (optionsData && optionsData !== "get-options-fail") {
         setUploadOptions({
           tags: optionsData.tags || [],
@@ -342,9 +329,12 @@ function DashboardSettings({ onBack }) {
 
   const handleSave = async () => {
     setSaving(true)
-    const result = await saveSettings(settings)
+    // Also update document.title live when siteName is saved
+    if (settings.siteName) document.title = settings.siteName
+    else document.title = "Graduation Gallery"
+    const result = await updateSettings(settings)
     setSaving(false)
-    if (result === "ok") showToast("Settings saved successfully.")
+    if (result === "settings-ok") showToast("Settings saved successfully.")
     else showToast("Failed to save settings.", false)
     if (isMobile) setSidebarOpen(false)
   }
@@ -586,7 +576,7 @@ function DashboardSettings({ onBack }) {
                   sublabel="Shown in the browser tab and header"
                   value={settings.siteName}
                   onChange={(v) => set("siteName", v)}
-                  placeholder="e.g. Graduation Projects Catalog"
+                  placeholder="Graduation Gallery"
                 />
               </SectionCard>
 

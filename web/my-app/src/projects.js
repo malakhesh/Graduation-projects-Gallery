@@ -4,9 +4,24 @@ import {
 import { db } from "./firebase.js"
 import { sendNotif } from "./notifications.js"
 import { getUser } from "./auth.js"
+import { getSettings } from "./DashSettings.js"
 
 async function addProj(title, desc, userId, year, stack, category, gitLink, imgUrl, tags) {
   try {
+    // Load site settings to check autoApprove and maxProjectsPerUser
+    const settings = await getSettings()
+
+    // Check max projects per user
+    const maxAllowed = settings?.maxProjectsPerUser ?? 3
+    const userProjsQuery = query(collection(db, "projects"), where("userId", "==", userId))
+    const userProjsSnap = await getDocs(userProjsQuery)
+    if (userProjsSnap.size >= maxAllowed) {
+      return "max-reached"  // caller should show a message to the user
+    }
+
+    // Determine status based on autoApprove
+    const status = settings?.autoApprove === true ? "approved" : "pending"
+
     const r = await addDoc(collection(db, "projects"), {
       title,
       desc,
@@ -20,7 +35,7 @@ async function addProj(title, desc, userId, year, stack, category, gitLink, imgU
       createdAt: serverTimestamp(),
       comments: [],
       ratings: [],
-      status: "pending",
+      status,
       hidden: false,
     })
     return r.id
@@ -200,25 +215,25 @@ async function addComment(id, c, commenterUid) {
 
 async function addRate(id, r, uid) {
   try {
-    const projectRef = doc(db, "projects", id);
-    const projectSnap = await getDoc(projectRef);
-    if (!projectSnap.exists()) return "rate-fail";
+    const projectRef = doc(db, "projects", id)
+    const projectSnap = await getDoc(projectRef)
+    if (!projectSnap.exists()) return "rate-fail"
 
-    const data = projectSnap.data();
-    const userRatings = data.userRatings || {};
-    const oldRating = userRatings[uid] || null;
-    let ratings = Array.isArray(data.ratings) ? [...data.ratings] : [];
+    const data = projectSnap.data()
+    const userRatings = data.userRatings || {}
+    const oldRating = userRatings[uid] || null
+    let ratings = Array.isArray(data.ratings) ? [...data.ratings] : []
 
     if (oldRating !== null) {
-      const idx = ratings.indexOf(oldRating);
-      if (idx > -1) ratings.splice(idx, 1);
+      const idx = ratings.indexOf(oldRating)
+      if (idx > -1) ratings.splice(idx, 1)
     }
-    ratings.push(r);
+    ratings.push(r)
 
     await updateDoc(projectRef, {
       ratings,
       [`userRatings.${uid}`]: r,
-    });
+    })
 
     const ownerUid = data.userId
     if (ownerUid && ownerUid !== uid) {
@@ -232,27 +247,27 @@ async function addRate(id, r, uid) {
       })
     }
 
-    return "rate-ok";
+    return "rate-ok"
   } catch {
-    return "rate-fail";
+    return "rate-fail"
   }
 }
 
 async function removeRate(id, uid, oldRating) {
   try {
-    const projectRef = doc(db, "projects", id);
-    const projectSnap = await getDoc(projectRef);
-    if (!projectSnap.exists()) return "rate-fail";
-    const data = projectSnap.data();
-    let ratings = Array.isArray(data.ratings) ? [...data.ratings] : [];
-    const idx = ratings.indexOf(oldRating);
-    if (idx > -1) ratings.splice(idx, 1);
-    const userRatings = { ...(data.userRatings || {}) };
-    delete userRatings[uid];
-    await updateDoc(projectRef, { ratings, userRatings });
-    return "rate-removed";
+    const projectRef = doc(db, "projects", id)
+    const projectSnap = await getDoc(projectRef)
+    if (!projectSnap.exists()) return "rate-fail"
+    const data = projectSnap.data()
+    let ratings = Array.isArray(data.ratings) ? [...data.ratings] : []
+    const idx = ratings.indexOf(oldRating)
+    if (idx > -1) ratings.splice(idx, 1)
+    const userRatings = { ...(data.userRatings || {}) }
+    delete userRatings[uid]
+    await updateDoc(projectRef, { ratings, userRatings })
+    return "rate-removed"
   } catch {
-    return "rate-fail";
+    return "rate-fail"
   }
 }
 

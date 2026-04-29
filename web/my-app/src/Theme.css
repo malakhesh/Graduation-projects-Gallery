@@ -1,0 +1,150 @@
+/* ============================================================
+   THEME.CSS  —  Import this FIRST in your main entry file
+   e.g. in index.js: import './theme.css';
+   ============================================================ */
+
+/* ── LIGHT (default) ── */
+:root {
+  /* Backgrounds */
+  --bg-page:           rgb(245, 239, 230);
+  --bg-surface:        rgb(249, 245, 240);
+  --bg-card:           rgb(249, 245, 240);
+  --bg-hover:          rgb(245, 239, 230);
+  --bg-active:         rgb(237, 229, 218);
+  --bg-input:          rgb(249, 245, 240);
+  --bg-tag:            rgb(237, 228, 218);
+  --bg-notif-unread:   rgb(243, 232, 220);
+  --bg-sidebar:        rgb(249, 245, 240);
+
+  /* Borders */
+  --border:            rgb(196, 173, 150);
+  --border-strong:     rgb(122, 78, 45);
+  --border-subtle:     rgba(47, 28, 15, 0.08);
+
+  /* Text */
+  --text-primary:      rgb(44, 26, 14);
+  --text-secondary:    rgb(122, 78, 45);
+  --text-muted:        rgb(160, 120, 80);
+  --text-faint:        rgb(196, 173, 150);
+  --text-inverse:      rgb(249, 245, 240);
+
+  /* Accent / Brand */
+  --accent:            rgb(160, 120, 80);
+  --accent-dark:       rgb(122, 78, 45);
+  --accent-darker:     rgb(75, 48, 28);
+  --accent-darkest:    rgb(44, 26, 14);
+  --accent-light:      rgb(223, 205, 192);
+
+  /* Status */
+  --danger:            rgb(180, 60, 40);
+  --danger-dark:       rgb(140, 40, 25);
+  --danger-bg:         rgb(248, 215, 218);
+  --danger-text:       rgb(114, 28, 36);
+  --danger-border:     rgb(245, 198, 203);
+
+  --success:           rgb(60, 130, 80);
+  --success-bg:        rgb(212, 237, 218);
+  --success-text:      rgb(21, 87, 36);
+
+  --warning-bg:        rgb(255, 243, 205);
+  --warning-text:      rgb(133, 100, 4);
+
+  /* Shadows / Overlays */
+  --shadow-sm:         rgba(44, 26, 14, 0.06);
+  --shadow-md:         rgba(44, 26, 14, 0.10);
+  --shadow-lg:         rgba(44, 26, 14, 0.20);
+  --overlay:           rgba(44, 26, 14, 0.45);
+  --sidebar-overlay:   rgba(0, 0, 0, 0.35);
+
+  /* Scrollbar */
+  --scrollbar-thumb:   rgb(160, 120, 80);
+  --scrollbar-track:   rgb(245, 239, 230);
+
+  /* Spinner */
+  --spinner-track:     rgb(196, 173, 150);
+  --spinner-head:      rgb(122, 78, 45);
+
+  /* Notif dot */
+  --notif-dot:         rgb(180, 60, 40);
+
+  /* Carousel nav */
+  --carousel-btn-bg:       #6F4E37;
+  --carousel-btn-disabled: rgba(255,255,255,0.4);
+  --carousel-btn-color:    #fff;
+  --carousel-btn-muted:    #b09070;
+  --carousel-dot-active:   #6F4E37;
+  --carousel-dot-inactive: rgba(111, 78, 55, 0.25);
+}
+
+/* ── DARK ── */
+[data-theme="dark"] {
+  /* Backgrounds */
+  --bg-page:           rgb(18, 12, 8);
+  --bg-surface:        rgb(26, 18, 12);
+  --bg-card:           rgb(26, 18, 12);
+  --bg-hover:          rgb(38, 27, 18);
+  --bg-active:         rgb(50, 36, 24);
+  --bg-input:          rgb(30, 21, 14);
+  --bg-tag:            rgb(48, 35, 22);
+  --bg-notif-unread:   rgb(50, 36, 24);
+  --bg-sidebar:        rgb(22, 15, 10);
+
+  /* Borders */
+  --border:            rgb(62, 46, 32);
+  --border-strong:     rgb(180, 140, 100);
+  --border-subtle:     rgba(180, 140, 100, 0.12);
+
+  /* Text */
+  --text-primary:      rgb(228, 212, 196);
+  --text-secondary:    rgb(180, 140, 100);
+  --text-muted:        rgb(140, 105, 72);
+  --text-faint:        rgb(90, 68, 48);
+  --text-inverse:      rgb(22, 14, 8);
+
+  /* Accent / Brand */
+  --accent:            rgb(180, 140, 100);
+  --accent-dark:       rgb(200, 162, 120);
+  --accent-darker:     rgb(220, 185, 145);
+  --accent-darkest:    rgb(228, 212, 196);
+  --accent-light:      rgb(58, 42, 28);
+
+  /* Status */
+  --danger:            rgb(220, 80, 70);
+  --danger-dark:       rgb(180, 55, 45);
+  --danger-bg:         rgb(50, 20, 18);
+  --danger-text:       rgb(240, 150, 145);
+  --danger-border:     rgb(90, 35, 30);
+
+  --success:           rgb(80, 180, 110);
+  --success-bg:        rgb(18, 44, 26);
+  --success-text:      rgb(100, 200, 130);
+
+  --warning-bg:        rgb(45, 36, 12);
+  --warning-text:      rgb(210, 170, 80);
+
+  /* Shadows / Overlays */
+  --shadow-sm:         rgba(0, 0, 0, 0.25);
+  --shadow-md:         rgba(0, 0, 0, 0.35);
+  --shadow-lg:         rgba(0, 0, 0, 0.50);
+  --overlay:           rgba(0, 0, 0, 0.60);
+  --sidebar-overlay:   rgba(0, 0, 0, 0.60);
+
+  /* Scrollbar */
+  --scrollbar-thumb:   rgb(90, 65, 42);
+  --scrollbar-track:   rgb(18, 12, 8);
+
+  /* Spinner */
+  --spinner-track:     rgb(62, 46, 32);
+  --spinner-head:      rgb(180, 140, 100);
+
+  /* Notif dot */
+  --notif-dot:         rgb(220, 80, 70);
+
+  /* Carousel nav */
+  --carousel-btn-bg:       rgb(140, 105, 72);
+  --carousel-btn-disabled: rgba(40, 28, 18, 0.6);
+  --carousel-btn-color:    rgb(228, 212, 196);
+  --carousel-btn-muted:    rgb(90, 68, 48);
+  --carousel-dot-active:   rgb(180, 140, 100);
+  --carousel-dot-inactive: rgba(180, 140, 100, 0.25);
+}

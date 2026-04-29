@@ -8,10 +8,12 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import UploadModal from './UploadModal';
 import { listenNotifs, markAllSeen } from './notifications.js';
 import { getUserProjs, setHidden } from './projects.js';
+import { applyTheme } from './applyTheme.js';
 import {
   FaGraduationCap, FaUser, FaCog, FaFolderOpen, FaChevronDown,
   FaUserEdit, FaEnvelope, FaLock, FaTrash, FaBars, FaBell, FaTimes,
-  FaBookmark, FaEye, FaEyeSlash, FaExternalLinkAlt
+  FaBookmark, FaEye, FaEyeSlash, FaExternalLinkAlt, FaPalette,
+  FaSun, FaMoon, FaClock, FaDesktop
 } from "react-icons/fa";
 
 function Navbar({ isAdmin }) {
@@ -211,7 +213,7 @@ function ProjectManagement({ user }) {
 
   const toggleAll = async () => {
     setTogglingAll(true);
-    const newHidden = anyVisible; // if any are visible, hide all; otherwise show all
+    const newHidden = anyVisible;
     await Promise.all(projects.map((p) => setHidden(p.id, newHidden)));
     setProjects((prev) => prev.map((p) => ({ ...p, hidden: newHidden })));
     setTogglingAll(false);
@@ -236,8 +238,6 @@ function ProjectManagement({ user }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
-      {/* Header row with Hide All / Show All */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
         <p style={{ fontSize: 13, color: "rgb(104,68,42)", fontFamily: "Arial, sans-serif" }}>
           {projects.length} project{projects.length !== 1 ? "s" : ""} · hidden projects are only visible to you
@@ -262,7 +262,6 @@ function ProjectManagement({ user }) {
         </button>
       </div>
 
-      {/* Project rows */}
       {projects.map((proj) => {
         const statusStyle = STATUS_COLORS[proj.status] || STATUS_COLORS.pending;
         const isToggling = togglingId === proj.id;
@@ -280,7 +279,6 @@ function ProjectManagement({ user }) {
               transition: "all 0.2s",
             }}
           >
-            {/* Thumbnail */}
             {image && (
               <img
                 src={image}
@@ -288,8 +286,6 @@ function ProjectManagement({ user }) {
                 style={{ width: 52, height: 38, borderRadius: 8, objectFit: "cover", flexShrink: 0, border: "1px solid rgb(185,174,167)" }}
               />
             )}
-
-            {/* Title + status */}
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{
                 fontSize: 14, fontWeight: 600, color: "rgb(47,28,15)",
@@ -319,10 +315,7 @@ function ProjectManagement({ user }) {
                 )}
               </div>
             </div>
-
-            {/* Actions */}
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-              {/* Link to project */}
               <button
                 onClick={() => navigate(`/project/${proj.id}`)}
                 title="View project"
@@ -336,8 +329,6 @@ function ProjectManagement({ user }) {
               >
                 <FaExternalLinkAlt />
               </button>
-
-              {/* Hide / Show toggle */}
               <button
                 onClick={() => toggleOne(proj)}
                 disabled={isToggling}
@@ -362,12 +353,172 @@ function ProjectManagement({ user }) {
   );
 }
 
+// ===========================
+// THEME SECTION
+// ===========================
+const THEME_OPTIONS = [
+  {
+    value: "light",
+    label: "Light",
+    desc: "Always use light mode",
+    icon: <FaSun />,
+    preview: { bg: "#fffbf5", accent: "rgb(104,68,42)", dot: "#f3e8dc" },
+  },
+  {
+    value: "dark",
+    label: "Dark",
+    desc: "Always use dark mode",
+    icon: <FaMoon />,
+    preview: { bg: "#1a1210", accent: "#c4a882", dot: "#2a1f18" },
+  },
+  {
+    value: "auto",
+    label: "Auto",
+    desc: "Light 6am–6pm · Dark 6pm–6am",
+    icon: <FaClock />,
+    preview: { bg: "linear-gradient(135deg, #fffbf5 50%, #1a1210 50%)", accent: "rgb(104,68,42)", dot: "#888" },
+  },
+  {
+    value: "system",
+    label: "System",
+    desc: "Matches your device setting",
+    icon: <FaDesktop />,
+    preview: { bg: "#e8e0d8", accent: "rgb(104,68,42)", dot: "#c8bdb5" },
+  },
+];
+
+function ThemeSection() {
+  const [theme, setTheme] = useState(() => localStorage.getItem("gg-theme") || "system");
+
+  const handleSelect = (val) => {
+    setTheme(val);
+    localStorage.setItem("gg-theme", val);
+    applyTheme(val);
+  };
+
+  // Live preview of what time-based means right now
+  const hour = new Date().getHours();
+  const autoCurrently = hour >= 6 && hour < 18 ? "light" : "dark";
+
+  return (
+    <div className="st-form">
+      <p className="st-form-hint" style={{ marginBottom: 20 }}>
+        Choose how Graduation Gallery looks for you. Changes apply instantly.
+      </p>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {THEME_OPTIONS.map((opt) => {
+          const isActive = theme === opt.value;
+          return (
+            <button
+              key={opt.value}
+              onClick={() => handleSelect(opt.value)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+                padding: "13px 16px",
+                borderRadius: 14,
+                border: isActive ? "2px solid rgb(104,68,42)" : "1.5px solid rgb(185,174,167)",
+                background: isActive ? "rgb(243,232,220)" : "rgb(254,251,245)",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                textAlign: "left",
+                width: "100%",
+              }}
+            >
+              {/* Mini color preview swatch */}
+              <div style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                background: opt.preview.bg,
+                border: "1.5px solid rgb(185,174,167)",
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 14,
+                color: opt.preview.accent,
+                overflow: "hidden",
+              }}>
+                {opt.icon}
+              </div>
+
+              {/* Label + description */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{
+                  fontSize: 14, fontWeight: 600,
+                  color: "rgb(47,28,15)",
+                  margin: 0, fontFamily: "Arial, sans-serif",
+                }}>
+                  {opt.label}
+                  {/* Show live status for auto */}
+                  {opt.value === "auto" && (
+                    <span style={{
+                      marginLeft: 8, fontSize: 10, fontWeight: 700,
+                      padding: "2px 8px", borderRadius: 20,
+                      background: autoCurrently === "light" ? "rgb(255,243,205)" : "rgb(40,30,20)",
+                      color: autoCurrently === "light" ? "rgb(133,100,4)" : "rgb(185,155,130)",
+                      verticalAlign: "middle",
+                    }}>
+                      {autoCurrently === "light" ? "☀ Light now" : "🌙 Dark now"}
+                    </span>
+                  )}
+                </p>
+                <p style={{
+                  fontSize: 12, color: "rgb(104,68,42)",
+                  margin: "2px 0 0", fontFamily: "Arial, sans-serif",
+                }}>
+                  {opt.desc}
+                </p>
+              </div>
+
+              {/* Checkmark */}
+              <div style={{
+                width: 20, height: 20, borderRadius: "50%",
+                border: isActive ? "none" : "1.5px solid rgb(185,174,167)",
+                background: isActive ? "rgb(104,68,42)" : "transparent",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0, transition: "all 0.2s",
+              }}>
+                {isActive && (
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Current status line */}
+      <p style={{
+        fontSize: 12, color: "rgb(164,132,109)", marginTop: 16,
+        fontFamily: "Arial, sans-serif", textAlign: "center",
+      }}>
+        {theme === "system"
+          ? `Showing ${window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"} mode (device setting)`
+          : theme === "auto"
+          ? `Showing ${autoCurrently} mode (${hour}:00 local time)`
+          : `${theme.charAt(0).toUpperCase() + theme.slice(1)} mode active`
+        }
+      </p>
+    </div>
+  );
+}
+
+// ===========================
+// SECTIONS CONFIG
+// ===========================
 const SECTIONS = [
-  { key: "projects", label: "Project Management", icon: <FaFolderOpen /> },
-  { key: "name",     label: "Change Name",        icon: <FaUserEdit /> },
-  { key: "email",    label: "Change Email",        icon: <FaEnvelope /> },
-  { key: "password", label: "Change Password",     icon: <FaLock /> },
-  { key: "delete",   label: "Delete Account",      icon: <FaTrash />, danger: true },
+  { key: "theme",    label: "Appearance",       icon: <FaPalette /> },
+  { key: "projects", label: "Project Management",icon: <FaFolderOpen /> },
+  { key: "name",     label: "Change Name",       icon: <FaUserEdit /> },
+  { key: "email",    label: "Change Email",      icon: <FaEnvelope /> },
+  { key: "password", label: "Change Password",   icon: <FaLock /> },
+  { key: "delete",   label: "Delete Account",    icon: <FaTrash />, danger: true },
 ];
 
 function SectionContent({ sectionKey, user }) {
@@ -381,6 +532,7 @@ function SectionContent({ sectionKey, user }) {
 
   const reset = () => { setError(""); setSuccess(""); };
 
+  if (sectionKey === "theme")    return <ThemeSection />;
   if (sectionKey === "projects") return <ProjectManagement user={user} />;
 
   if (sectionKey === "name") return (
