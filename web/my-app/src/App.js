@@ -20,6 +20,10 @@ import ProjectShare from './ProjectShare';
 import Suspended from './suspended.js';
 import MaintenancePage from './MaintenancePage';
 import RegistrationClosed from './RegistrationClosed';
+import { initTheme } from './applyTheme.js';
+
+// Apply theme immediately on load, before any component renders
+initTheme();
 
 export const RoleContext = createContext(null);
 export const SettingsContext = createContext(null);
@@ -28,15 +32,15 @@ function PageSpinner() {
   return (
     <div style={{
       position: "fixed", inset: 0,
-      background: "rgb(245, 239, 230)",
+      background: "var(--bg-page)",
       display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center",
       zIndex: 9999,
     }}>
       <div style={{
         width: "44px", height: "44px",
-        border: "4px solid rgb(196, 173, 150)",
-        borderTopColor: "rgb(122, 78, 45)",
+        border: "4px solid var(--spinner-track)",
+        borderTopColor: "var(--spinner-head)",
         borderRadius: "50%",
         animation: "app-spin 0.8s linear infinite",
       }} />
@@ -45,7 +49,7 @@ function PageSpinner() {
         marginTop: "16px",
         fontFamily: "Arial, Helvetica, sans-serif",
         fontSize: "14px",
-        color: "rgb(160, 120, 80)",
+        color: "var(--text-muted)",
         fontStyle: "italic",
       }}>
         Loading…

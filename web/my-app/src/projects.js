@@ -1,5 +1,5 @@
 import { 
-  collection, addDoc, doc, getDoc, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, query, where, serverTimestamp 
+  collection, addDoc, doc, getDoc, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, query, where, serverTimestamp, Timestamp
 } from "firebase/firestore"
 import { db } from "./firebase.js"
 import { sendNotif } from "./notifications.js"
@@ -8,15 +8,23 @@ import { getSettings } from "./DashSettings.js"
 
 async function addProj(title, desc, userId, year, stack, category, gitLink, imgUrl, tags) {
   try {
-    // Load site settings to check autoApprove and maxProjectsPerUser
+    // Load site settings to check autoApprove and maxProjectsPerUserPerDay
     const settings = await getSettings()
 
-    // Check max projects per user
-    const maxAllowed = settings?.maxProjectsPerUser ?? 3
-    const userProjsQuery = query(collection(db, "projects"), where("userId", "==", userId))
-    const userProjsSnap = await getDocs(userProjsQuery)
-    if (userProjsSnap.size >= maxAllowed) {
-      return "max-reached"  // caller should show a message to the user
+    // Check daily project limit
+    const maxPerDay = settings?.maxProjectsPerUserPerDay ?? 3
+    const startOfToday = new Date()
+    startOfToday.setHours(0, 0, 0, 0)
+    const todayTimestamp = Timestamp.fromDate(startOfToday)
+
+    const dailyQuery = query(
+      collection(db, "projects"),
+      where("userId", "==", userId),
+      where("createdAt", ">=", todayTimestamp)
+    )
+    const dailySnap = await getDocs(dailyQuery)
+    if (dailySnap.size >= maxPerDay) {
+      return "daily-limit-reached"
     }
 
     // Determine status based on autoApprove
@@ -38,8 +46,20 @@ async function addProj(title, desc, userId, year, stack, category, gitLink, imgU
       status,
       hidden: false,
     })
-    return r.id
-  } catch {
+
+    // If auto-approved, notify the user immediately
+    if (status === "approved") {
+      await sendNotif(userId, {
+        type: "approved",
+        message: `Your project "${title}" has been approved and is now live.`,
+        projectId: r.id,
+        clickable: true,
+      })
+    }
+
+    return { id: r.id, status }
+  } catch (err) {
+    console.error("[addProj] error:", err)
     return "add-fail"
   }
 }
@@ -325,9 +345,26 @@ async function notifyBookmark(projectId, bookmarkerUid) {
   } catch {}
 }
 
+async function getDailyProjCount(userId) {
+  try {
+    const startOfToday = new Date()
+    startOfToday.setHours(0, 0, 0, 0)
+    const todayTimestamp = Timestamp.fromDate(startOfToday)
+    const q = query(
+      collection(db, "projects"),
+      where("userId", "==", userId),
+      where("createdAt", ">=", todayTimestamp)
+    )
+    const snap = await getDocs(q)
+    return snap.size
+  } catch {
+    return 0
+  }
+}
+
 export { 
   addProj, getProj, getApproved, getPending, getRejected, setStatus, 
   getUserProjs, getByTag, getByCategory, getByStack,
   addComment, addRate, removeRate, delProj, updProj, removeComment,
-  notifyBookmark, setHidden
+  notifyBookmark, setHidden, getDailyProjCount
 }

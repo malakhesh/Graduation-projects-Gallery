@@ -372,6 +372,13 @@ const THEME_OPTIONS = [
     preview: { bg: "#1a1210", accent: "#c4a882", dot: "#2a1f18" },
   },
   {
+    value: "caramel",
+    label: "Caramel",
+    desc: "Warm amber tones, easier on the eyes",
+    icon: <FaMoon style={{ color: "#d29a58" }} />,
+    preview: { bg: "#2c1800", accent: "#d29a58", dot: "#3d2510" },
+  },
+  {
     value: "auto",
     label: "Auto",
     desc: "Light 6am–6pm · Dark 6pm–6am",
@@ -502,6 +509,8 @@ function ThemeSection() {
           ? `Showing ${window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"} mode (device setting)`
           : theme === "auto"
           ? `Showing ${autoCurrently} mode (${hour}:00 local time)`
+          : theme === "caramel"
+          ? "Caramel mode active"
           : `${theme.charAt(0).toUpperCase() + theme.slice(1)} mode active`
         }
       </p>

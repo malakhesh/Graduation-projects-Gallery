@@ -7,6 +7,80 @@ function MaintenancePage() {
   return (
     <div className="pf-page" style={{ display: "flex", flexDirection: "column" }}>
 
+      <style>{`
+        @keyframes maint-spin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+        .mp-card {
+          width: 100%;
+          max-width: 480px;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          gap: 0;
+          padding: 56px 48px;
+          box-sizing: border-box;
+        }
+        .mp-icon-bubble {
+          width: 72px;
+          height: 72px;
+          border-radius: 50%;
+          background: var(--bg-hover);
+          border: 1px solid var(--border);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 24px;
+          flex-shrink: 0;
+        }
+        .mp-icon-bubble svg {
+          font-size: 28px;
+          color: var(--text-secondary);
+          animation: maint-spin 6s linear infinite;
+        }
+        .mp-title {
+          font-family: 'Times New Roman', Times, serif;
+          font-size: clamp(20px, 5vw, 26px);
+          font-weight: 700;
+          color: var(--text-primary);
+          margin: 0 0 10px;
+        }
+        .mp-body {
+          font-size: clamp(13px, 3.5vw, 15px);
+          color: var(--text-secondary);
+          line-height: 1.75;
+          margin: 0 0 6px;
+          font-family: Arial, Helvetica, sans-serif;
+        }
+        .mp-sub {
+          font-size: clamp(12px, 3vw, 13px);
+          color: var(--text-muted);
+          line-height: 1.6;
+          margin: 0 0 32px;
+          font-family: Arial, Helvetica, sans-serif;
+          font-style: italic;
+        }
+        @media (max-width: 540px) {
+          .mp-card {
+            padding: 40px 24px;
+          }
+          .mp-icon-bubble {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 18px;
+          }
+          .mp-icon-bubble svg {
+            font-size: 22px;
+          }
+        }
+        @media (max-width: 360px) {
+          .mp-card {
+            padding: 32px 16px;
+          }
+        }
+      `}</style>
+
       {/* Navbar */}
       <nav className="pf-navbar">
         <Link to="/" className="pf-navbar-logo">
@@ -19,57 +93,24 @@ function MaintenancePage() {
 
       {/* Main */}
       <main className="pf-main-content">
-        <div className="pf-card" style={{ maxWidth: "480px", flexDirection: "column", alignItems: "center", textAlign: "center", gap: "0", padding: "56px 48px" }}>
-
-          <style>{`
-            @keyframes maint-spin {
-              from { transform: rotate(0deg); }
-              to   { transform: rotate(360deg); }
-            }
-          `}</style>
+        <div className="pf-card mp-card">
 
           {/* Icon bubble */}
-          <div style={{
-            width: "72px", height: "72px", borderRadius: "50%",
-            background: "rgb(245, 239, 230)",
-            border: "1px solid rgb(196, 173, 150)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            marginBottom: "24px",
-          }}>
-            <FaTools style={{
-              fontSize: "28px",
-              color: "rgb(122, 78, 45)",
-              animation: "maint-spin 6s linear infinite",
-            }} />
+          <div className="mp-icon-bubble">
+            <FaTools />
           </div>
 
           {/* Title */}
-          <h1 style={{
-            fontFamily: "'Times New Roman', Times, serif",
-            fontSize: "26px", fontWeight: "700",
-            color: "rgb(44, 26, 14)",
-            margin: "0 0 10px",
-          }}>
-            Under Maintenance
-          </h1>
+          <h1 className="mp-title">Under Maintenance</h1>
 
           {/* Divider */}
           <div className="pf-divider" style={{ margin: "0 auto 20px" }} />
 
           {/* Body */}
-          <p style={{
-            fontSize: "15px", color: "rgb(122, 78, 45)",
-            lineHeight: "1.75", margin: "0 0 6px",
-            fontFamily: "Arial, Helvetica, sans-serif",
-          }}>
+          <p className="mp-body">
             Graduation Gallery is currently undergoing maintenance.
           </p>
-          <p style={{
-            fontSize: "13px", color: "rgb(160, 120, 80)",
-            lineHeight: "1.6", margin: "0 0 32px",
-            fontFamily: "Arial, Helvetica, sans-serif",
-            fontStyle: "italic",
-          }}>
+          <p className="mp-sub">
             We'll be back shortly. Thank you for your patience.
           </p>
 

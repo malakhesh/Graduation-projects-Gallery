@@ -3,21 +3,23 @@
 
 export function applyTheme(pref) {
   const root = document.documentElement;
-  let dark = false;
+  let theme = "light";
 
   if (pref === "dark") {
-    dark = true;
+    theme = "dark";
   } else if (pref === "light") {
-    dark = false;
+    theme = "light";
+  } else if (pref === "caramel") {
+    theme = "caramel";
   } else if (pref === "auto") {
     const hour = new Date().getHours();
-    dark = hour < 6 || hour >= 18; // dark 6pm–6am
+    theme = (hour < 6 || hour >= 18) ? "dark" : "light";
   } else {
     // "system"
-    dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   }
 
-  root.setAttribute("data-theme", dark ? "dark" : "light");
+  root.setAttribute("data-theme", theme);
 }
 
 export function initTheme() {

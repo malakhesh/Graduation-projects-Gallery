@@ -12,6 +12,8 @@ const DEFAULTS = {
   notifyOnNewUser: true,
   notifyOnReport: true,
   contactOpen: true,
+  suspensionDuration: 7,
+  suspensionUnit: "days", // "seconds" | "minutes" | "hours" | "days"
 }
 
 async function getSettings() {
@@ -44,4 +46,25 @@ async function updateSettings(settings) {
   }
 }
 
-export { getSettings, listenSettings, updateSettings, DEFAULTS }
+/**
+ * Converts a duration + unit into milliseconds.
+ * Use this when suspending a user to calculate their suspendedUntil timestamp.
+ * 
+ * Example usage when suspending a user:
+ *   const settings = await getSettings()
+ *   const ms = getSuspensionMs(settings.suspensionDuration, settings.suspensionUnit)
+ *   const suspendedUntil = new Date(Date.now() + ms)
+ *   // Save suspendedUntil to the user's Firestore doc
+ */
+function getSuspensionMs(duration, unit) {
+  const n = Number(duration) || 0
+  switch (unit) {
+    case "seconds": return n * 1000
+    case "minutes": return n * 60 * 1000
+    case "hours":   return n * 3600 * 1000
+    case "days":    return n * 86400 * 1000
+    default:        return n * 86400 * 1000
+  }
+}
+
+export { getSettings, listenSettings, updateSettings, getSuspensionMs, DEFAULTS }
