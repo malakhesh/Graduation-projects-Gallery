@@ -319,6 +319,7 @@
   text-align: left;
   width: 100%;
   box-sizing: border-box;
+  position: relative; /* FIX: anchors absolutely positioned children like the edit button */
 }
 
 .hg-project-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px var(--shadow-md); }
