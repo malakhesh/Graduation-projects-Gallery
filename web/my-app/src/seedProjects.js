@@ -449,7 +449,7 @@ async function seed() {
 
     await addDoc(collection(db, "projects"), {
       title: p.title,
-      desc: p.desc,
+      description: p.desc,  // <-- changed from desc: p.desc
       userId,
       year,
       stack: p.stack,
@@ -463,7 +463,7 @@ async function seed() {
       comments: [],
       userRatings: {},
       createdAt: serverTimestamp(),
-    })
+      updatedAt: serverTimestamp(),})
 
     count++
     console.log(`✓ [${count}/${PROJECTS.length}] ${p.title} (${p.tags[0]}) — ${p.category}`)

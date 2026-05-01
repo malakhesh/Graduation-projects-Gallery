@@ -18,6 +18,7 @@ import {
   FaBars, FaTimes, FaChevronLeft, FaChevronRight
 } from "react-icons/fa";
 
+// ✅ Fixed: correct port (your backend runs on 5000)
 const API_BASE = "http://localhost:5000";
 
 const exploreTags = [
@@ -31,13 +32,13 @@ const exploreTags = [
 // ── API helpers ──────────────────────────────────────────────
 async function trackView(uid, projectId) {
   try {
-    await fetch(`${API_BASE}/api/view/${uid}/${projectId}`, { method: "POST" });
+    await fetch(`${API_BASE}/api/recommendations/view/${uid}/${projectId}`, { method: "POST" });
   } catch { }
 }
 
 async function trackTagSearch(uid, tag) {
   try {
-    await fetch(`${API_BASE}/api/search/${uid}/${encodeURIComponent(tag)}`, { method: "POST" });
+    await fetch(`${API_BASE}/api/recommendations/search/${uid}/${encodeURIComponent(tag)}`, { method: "POST" });
   } catch { }
 }
 
@@ -479,39 +480,42 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
       ) : projects.length === 0 ? (
         <p className="hg-no-results">No recommendations yet. Start exploring projects!</p>
       ) : (
-        <div ref={containerRef} style={{ overflow: "hidden", width: "100%" }}>
-          <div
-            style={{
-              display: "flex",
-              gap: `${GAP}px`,
-              transform: `translateX(calc(-${index * 100 / visible}% - ${index * GAP}px))`,
-              transition: "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
-              willChange: "transform",
-            }}
-          >
-            {projects.map((p, i) => {
-              const distFromView = i < index ? index - i : i - (index + visible - 1);
-              const isEdge = i < index || i >= index + visible;
-              return (
-                <div
-                  key={p.id}
-                  style={{
-                    flex: `0 0 calc(${100 / visible}% - ${GAP * (visible - 1) / visible}px)`,
-                    minWidth: 0,
-                    opacity: isEdge ? Math.max(0, 1 - distFromView * 0.5) : 1,
-                    transform: isEdge ? `scale(${Math.max(0.94, 1 - distFromView * 0.03)})` : "scale(1)",
-                    transition: "opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
-                  }}
-                >
-                  <ProjectCard
-                    project={p}
-                    onOpen={handleOpen}
-                    bookmarked={bookmarkedIds.includes(p.id)}
-                    onToggleBookmark={onToggleBookmark}
-                  />
-                </div>
-              );
-            })}
+        // ✅ FIX: outer div clips side-bleed, inner div keeps hover scale room
+        <div style={{ overflow: "hidden", width: "100%", margin: "-12px 0" }}>
+          <div ref={containerRef} style={{ overflow: "visible", width: "100%", padding: "12px 0" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: `${GAP}px`,
+                transform: `translateX(calc(-${index * 100 / visible}% - ${index * GAP}px))`,
+                transition: "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
+                willChange: "transform",
+              }}
+            >
+              {projects.map((p, i) => {
+                const distFromView = i < index ? index - i : i - (index + visible - 1);
+                const isEdge = i < index || i >= index + visible;
+                return (
+                  <div
+                    key={p.id}
+                    style={{
+                      flex: `0 0 calc(${100 / visible}% - ${GAP * (visible - 1) / visible}px)`,
+                      minWidth: 0,
+                      opacity: isEdge ? Math.max(0, 1 - distFromView * 0.5) : 1,
+                      transform: isEdge ? `scale(${Math.max(0.94, 1 - distFromView * 0.03)})` : "scale(1)",
+                      transition: "opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
+                    }}
+                  >
+                    <ProjectCard
+                      project={p}
+                      onOpen={handleOpen}
+                      bookmarked={bookmarkedIds.includes(p.id)}
+                      onToggleBookmark={onToggleBookmark}
+                    />
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

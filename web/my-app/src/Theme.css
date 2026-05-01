@@ -15,6 +15,7 @@
   --bg-tag:            rgb(237, 228, 218);
   --bg-notif-unread:   rgb(243, 232, 220);
   --bg-sidebar:        rgb(249, 245, 240);
+  --bg-nav:            rgb(249, 245, 240);
 
   /* Borders */
   --border:            rgb(196, 173, 150);
@@ -89,6 +90,7 @@
   --bg-tag:            rgb(224, 210, 188);
   --bg-notif-unread:   rgb(238, 224, 202);
   --bg-sidebar:        rgb(236, 224, 204);
+  --bg-nav:            rgb(240, 230, 212);
 
   /* Borders */
   --border:            rgba(140, 100, 58, 0.22);
@@ -155,14 +157,15 @@
 [data-theme="dark"] {
   /* Backgrounds */
   --bg-page:           rgb(10, 6, 2);
-  --bg-surface:        rgb(38, 28, 18);    /* navbar — stays deep */
-  --bg-card:           rgb(75, 57, 38);    /* cards, panels, settings */
+  --bg-surface:        rgb(38, 28, 18);
+  --bg-card:           rgb(75, 57, 38);
   --bg-hover:          rgb(88, 68, 46);
   --bg-active:         rgb(62, 46, 30);
-  --bg-input:          rgb(75, 57, 38);    /* search, inputs match card */
+  --bg-input:          rgb(75, 57, 38);
   --bg-tag:            rgb(60, 45, 28);
   --bg-notif-unread:   rgb(82, 62, 42);
   --bg-sidebar:        rgb(20, 14, 8);
+  --bg-nav:            rgb(20, 14, 8);
 
   /* Borders */
   --border:            rgba(225, 212, 195, 0.28);
@@ -234,4 +237,42 @@
 }
 [data-theme="dark"] {
   --bg-auth-input: rgb(52, 38, 24);
+}
+
+
+/* ===========================
+   SEAMLESS THEME TRANSITION
+=========================== */
+*,
+*::before,
+*::after {
+  transition:
+    background-color 0.4s ease,
+    color 0.3s ease,
+    border-color 0.4s ease,
+    box-shadow 0.4s ease;
+}
+
+/* Restore fast transitions for interactive elements */
+.hg-project-card,
+.hg-nav-link,
+.hg-upload-btn,
+.hg-tag-card,
+.hg-card-bookmark,
+.hg-pm-github-btn,
+.hg-pm-bookmark-btn,
+.hg-btn-outline,
+.hg-dropdown-item,
+.hg-sidebar-item,
+.hg-pm-close,
+.hg-mobile-bell,
+.hg-hamburger,
+.hg-card-edit-btn {
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
 }

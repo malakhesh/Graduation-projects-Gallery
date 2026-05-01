@@ -308,7 +308,7 @@
   background: var(--bg-card);
   border-radius: 14px;
   border: 1px solid var(--border);
-  overflow: hidden;
+  overflow: visible; /* ✅ changed from hidden so hover scale isn't clipped */
   box-shadow: 0 2px 8px var(--shadow-sm);
   transition: transform 0.2s, box-shadow 0.2s;
   display: flex;
@@ -319,7 +319,7 @@
   text-align: left;
   width: 100%;
   box-sizing: border-box;
-  position: relative; /* FIX: anchors absolutely positioned children like the edit button */
+  position: relative;
 }
 
 .hg-project-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px var(--shadow-md); }
@@ -349,7 +349,14 @@
 
 .hg-author-name { font-size: 11px; font-weight: 600; color: var(--text-primary); }
 .hg-author-date { font-size: 10px; color: var(--text-primary); }
-.hg-card-image-wrapper { padding: 0 10px; }
+
+/* ✅ overflow hidden moved here so image stays within rounded corners */
+.hg-card-image-wrapper {
+  padding: 0 10px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+}
 
 .hg-card-image {
   width: 100%;
@@ -357,6 +364,23 @@
   object-fit: cover;
   border-radius: 10px;
   display: block;
+}
+
+/* ===========================
+   CARD EDIT BUTTON
+=========================== */
+.hg-card-edit-btn {
+  position: absolute;
+  top: 8px;
+  right: 18px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.hg-project-card:hover .hg-card-edit-btn {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .hg-card-footer {
@@ -867,7 +891,6 @@
   width: fit-content;
 }
 
-/* FIX: body uses box-sizing and hidden overflow to contain all children */
 .hg-pm-body {
   padding: 20px 24px 28px;
   display: flex;
@@ -915,7 +938,6 @@
   box-sizing: border-box;
 }
 
-/* FIX: actions container constrained to full width */
 .hg-pm-actions {
   display: flex;
   gap: 10px;
@@ -924,7 +946,6 @@
   box-sizing: border-box;
 }
 
-/* FIX: both buttons use box-sizing so padding doesn't cause overflow */
 .hg-pm-github-btn {
   display: inline-flex;
   align-items: center;
@@ -973,7 +994,6 @@
 .hg-star { font-size: 20px; color: var(--border); cursor: pointer; transition: color 0.15s; }
 .hg-star svg { color: var(--accent); }
 
-/* FIX: textarea fully constrained with box-sizing */
 .hg-pm-textarea {
   width: 100%;
   padding: 10px 14px;
@@ -1133,7 +1153,6 @@
   .hg-tag-label { font-size: 13px; }
   .hg-notif-dropdown { position: fixed; top: 56px; left: 12px; right: 12px; width: auto; }
 
-  /* FIX: modal slides up from bottom on mobile */
   .hg-pm-overlay { padding: 0; align-items: flex-end; }
   .hg-pm {
     border-radius: 20px 20px 0 0;
@@ -1144,7 +1163,6 @@
   }
   .hg-pm-image-wrap { height: 180px; border-radius: 20px 20px 0 0; }
 
-  /* FIX: tighter padding so content fits within screen width */
   .hg-pm-body {
     padding: 16px 16px 24px;
     width: 100%;
@@ -1154,7 +1172,6 @@
 
   .hg-pm-title { font-size: 18px; }
 
-  /* FIX: stack buttons vertically and full-width with proper box-sizing */
   .hg-pm-actions { flex-direction: column; width: 100%; }
   .hg-pm-github-btn {
     justify-content: center;
@@ -1167,7 +1184,6 @@
     box-sizing: border-box;
   }
 
-  /* FIX: textarea and comment section fully contained */
   .hg-pm-textarea {
     width: 100%;
     box-sizing: border-box;
