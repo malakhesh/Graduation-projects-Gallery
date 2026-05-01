@@ -84,11 +84,7 @@
   color: var(--text-faint);
 }
 
-/* Hide browser built-in password icons */
-.login-input::-webkit-credentials-auto-fill-button,
-.login-input::-webkit-textfield-decoration-container {
-  display: none;
-}
+
 .login-input::-ms-reveal,
 .login-input::-ms-clear {
   display: none;
