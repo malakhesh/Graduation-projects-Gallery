@@ -13,10 +13,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import { collection, getDocs, query, where } from "firebase/firestore";
 
 import { getUser } from "../backend/auth";
-import { db } from "../backend/firebase";
+import { getUserProjs } from "../backend/projects";
 
 const C = {
   bg: "rgb(223, 205, 192)",
@@ -27,6 +26,9 @@ const C = {
   button: "rgb(104, 68, 42)",
   input: "rgb(185, 174, 167)",
   border: "rgba(104, 68, 42, 0.15)",
+  danger: "rgb(150, 55, 45)",
+  success: "rgb(45, 130, 75)",
+  warning: "rgb(180, 130, 40)",
 };
 
 export default function UserProfileScreen() {
@@ -36,26 +38,6 @@ export default function UserProfileScreen() {
   const [user, setUser] = useState<any>(null);
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const fetchUserProjects = async (uid: string) => {
-    try {
-      const q = query(collection(db, "projects"), where("userId", "==", uid));
-      const snap = await getDocs(q);
-
-      const arr: any[] = [];
-
-      snap.forEach((docSnap) => {
-        arr.push({
-          id: docSnap.id,
-          ...docSnap.data(),
-        });
-      });
-
-      setProjects(arr);
-    } catch {
-      setProjects([]);
-    }
-  };
 
   const fetchProfile = async () => {
     if (!userId) {
@@ -80,7 +62,14 @@ export default function UserProfileScreen() {
       }
 
       setUser(userData);
-      await fetchUserProjects(userId);
+
+      const userProjects: any = await getUserProjs(userId);
+
+      if (Array.isArray(userProjects)) {
+        setProjects(userProjects);
+      } else {
+        setProjects([]);
+      }
     } catch {
       Alert.alert("Error", "Could not load user profile.");
     } finally {
@@ -92,8 +81,13 @@ export default function UserProfileScreen() {
     fetchProfile();
   }, [userId]);
 
-  const openLinkedIn = async (url: string) => {
+  const openUrl = async (url: string, label: string) => {
     try {
+      if (!url) {
+        Alert.alert("Not Available", `${label} link is not available.`);
+        return;
+      }
+
       const finalUrl =
         url.startsWith("http://") || url.startsWith("https://")
           ? url
@@ -102,14 +96,37 @@ export default function UserProfileScreen() {
       const supported = await Linking.canOpenURL(finalUrl);
 
       if (!supported) {
-        Alert.alert("Error", "Could not open LinkedIn link.");
+        Alert.alert("Error", `Could not open ${label} link.`);
         return;
       }
 
       await Linking.openURL(finalUrl);
     } catch {
-      Alert.alert("Error", "Could not open LinkedIn link.");
+      Alert.alert("Error", `Could not open ${label} link.`);
     }
+  };
+
+  const getStatusStyle = (status: string) => {
+    const normalized = status?.toLowerCase();
+
+    if (normalized === "approved") {
+      return {
+        bg: "rgba(45, 130, 75, 0.14)",
+        color: C.success,
+      };
+    }
+
+    if (normalized === "rejected") {
+      return {
+        bg: "rgba(150, 55, 45, 0.14)",
+        color: C.danger,
+      };
+    }
+
+    return {
+      bg: "rgba(180, 130, 40, 0.14)",
+      color: C.warning,
+    };
   };
 
   if (loading) {
@@ -141,13 +158,45 @@ export default function UserProfileScreen() {
   const role = user.role || "Student";
   const year = user.year || "";
   const bio = user.bio || user.about || "No bio added yet.";
+  const status = user.status || "active";
+  const violations = user.violations || 0;
+
+  const avatar =
+    user.photoURL ||
+    user.avatar ||
+    user.image ||
+    user.profileImage ||
+    user.profilePic ||
+    "";
 
   const linkedIn =
+    user.socialLinks?.linkedin ||
     user.linkedin ||
     user.linkedIn ||
     user.linkedinUrl ||
     user.linkedInUrl ||
     user.linkedinLink ||
+    user.linkedinProfile ||
+    user.linkedInProfile ||
+    user.linkedin_url ||
+    user.linked_in ||
+    user.LinkedIn ||
+    "";
+
+  const github =
+    user.socialLinks?.github ||
+    user.github ||
+    user.githubUrl ||
+    user.githubLink ||
+    user.githubProfile ||
+    "";
+
+  const portfolio =
+    user.socialLinks?.portfolio ||
+    user.portfolio ||
+    user.portfolioUrl ||
+    user.website ||
+    user.personalWebsite ||
     "";
 
   const techStack = Array.isArray(user.techStack)
@@ -175,11 +224,8 @@ export default function UserProfileScreen() {
         <View style={styles.profileCard}>
           <View style={styles.profileTop}>
             <View style={styles.avatar}>
-              {user.photoURL || user.avatar ? (
-                <Image
-                  source={{ uri: user.photoURL || user.avatar }}
-                  style={styles.avatarImage}
-                />
+              {avatar ? (
+                <Image source={{ uri: avatar }} style={styles.avatarImage} />
               ) : (
                 <Ionicons name="person" size={42} color={C.button} />
               )}
@@ -202,23 +248,76 @@ export default function UserProfileScreen() {
                 </View>
               ) : null}
 
-              <View style={styles.roleBadge}>
-                <Text style={styles.roleText}>{role}</Text>
+              <View style={styles.badgesRow}>
+                <View style={styles.roleBadge}>
+                  <Text style={styles.roleText}>{role}</Text>
+                </View>
+
+                <View
+                  style={[
+                    styles.statusBadge,
+                    status === "suspended" && styles.statusBadgeDanger,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.statusText,
+                      status === "suspended" && styles.statusTextDanger,
+                    ]}
+                  >
+                    {status}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
 
           <Text style={styles.bioText}>{bio}</Text>
 
-          {linkedIn ? (
-            <TouchableOpacity
-              style={styles.linkedinButton}
-              activeOpacity={0.85}
-              onPress={() => openLinkedIn(linkedIn)}
-            >
-              <Ionicons name="logo-linkedin" size={16} color={C.button} />
-              <Text style={styles.linkedinText}>LinkedIn</Text>
-            </TouchableOpacity>
+          {violations > 0 ? (
+            <View style={styles.warningBox}>
+              <Ionicons name="warning-outline" size={16} color={C.danger} />
+              <Text style={styles.warningText}>
+                {violations} violation{violations === 1 ? "" : "s"} recorded
+              </Text>
+            </View>
+          ) : null}
+
+          {(linkedIn || github || portfolio) ? (
+            <View style={styles.socialRow}>
+              {linkedIn ? (
+                <TouchableOpacity
+                  style={styles.socialButton}
+                  activeOpacity={0.85}
+                  onPress={() => openUrl(linkedIn, "LinkedIn")}
+                >
+                  <Ionicons name="logo-linkedin" size={16} color={C.button} />
+                  <Text style={styles.socialText}>LinkedIn</Text>
+                </TouchableOpacity>
+              ) : null}
+
+              {github ? (
+                <TouchableOpacity
+                  style={styles.socialButton}
+                  activeOpacity={0.85}
+                  onPress={() => openUrl(github, "GitHub")}
+                >
+                  <Ionicons name="logo-github" size={16} color={C.button} />
+                  <Text style={styles.socialText}>GitHub</Text>
+                </TouchableOpacity>
+              ) : null}
+
+              {portfolio ? (
+                <TouchableOpacity
+                  style={styles.socialButton}
+                  activeOpacity={0.85}
+                  onPress={() => openUrl(portfolio, "Portfolio")}
+                >
+                  <Ionicons name="globe-outline" size={16} color={C.button} />
+                  <Text style={styles.socialText}>Portfolio</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
           ) : null}
 
           {techStack.length > 0 ? (
@@ -243,6 +342,21 @@ export default function UserProfileScreen() {
         {projects.length > 0 ? (
           projects.map((project) => {
             const stack = Array.isArray(project.stack) ? project.stack : [];
+            const statusStyle = getStatusStyle(project.status || "pending");
+
+            const ratings = Array.isArray(project.ratings)
+              ? project.ratings
+              : [];
+
+            const avgRating =
+              ratings.length > 0
+                ? (
+                    ratings.reduce(
+                      (sum: number, rate: number) => sum + Number(rate || 0),
+                      0
+                    ) / ratings.length
+                  ).toFixed(1)
+                : "0.0";
 
             return (
               <TouchableOpacity
@@ -270,9 +384,27 @@ export default function UserProfileScreen() {
                 )}
 
                 <View style={styles.projectInfo}>
-                  <Text style={styles.projectTitle} numberOfLines={1}>
-                    {project.title || "Untitled Project"}
-                  </Text>
+                  <View style={styles.projectTitleRow}>
+                    <Text style={styles.projectTitle} numberOfLines={1}>
+                      {project.title || "Untitled Project"}
+                    </Text>
+
+                    <View
+                      style={[
+                        styles.projectStatusBadge,
+                        { backgroundColor: statusStyle.bg },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.projectStatusText,
+                          { color: statusStyle.color },
+                        ]}
+                      >
+                        {project.status || "pending"}
+                      </Text>
+                    </View>
+                  </View>
 
                   <Text style={styles.projectDesc} numberOfLines={2}>
                     {project.desc || "No description added"}
@@ -286,6 +418,8 @@ export default function UserProfileScreen() {
                     {project.year ? (
                       <Text style={styles.projectMeta}>{project.year}</Text>
                     ) : null}
+
+                    <Text style={styles.projectMeta}>⭐ {avgRating}</Text>
                   </View>
 
                   {stack.length > 0 ? (
@@ -444,6 +578,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
     marginLeft: 6,
+    flexShrink: 1,
+  },
+
+  badgesRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 8,
   },
 
   roleBadge: {
@@ -451,7 +592,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 14,
-    marginTop: 8,
+    marginRight: 7,
+    marginBottom: 6,
   },
 
   roleText: {
@@ -459,6 +601,29 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "900",
     textTransform: "capitalize",
+  },
+
+  statusBadge: {
+    backgroundColor: "rgba(45, 130, 75, 0.12)",
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 14,
+    marginBottom: 6,
+  },
+
+  statusBadgeDanger: {
+    backgroundColor: "rgba(150, 55, 45, 0.12)",
+  },
+
+  statusText: {
+    color: C.success,
+    fontSize: 13,
+    fontWeight: "900",
+    textTransform: "capitalize",
+  },
+
+  statusTextDanger: {
+    color: C.danger,
   },
 
   bioText: {
@@ -469,7 +634,32 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
 
-  linkedinButton: {
+  warningBox: {
+    marginTop: 14,
+    backgroundColor: "rgba(150, 55, 45, 0.10)",
+    borderWidth: 1,
+    borderColor: "rgba(150, 55, 45, 0.18)",
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  warningText: {
+    color: C.danger,
+    fontSize: 12.5,
+    fontWeight: "800",
+    marginLeft: 7,
+  },
+
+  socialRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 14,
+  },
+
+  socialButton: {
     alignSelf: "flex-start",
     flexDirection: "row",
     alignItems: "center",
@@ -478,11 +668,12 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 13,
     paddingVertical: 8,
-    marginTop: 14,
+    marginRight: 8,
+    marginBottom: 8,
     backgroundColor: C.white,
   },
 
-  linkedinText: {
+  socialText: {
     color: C.button,
     fontSize: 13,
     fontWeight: "900",
@@ -493,7 +684,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "flex-start",
-    marginTop: 14,
+    marginTop: 8,
   },
 
   stackChip: {
@@ -560,6 +751,7 @@ const styles = StyleSheet.create({
     height: 58,
     borderRadius: 14,
     marginRight: 12,
+    backgroundColor: C.input,
   },
 
   projectImageFallback: {
@@ -576,11 +768,30 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
+  projectTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+
   projectTitle: {
     color: C.black,
     fontSize: 14.5,
     fontWeight: "900",
-    marginBottom: 4,
+    flex: 1,
+    marginRight: 6,
+  },
+
+  projectStatusBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 9,
+  },
+
+  projectStatusText: {
+    fontSize: 9.5,
+    fontWeight: "900",
+    textTransform: "capitalize",
   },
 
   projectDesc: {
@@ -593,7 +804,7 @@ const styles = StyleSheet.create({
   projectMetaRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    flexWrap: "wrap",
     marginBottom: 6,
   },
 
@@ -601,6 +812,8 @@ const styles = StyleSheet.create({
     color: C.linkDark,
     fontSize: 11.5,
     fontWeight: "800",
+    marginRight: 8,
+    marginBottom: 3,
   },
 
   projectStackRow: {
