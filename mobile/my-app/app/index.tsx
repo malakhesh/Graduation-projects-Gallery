@@ -13,6 +13,15 @@ export default function WelcomeScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <LinearGradient colors={["#F5ECE4", "#DFCDBF"]} style={styles.container}>
+        
+        {/* About Button */}
+        <Pressable
+          style={styles.aboutButton}
+          onPress={() => router.push("/about")}
+        >
+          <Text style={styles.aboutText}>About</Text>
+        </Pressable>
+
         <View style={styles.softCircleOne} />
         <View style={styles.softCircleTwo} />
 
@@ -65,6 +74,20 @@ const styles = StyleSheet.create({
     position: "relative",
   },
 
+  // ✅ About Button
+  aboutButton: {
+    position: "absolute",
+    top: 50,
+    right: 28,
+    zIndex: 10,
+  },
+
+  aboutText: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "rgb(104, 68, 42)",
+  },
+
   softCircleOne: {
     position: "absolute",
     top: -90,
@@ -99,7 +122,7 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 31,
+    fontSize: 30,
     fontWeight: "900",
     color: "rgb(47, 28, 15)",
     textAlign: "center",
@@ -108,7 +131,7 @@ const styles = StyleSheet.create({
   },
 
   highlight: {
-    fontSize: 24,
+    fontSize:23,
     fontWeight: "800",
     fontStyle: "italic",
     color: "rgba(164, 132, 109, 0.8)",
@@ -117,7 +140,7 @@ const styles = StyleSheet.create({
   },
 
   subtitle: {
-    fontSize: 15.5,
+    fontSize: 14.5,
     lineHeight: 25,
     color: "rgb(104, 68, 42)",
     textAlign: "center",
@@ -147,12 +170,12 @@ const styles = StyleSheet.create({
 
   primaryButtonText: {
     color: "rgb(254, 251, 245)",
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "800",
   },
 
   loginText: {
-    fontSize: 15,
+    fontSize: 14,
     color: "rgb(104, 68, 42)",
   },
 
