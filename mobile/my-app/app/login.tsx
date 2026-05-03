@@ -14,7 +14,7 @@ import {
   View,
 } from "react-native";
 
-import { logUser } from "../backend/auth";
+import { logUser, checkStatus, logOut } from "../backend/auth";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -58,6 +58,18 @@ export default function LoginScreen() {
     return isValid;
   };
 
+  const formatSuspensionDate = (value: any) => {
+    try {
+      if (!value) return "";
+
+      const date = value.toDate ? value.toDate() : new Date(value);
+
+      return date.toLocaleString();
+    } catch {
+      return "";
+    }
+  };
+
   const handleLogin = async () => {
     if (!validateForm()) return;
 
@@ -65,7 +77,7 @@ export default function LoginScreen() {
       setLoading(true);
       setGeneralError("");
 
-      const result = await logUser(email.trim().toLowerCase(), password);
+      const result: any = await logUser(email.trim().toLowerCase(), password);
 
       if (result === "no-user") {
         setEmailError("This email is not registered.");
@@ -84,6 +96,40 @@ export default function LoginScreen() {
 
       if (typeof result === "string") {
         setGeneralError("Email or password is incorrect.");
+        return;
+      }
+
+      const statusData: any = await checkStatus(result.uid);
+
+      if (statusData === "status-fail") {
+        await logOut();
+        setGeneralError("Could not check your account status. Please try again.");
+        return;
+      }
+
+      if (statusData === "no-user") {
+        await logOut();
+        setGeneralError("User account data was not found.");
+        return;
+      }
+
+      if (statusData?.status === "suspended") {
+        await logOut();
+
+        const until = formatSuspensionDate(statusData.suspendedUntil);
+
+        const reasons =
+          Array.isArray(statusData.suspendReasons) &&
+          statusData.suspendReasons.length > 0
+            ? statusData.suspendReasons.join("\n")
+            : "Repeated violations.";
+
+        setGeneralError(
+          until
+            ? `Your account is suspended until ${until}.\nReason: ${reasons}`
+            : `Your account is suspended.\nReason: ${reasons}`
+        );
+
         return;
       }
 
@@ -132,6 +178,7 @@ export default function LoginScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={email}
+                editable={!loading}
                 onChangeText={(value) => {
                   setEmail(value);
                   setEmailError("");
@@ -157,6 +204,7 @@ export default function LoginScreen() {
                   placeholderTextColor="rgba(47, 28, 15, 0.55)"
                   secureTextEntry={!showPassword}
                   value={password}
+                  editable={!loading}
                   onChangeText={(value) => {
                     setPassword(value);
                     setPasswordError("");
@@ -164,7 +212,10 @@ export default function LoginScreen() {
                   }}
                 />
 
-                <Pressable onPress={() => setShowPassword(!showPassword)}>
+                <Pressable
+                  onPress={() => setShowPassword(!showPassword)}
+                  disabled={loading}
+                >
                   <Text style={styles.showText}>
                     {showPassword ? "Hide" : "Show"}
                   </Text>
@@ -178,6 +229,7 @@ export default function LoginScreen() {
               <Pressable
                 style={styles.forgotButton}
                 onPress={() => router.push("/forgot-password")}
+                disabled={loading}
               >
                 <Text style={styles.forgotText}>Forgot Password?</Text>
               </Pressable>
@@ -199,7 +251,10 @@ export default function LoginScreen() {
               </Pressable>
             </View>
 
-            <Pressable onPress={() => router.push("/register")}>
+            <Pressable
+              onPress={() => router.push("/register")}
+              disabled={loading}
+            >
               <Text style={styles.registerText}>
                 Don&apos;t have an account?{" "}
                 <Text style={styles.registerLink}>Create Account</Text>
@@ -289,6 +344,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
     textAlign: "center",
+    lineHeight: 19,
   },
 
   label: {
