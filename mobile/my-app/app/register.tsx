@@ -1,3 +1,4 @@
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -10,6 +11,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from "react-native";
 
 import { regUser } from "../backend/auth";
@@ -108,143 +110,163 @@ export default function RegisterScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
+      <LinearGradient colors={["#F5ECE4", "#DFCDBF"]} style={styles.gradient}>
+        <KeyboardAvoidingView
+          style={styles.container}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.backText}>← Back</Text>
+          </TouchableOpacity>
 
-        <View style={styles.content}>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>
-            Create your account to upload and explore graduation projects.
-          </Text>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Text style={styles.title}>Create Account</Text>
 
-          <View style={styles.card}>
-            <Text style={styles.label}>Full Name</Text>
-            <TextInput
-              placeholder="Enter your full name"
-              placeholderTextColor="rgb(95, 78, 66)"
-              value={fullName}
-              onChangeText={(text) => {
-                setFullName(text);
-                if (fullNameError) setFullNameError("");
-                if (generalError) setGeneralError("");
-              }}
-              style={[
-                styles.input,
-                fullNameError ? styles.inputErrorBorder : null,
-              ]}
-            />
-            {fullNameError ? (
-              <Text style={styles.errorText}>{fullNameError}</Text>
-            ) : null}
+            <Text style={styles.subtitle}>
+              Create your account to upload and explore graduation projects.
+            </Text>
 
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              placeholder="Enter your email"
-              placeholderTextColor="rgb(95, 78, 66)"
-              value={email}
-              onChangeText={(text) => {
-                setEmail(text);
-                if (emailError) setEmailError("");
-                if (generalError) setGeneralError("");
-              }}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              style={[styles.input, emailError ? styles.inputErrorBorder : null]}
-            />
-            {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
-
-            <Text style={styles.label}>Password</Text>
-            <View
-              style={[
-                styles.passwordWrapper,
-                passwordError ? styles.inputErrorBorder : null,
-              ]}
-            >
+            <View style={styles.card}>
+              <Text style={styles.label}>Full Name</Text>
               <TextInput
-                placeholder="Create your password"
-                placeholderTextColor="rgb(95, 78, 66)"
-                value={password}
+                placeholder="Enter your full name"
+                placeholderTextColor="rgba(47, 28, 15, 0.55)"
+                value={fullName}
                 onChangeText={(text) => {
-                  setPassword(text);
-                  if (passwordError) setPasswordError("");
-                  if (confirmPasswordError) setConfirmPasswordError("");
+                  setFullName(text);
+                  if (fullNameError) setFullNameError("");
                   if (generalError) setGeneralError("");
                 }}
-                secureTextEntry={!showPass}
-                style={styles.passwordInput}
-                autoCapitalize="none"
+                style={[
+                  styles.input,
+                  fullNameError ? styles.inputErrorBorder : null,
+                ]}
               />
-              <TouchableOpacity onPress={() => setShowPass(!showPass)}>
-                <Text style={styles.showText}>{showPass ? "Hide" : "Show"}</Text>
-              </TouchableOpacity>
-            </View>
-            {passwordError ? (
-              <Text style={styles.errorText}>{passwordError}</Text>
-            ) : null}
+              {fullNameError ? (
+                <Text style={styles.errorText}>{fullNameError}</Text>
+              ) : null}
 
-            <Text style={styles.label}>Confirm Password</Text>
-            <View
-              style={[
-                styles.passwordWrapper,
-                confirmPasswordError ? styles.inputErrorBorder : null,
-              ]}
-            >
+              <Text style={styles.label}>Email</Text>
               <TextInput
-                placeholder="Confirm your password"
-                placeholderTextColor="rgb(95, 78, 66)"
-                value={confirmPassword}
+                placeholder="Enter your email"
+                placeholderTextColor="rgba(47, 28, 15, 0.55)"
+                value={email}
                 onChangeText={(text) => {
-                  setConfirmPassword(text);
-                  if (confirmPasswordError) setConfirmPasswordError("");
+                  setEmail(text);
+                  if (emailError) setEmailError("");
                   if (generalError) setGeneralError("");
                 }}
-                secureTextEntry={!showConfirm}
-                style={styles.passwordInput}
+                keyboardType="email-address"
                 autoCapitalize="none"
+                style={[
+                  styles.input,
+                  emailError ? styles.inputErrorBorder : null,
+                ]}
               />
-              <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)}>
-                <Text style={styles.showText}>
-                  {showConfirm ? "Hide" : "Show"}
-                </Text>
+              {emailError ? (
+                <Text style={styles.errorText}>{emailError}</Text>
+              ) : null}
+
+              <Text style={styles.label}>Password</Text>
+              <View
+                style={[
+                  styles.passwordWrapper,
+                  passwordError ? styles.inputErrorBorder : null,
+                ]}
+              >
+                <TextInput
+                  placeholder="Create your password"
+                  placeholderTextColor="rgba(47, 28, 15, 0.55)"
+                  value={password}
+                  onChangeText={(text) => {
+                    setPassword(text);
+                    if (passwordError) setPasswordError("");
+                    if (confirmPasswordError) setConfirmPasswordError("");
+                    if (generalError) setGeneralError("");
+                  }}
+                  secureTextEntry={!showPass}
+                  style={styles.passwordInput}
+                  autoCapitalize="none"
+                />
+
+                <TouchableOpacity onPress={() => setShowPass(!showPass)}>
+                  <Text style={styles.showText}>
+                    {showPass ? "Hide" : "Show"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              {passwordError ? (
+                <Text style={styles.errorText}>{passwordError}</Text>
+              ) : null}
+
+              <Text style={styles.label}>Confirm Password</Text>
+              <View
+                style={[
+                  styles.passwordWrapper,
+                  confirmPasswordError ? styles.inputErrorBorder : null,
+                ]}
+              >
+                <TextInput
+                  placeholder="Confirm your password"
+                  placeholderTextColor="rgba(47, 28, 15, 0.55)"
+                  value={confirmPassword}
+                  onChangeText={(text) => {
+                    setConfirmPassword(text);
+                    if (confirmPasswordError) setConfirmPasswordError("");
+                    if (generalError) setGeneralError("");
+                  }}
+                  secureTextEntry={!showConfirm}
+                  style={styles.passwordInput}
+                  autoCapitalize="none"
+                />
+
+                <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)}>
+                  <Text style={styles.showText}>
+                    {showConfirm ? "Hide" : "Show"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              {confirmPasswordError ? (
+                <Text style={styles.errorText}>{confirmPasswordError}</Text>
+              ) : null}
+
+              {generalError ? (
+                <View style={styles.errorBox}>
+                  <Text style={styles.errorBoxText}>{generalError}</Text>
+                </View>
+              ) : null}
+
+              <TouchableOpacity
+                style={[styles.button, loading && styles.buttonDisabled]}
+                onPress={handleRegister}
+                disabled={loading}
+                activeOpacity={0.85}
+              >
+                {loading ? (
+                  <ActivityIndicator color="rgb(254, 251, 245)" />
+                ) : (
+                  <Text style={styles.buttonText}>Create Account</Text>
+                )}
               </TouchableOpacity>
             </View>
-            {confirmPasswordError ? (
-              <Text style={styles.errorText}>{confirmPasswordError}</Text>
-            ) : null}
 
-            {generalError ? (
-              <Text style={[styles.errorText, { marginTop: 8 }]}>
-                {generalError}
-              </Text>
-            ) : null}
-
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleRegister}
-              disabled={loading}
-              activeOpacity={0.85}
-            >
-              {loading ? (
-                <ActivityIndicator color="rgb(254, 251, 245)" />
-              ) : (
-                <Text style={styles.buttonText}>Create Account</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.bottomRow}>
-            <Text style={styles.bottomText}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => router.push("/login")}>
-              <Text style={styles.loginText}>Login</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
+            <View style={styles.bottomRow}>
+              <Text style={styles.bottomText}>Already have an account? </Text>
+              <TouchableOpacity onPress={() => router.push("/login")}>
+                <Text style={styles.loginText}>Login</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </LinearGradient>
     </SafeAreaView>
   );
 }
@@ -252,136 +274,176 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "rgb(223, 205, 192)",
+    backgroundColor: "#DFCDBF",
   },
+
+  gradient: {
+    flex: 1,
+  },
+
   container: {
     flex: 1,
-    backgroundColor: "rgb(223, 205, 192)",
   },
+
   backButton: {
-    marginTop: 8,
-    marginLeft: 16,
+    position: "absolute",
+    top: 48,
+    left: 28,
+    zIndex: 10,
   },
+
   backText: {
     color: "rgb(47, 28, 15)",
-    fontSize: 18,
-    fontWeight: "500",
-  },
-  content: {
-    flex: 1,
-    alignItems: "center",
-    paddingHorizontal: 22,
-    paddingTop: 50,
-  },
-  title: {
-    fontSize: 32,
+    fontSize: 15,
     fontWeight: "800",
+  },
+
+  scrollContent: {
+    flexGrow: 1,
+    alignItems: "center",
+    paddingHorizontal: 28,
+    paddingTop: 108,
+    paddingBottom: 28,
+  },
+
+  title: {
+    fontSize: 30,
+    fontWeight: "900",
     color: "rgb(47, 28, 15)",
-    marginBottom: 10,
+    marginBottom: 12,
     textAlign: "center",
   },
+
   subtitle: {
-    fontSize: 16,
+    fontSize: 14.5,
     color: "rgb(47, 28, 15)",
     textAlign: "center",
-    lineHeight: 28,
-    marginBottom: 22,
-    paddingHorizontal: 8,
+    lineHeight: 23,
+    marginBottom: 28,
+    paddingHorizontal: 4,
   },
+
   card: {
     width: "100%",
     backgroundColor: "rgb(254, 251, 245)",
     borderRadius: 28,
-    paddingHorizontal: 20,
-    paddingTop: 22,
-    paddingBottom: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 4,
+    padding: 22,
+    shadowColor: "rgb(47, 28, 15)",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    elevation: 5,
   },
+
   label: {
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 14.5,
+    fontWeight: "900",
     color: "rgb(47, 28, 15)",
     marginBottom: 8,
-    marginTop: 12,
+    marginTop: 10,
   },
+
   input: {
     width: "100%",
+    height: 53,
     backgroundColor: "rgb(185, 174, 167)",
     borderRadius: 18,
     paddingHorizontal: 18,
-    paddingVertical: 16,
-    fontSize: 16,
+    fontSize: 14.5,
     color: "rgb(47, 28, 15)",
     borderWidth: 1.5,
     borderColor: "transparent",
   },
+
   passwordWrapper: {
     width: "100%",
+    height: 53,
     backgroundColor: "rgb(185, 174, 167)",
     borderRadius: 18,
     paddingHorizontal: 18,
-    paddingVertical: 4,
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1.5,
     borderColor: "transparent",
   },
+
   passwordInput: {
     flex: 1,
-    paddingVertical: 12,
-    fontSize: 16,
+    fontSize: 14.5,
     color: "rgb(47, 28, 15)",
   },
+
   showText: {
     color: "rgb(75, 48, 28)",
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 13.5,
+    fontWeight: "900",
     marginLeft: 10,
   },
+
   button: {
+    height: 54,
     backgroundColor: "rgb(104, 68, 42)",
     borderRadius: 18,
-    paddingVertical: 18,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 18,
+    marginTop: 20,
   },
+
   buttonDisabled: {
     opacity: 0.8,
   },
+
   buttonText: {
     color: "rgb(254, 251, 245)",
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: "900",
   },
+
   bottomRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 16,
-    marginBottom: 12,
+    marginTop: 18,
+    marginBottom: 8,
   },
+
   bottomText: {
     color: "rgb(104, 68, 42)",
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "500",
   },
+
   loginText: {
-    color: "rgb(75, 48, 28)",
-    fontSize: 16,
-    fontWeight: "700",
+    color: "rgb(47, 28, 15)",
+    fontSize: 14,
+    fontWeight: "900",
   },
+
   errorText: {
-    color: "#b3261e",
-    fontSize: 13,
+    color: "rgb(160, 40, 40)",
+    fontSize: 12.5,
+    fontWeight: "700",
     marginTop: 5,
     marginLeft: 4,
   },
+
+  errorBox: {
+    backgroundColor: "rgba(180, 40, 40, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(180, 40, 40, 0.3)",
+    borderRadius: 14,
+    padding: 11,
+    marginTop: 14,
+  },
+
+  errorBoxText: {
+    color: "rgb(130, 25, 25)",
+    fontSize: 13,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+
   inputErrorBorder: {
-    borderColor: "#b3261e",
+    borderColor: "rgb(160, 40, 40)",
   },
 });

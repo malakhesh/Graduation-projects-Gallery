@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
   },
 
   backText: {
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: "800",
     color: "rgb(47, 28, 15)",
   },
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: "rgb(254, 251, 245)",
     borderRadius: 28,
-    padding: 26,
+    padding: 24,
     shadowColor: "rgb(47, 28, 15)",
     shadowOpacity: 0.16,
     shadowRadius: 10,
@@ -203,44 +203,44 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(180, 40, 40, 0.3)",
     borderRadius: 14,
-    padding: 12,
-    marginBottom: 16,
+    padding: 11,
+    marginBottom: 15,
   },
 
   errorBoxText: {
     color: "rgb(130, 25, 25)",
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "700",
     textAlign: "center",
   },
 
   title: {
-    fontSize: 31,
+    fontSize: 28,
     fontWeight: "900",
     color: "rgb(47, 28, 15)",
-    marginBottom: 10,
+    marginBottom: 9,
   },
 
   subtitle: {
-    fontSize: 15,
-    lineHeight: 23,
+    fontSize: 14,
+    lineHeight: 22,
     color: "rgb(104, 68, 42)",
-    marginBottom: 26,
+    marginBottom: 24,
   },
 
   label: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "900",
     color: "rgb(47, 28, 15)",
-    marginBottom: 10,
+    marginBottom: 9,
   },
 
   input: {
-    height: 56,
+    height: 54,
     borderRadius: 18,
     backgroundColor: "rgb(185, 174, 167)",
     paddingHorizontal: 20,
-    fontSize: 15,
+    fontSize: 14.5,
     color: "rgb(47, 28, 15)",
     marginBottom: 8,
   },
@@ -252,19 +252,19 @@ const styles = StyleSheet.create({
 
   errorText: {
     color: "rgb(160, 40, 40)",
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: "700",
-    marginBottom: 18,
+    marginBottom: 17,
     marginLeft: 4,
   },
 
   sendButton: {
-    height: 56,
+    height: 54,
     borderRadius: 18,
     backgroundColor: "rgb(104, 68, 42)",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 20,
+    marginBottom: 18,
     marginTop: 8,
   },
 
@@ -278,13 +278,13 @@ const styles = StyleSheet.create({
   },
 
   sendButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "900",
     color: "rgb(254, 251, 245)",
   },
 
   loginText: {
-    fontSize: 15,
+    fontSize: 14,
     color: "rgb(104, 68, 42)",
     textAlign: "center",
   },

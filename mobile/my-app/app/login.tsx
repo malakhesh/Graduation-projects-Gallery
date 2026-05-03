@@ -3,7 +3,6 @@ import { router } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -94,20 +93,6 @@ export default function LoginScreen() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleGoogleLogin = () => {
-    Alert.alert(
-      "Google Login",
-      "Google login is not connected yet for mobile."
-    );
-  };
-
-  const handleGithubLogin = () => {
-    Alert.alert(
-      "GitHub Login",
-      "GitHub login is not connected yet for mobile."
-    );
   };
 
   return (
@@ -212,24 +197,6 @@ export default function LoginScreen() {
                   <Text style={styles.loginButtonText}>Login</Text>
                 )}
               </Pressable>
-
-              <Text style={styles.orText}>Or Login With</Text>
-
-              <View style={styles.socialRow}>
-                <Pressable
-                  style={styles.socialButton}
-                  onPress={handleGoogleLogin}
-                >
-                  <Text style={styles.socialText}>Google</Text>
-                </Pressable>
-
-                <Pressable
-                  style={styles.socialButtonDark}
-                  onPress={handleGithubLogin}
-                >
-                  <Text style={styles.socialTextLight}>GitHub</Text>
-                </Pressable>
-              </View>
             </View>
 
             <Pressable onPress={() => router.push("/register")}>
@@ -263,7 +230,7 @@ const styles = StyleSheet.create({
   },
 
   backText: {
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: "800",
     color: "rgb(47, 28, 15)",
   },
@@ -275,24 +242,24 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 28,
-    paddingTop: 105,
+    paddingTop: 115,
     paddingBottom: 45,
     alignItems: "center",
   },
 
   title: {
-    fontSize: 36,
+    fontSize: 33,
     fontWeight: "900",
     color: "rgb(47, 28, 15)",
-    marginBottom: 14,
+    marginBottom: 12,
   },
 
   subtitle: {
-    fontSize: 17,
-    lineHeight: 27,
+    fontSize: 15.5,
+    lineHeight: 24,
     color: "rgb(47, 28, 15)",
     textAlign: "center",
-    marginBottom: 34,
+    marginBottom: 32,
   },
 
   card: {
@@ -313,36 +280,36 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(180, 40, 40, 0.3)",
     borderRadius: 14,
-    padding: 12,
-    marginBottom: 16,
+    padding: 11,
+    marginBottom: 15,
   },
 
   errorBoxText: {
     color: "rgb(130, 25, 25)",
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "700",
     textAlign: "center",
   },
 
   label: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "900",
     color: "rgb(47, 28, 15)",
-    marginBottom: 10,
+    marginBottom: 9,
   },
 
   input: {
-    height: 56,
+    height: 54,
     borderRadius: 18,
     backgroundColor: "rgb(185, 174, 167)",
     paddingHorizontal: 20,
-    fontSize: 15,
+    fontSize: 14.5,
     color: "rgb(47, 28, 15)",
     marginBottom: 8,
   },
 
   passwordContainer: {
-    height: 56,
+    height: 54,
     borderRadius: 18,
     backgroundColor: "rgb(185, 174, 167)",
     paddingHorizontal: 20,
@@ -353,7 +320,7 @@ const styles = StyleSheet.create({
 
   passwordInput: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14.5,
     color: "rgb(47, 28, 15)",
   },
 
@@ -364,14 +331,14 @@ const styles = StyleSheet.create({
 
   errorText: {
     color: "rgb(160, 40, 40)",
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: "700",
-    marginBottom: 14,
+    marginBottom: 13,
     marginLeft: 4,
   },
 
   showText: {
-    fontSize: 14,
+    fontSize: 13.5,
     fontWeight: "900",
     color: "rgb(104, 68, 42)",
   },
@@ -382,18 +349,17 @@ const styles = StyleSheet.create({
   },
 
   forgotText: {
-    fontSize: 14,
+    fontSize: 13.5,
     fontWeight: "900",
     color: "rgb(75, 48, 28)",
   },
 
   loginButton: {
-    height: 56,
+    height: 55,
     borderRadius: 18,
     backgroundColor: "rgb(104, 68, 42)",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 20,
   },
 
   loginButtonPressed: {
@@ -406,57 +372,13 @@ const styles = StyleSheet.create({
   },
 
   loginButtonText: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "900",
     color: "rgb(254, 251, 245)",
   },
 
-  orText: {
-    fontSize: 14,
-    color: "rgb(104, 68, 42)",
-    textAlign: "center",
-    marginBottom: 14,
-  },
-
-  socialRow: {
-    flexDirection: "row",
-    gap: 12,
-  },
-
-  socialButton: {
-    flex: 1,
-    height: 46,
-    borderRadius: 14,
-    backgroundColor: "rgb(254, 251, 245)",
-    borderWidth: 1,
-    borderColor: "rgba(104, 68, 42, 0.25)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  socialButtonDark: {
-    flex: 1,
-    height: 46,
-    borderRadius: 14,
-    backgroundColor: "rgb(47, 28, 15)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  socialText: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "rgb(47, 28, 15)",
-  },
-
-  socialTextLight: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "rgb(254, 251, 245)",
-  },
-
   registerText: {
-    fontSize: 15,
+    fontSize: 14,
     color: "rgb(104, 68, 42)",
     textAlign: "center",
   },
