@@ -37,46 +37,53 @@ export default function RegisterScreen() {
     return emailRegex.test(value);
   };
 
-  const handleRegister = async () => {
-    let isValid = true;
-
+  const clearErrors = () => {
     setFullNameError("");
     setEmailError("");
     setPasswordError("");
     setConfirmPasswordError("");
     setGeneralError("");
+  };
+
+  const handleRegister = async () => {
+    let isValid = true;
+
+    clearErrors();
 
     const trimmedFullName = fullName.trim();
-    const trimmedEmail = email.trim();
-    const trimmedPassword = password.trim();
-    const trimmedConfirmPassword = confirmPassword.trim();
+    const trimmedEmail = email.trim().toLowerCase();
+    const rawPassword = password;
+    const rawConfirmPassword = confirmPassword;
 
     if (!trimmedFullName) {
-      setFullNameError("Please enter your full name");
+      setFullNameError("Please enter your full name.");
+      isValid = false;
+    } else if (trimmedFullName.length < 3) {
+      setFullNameError("Full name must be at least 3 characters.");
       isValid = false;
     }
 
     if (!trimmedEmail) {
-      setEmailError("Please enter your email");
+      setEmailError("Please enter your email.");
       isValid = false;
     } else if (!validateEmail(trimmedEmail)) {
-      setEmailError("Please enter a valid email");
+      setEmailError("Please enter a valid email address.");
       isValid = false;
     }
 
-    if (!trimmedPassword) {
-      setPasswordError("Please create your password");
+    if (!rawPassword) {
+      setPasswordError("Please create your password.");
       isValid = false;
-    } else if (trimmedPassword.length < 6) {
-      setPasswordError("Password must be at least 6 characters");
+    } else if (rawPassword.length < 6) {
+      setPasswordError("Password must be at least 6 characters.");
       isValid = false;
     }
 
-    if (!trimmedConfirmPassword) {
-      setConfirmPasswordError("Please confirm your password");
+    if (!rawConfirmPassword) {
+      setConfirmPasswordError("Please confirm your password.");
       isValid = false;
-    } else if (trimmedPassword !== trimmedConfirmPassword) {
-      setConfirmPasswordError("Passwords do not match");
+    } else if (rawPassword !== rawConfirmPassword) {
+      setConfirmPasswordError("Passwords do not match.");
       isValid = false;
     }
 
@@ -84,27 +91,37 @@ export default function RegisterScreen() {
 
     try {
       setLoading(true);
+      setGeneralError("");
 
-      const res = await regUser(
+      const result: any = await regUser(
         trimmedEmail,
-        trimmedPassword,
+        rawPassword,
         trimmedFullName,
         "student",
         "2024",
         "frontend"
       );
 
-      setLoading(false);
+      if (result === "email-in-use") {
+        setGeneralError("This email is already in use.");
+        return;
+      }
 
-      if (res === "email-in-use") {
-        setGeneralError("This email is already in use");
+      if (result === "register-fail") {
+        setGeneralError("Registration failed. Please try again.");
+        return;
+      }
+
+      if (typeof result === "string") {
+        setGeneralError("Could not create your account. Please try again.");
         return;
       }
 
       router.replace("/home");
-    } catch (error) {
-      setLoading(false);
+    } catch {
       setGeneralError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -119,6 +136,7 @@ export default function RegisterScreen() {
             style={styles.backButton}
             onPress={() => router.back()}
             activeOpacity={0.8}
+            disabled={loading}
           >
             <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
@@ -135,21 +153,29 @@ export default function RegisterScreen() {
             </Text>
 
             <View style={styles.card}>
+              {generalError ? (
+                <View style={styles.errorBox}>
+                  <Text style={styles.errorBoxText}>{generalError}</Text>
+                </View>
+              ) : null}
+
               <Text style={styles.label}>Full Name</Text>
               <TextInput
                 placeholder="Enter your full name"
                 placeholderTextColor="rgba(47, 28, 15, 0.55)"
                 value={fullName}
+                editable={!loading}
                 onChangeText={(text) => {
                   setFullName(text);
-                  if (fullNameError) setFullNameError("");
-                  if (generalError) setGeneralError("");
+                  setFullNameError("");
+                  setGeneralError("");
                 }}
                 style={[
                   styles.input,
                   fullNameError ? styles.inputErrorBorder : null,
                 ]}
               />
+
               {fullNameError ? (
                 <Text style={styles.errorText}>{fullNameError}</Text>
               ) : null}
@@ -159,23 +185,27 @@ export default function RegisterScreen() {
                 placeholder="Enter your email"
                 placeholderTextColor="rgba(47, 28, 15, 0.55)"
                 value={email}
+                editable={!loading}
                 onChangeText={(text) => {
                   setEmail(text);
-                  if (emailError) setEmailError("");
-                  if (generalError) setGeneralError("");
+                  setEmailError("");
+                  setGeneralError("");
                 }}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                autoCorrect={false}
                 style={[
                   styles.input,
                   emailError ? styles.inputErrorBorder : null,
                 ]}
               />
+
               {emailError ? (
                 <Text style={styles.errorText}>{emailError}</Text>
               ) : null}
 
               <Text style={styles.label}>Password</Text>
+
               <View
                 style={[
                   styles.passwordWrapper,
@@ -186,28 +216,35 @@ export default function RegisterScreen() {
                   placeholder="Create your password"
                   placeholderTextColor="rgba(47, 28, 15, 0.55)"
                   value={password}
+                  editable={!loading}
                   onChangeText={(text) => {
                     setPassword(text);
-                    if (passwordError) setPasswordError("");
-                    if (confirmPasswordError) setConfirmPasswordError("");
-                    if (generalError) setGeneralError("");
+                    setPasswordError("");
+                    setConfirmPasswordError("");
+                    setGeneralError("");
                   }}
                   secureTextEntry={!showPass}
                   style={styles.passwordInput}
                   autoCapitalize="none"
+                  autoCorrect={false}
                 />
 
-                <TouchableOpacity onPress={() => setShowPass(!showPass)}>
+                <TouchableOpacity
+                  onPress={() => setShowPass(!showPass)}
+                  disabled={loading}
+                >
                   <Text style={styles.showText}>
                     {showPass ? "Hide" : "Show"}
                   </Text>
                 </TouchableOpacity>
               </View>
+
               {passwordError ? (
                 <Text style={styles.errorText}>{passwordError}</Text>
               ) : null}
 
               <Text style={styles.label}>Confirm Password</Text>
+
               <View
                 style={[
                   styles.passwordWrapper,
@@ -218,30 +255,30 @@ export default function RegisterScreen() {
                   placeholder="Confirm your password"
                   placeholderTextColor="rgba(47, 28, 15, 0.55)"
                   value={confirmPassword}
+                  editable={!loading}
                   onChangeText={(text) => {
                     setConfirmPassword(text);
-                    if (confirmPasswordError) setConfirmPasswordError("");
-                    if (generalError) setGeneralError("");
+                    setConfirmPasswordError("");
+                    setGeneralError("");
                   }}
                   secureTextEntry={!showConfirm}
                   style={styles.passwordInput}
                   autoCapitalize="none"
+                  autoCorrect={false}
                 />
 
-                <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)}>
+                <TouchableOpacity
+                  onPress={() => setShowConfirm(!showConfirm)}
+                  disabled={loading}
+                >
                   <Text style={styles.showText}>
                     {showConfirm ? "Hide" : "Show"}
                   </Text>
                 </TouchableOpacity>
               </View>
+
               {confirmPasswordError ? (
                 <Text style={styles.errorText}>{confirmPasswordError}</Text>
-              ) : null}
-
-              {generalError ? (
-                <View style={styles.errorBox}>
-                  <Text style={styles.errorBoxText}>{generalError}</Text>
-                </View>
               ) : null}
 
               <TouchableOpacity
@@ -260,7 +297,11 @@ export default function RegisterScreen() {
 
             <View style={styles.bottomRow}>
               <Text style={styles.bottomText}>Already have an account? </Text>
-              <TouchableOpacity onPress={() => router.push("/login")}>
+
+              <TouchableOpacity
+                onPress={() => router.push("/login")}
+                disabled={loading}
+              >
                 <Text style={styles.loginText}>Login</Text>
               </TouchableOpacity>
             </View>
@@ -433,7 +474,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(180, 40, 40, 0.3)",
     borderRadius: 14,
     padding: 11,
-    marginTop: 14,
+    marginBottom: 14,
   },
 
   errorBoxText: {
@@ -441,6 +482,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
     textAlign: "center",
+    lineHeight: 18,
   },
 
   inputErrorBorder: {
