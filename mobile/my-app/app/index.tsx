@@ -23,11 +23,13 @@ export default function WelcomeScreen() {
             resizeMode="contain"
           />
 
-          <Text style={styles.title}>Explore Graduation Projects</Text>
+          <Text style={styles.title}>Your Work is Your Legacy</Text>
+
+          <Text style={styles.highlight}>Let the world witness it.</Text>
 
           <Text style={styles.subtitle}>
-            Discover, browse, and save inspiring graduation projects in one
-            organized gallery.
+            Publish your projects, explore inspiring ideas, and connect with
+            creative students.
           </Text>
 
           <Pressable
@@ -37,7 +39,7 @@ export default function WelcomeScreen() {
             ]}
             onPress={() => router.push("/register")}
           >
-            <Text style={styles.primaryButtonText}>Get Started</Text>
+            <Text style={styles.primaryButtonText}>Explore Projects</Text>
           </Pressable>
 
           <Pressable onPress={() => router.push("/login")}>
@@ -92,32 +94,41 @@ const styles = StyleSheet.create({
 
   image: {
     width: "100%",
-    height: 310,
-    marginBottom: 28,
+    height: 260,
+    marginBottom: 32,
   },
 
   title: {
-    fontSize: 32,
+    fontSize: 31,
     fontWeight: "900",
     color: "rgb(47, 28, 15)",
     textAlign: "center",
-    marginBottom: 16,
-    lineHeight: 40,
+    marginBottom: 8,
+    lineHeight: 39,
+  },
+
+  highlight: {
+    fontSize: 24,
+    fontWeight: "800",
+    fontStyle: "italic",
+    color: "rgba(164, 132, 109, 0.8)",
+    textAlign: "center",
+    marginBottom: 18,
   },
 
   subtitle: {
-    fontSize: 16,
+    fontSize: 15.5,
     lineHeight: 25,
     color: "rgb(104, 68, 42)",
     textAlign: "center",
-    marginBottom: 38,
-    paddingHorizontal: 6,
+    marginBottom: 36,
+    paddingHorizontal: 4,
   },
 
   primaryButton: {
     width: "100%",
     height: 58,
-    borderRadius: 18,
+    borderRadius: 22,
     backgroundColor: "rgb(104, 68, 42)",
     alignItems: "center",
     justifyContent: "center",
