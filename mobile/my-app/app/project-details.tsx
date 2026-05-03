@@ -616,7 +616,22 @@ export default function ProjectDetails() {
               ) : null}
             </View>
 
-            <TouchableOpacity activeOpacity={0.8}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => {
+                if (!project?.userId) {
+                  Alert.alert("Error", "User profile not found.");
+                  return;
+                }
+
+                router.push({
+                  pathname: "/user-profile",
+                  params: {
+                    userId: project.userId,
+                  },
+                });
+              }}
+            >
               <Text style={styles.profileLink}>View profile →</Text>
             </TouchableOpacity>
           </View>
