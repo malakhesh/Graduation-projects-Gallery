@@ -9,7 +9,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { auth } from "../backend/firebase";
 import { getUser, logOut } from "../backend/auth";
-import { addBookmark, isBookmarked } from "../backend/notifications";
+import { addBookmark, isBookmarked } from "../../backend/notifications";
 
 const CATEGORIES = ["All Projects", "AI / ML", "Web Dev", "Mobile", "Design"];
 
@@ -161,7 +161,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Categories */}
+        {/* categories */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll} contentContainerStyle={styles.categoriesContent}>
           {CATEGORIES.map((cat) => (
             <TouchableOpacity key={cat} style={[styles.categoryChip, activeCategory === cat && styles.categoryChipActive]} onPress={() => setActiveCategory(cat)}>

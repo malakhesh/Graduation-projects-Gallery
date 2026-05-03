@@ -1,161 +1,152 @@
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    SafeAreaView,
+  Image,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
-export default function LandingScreen() {
-    return (
-        <SafeAreaView style={styles.safeArea}>
-            <View style={styles.container}>
-                <View style={styles.topSection}>
-                    <View style={styles.badge}>
-                        <Text style={styles.badgeText}>CS Projects Portal</Text>
-                    </View>
+export default function WelcomeScreen() {
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <LinearGradient colors={["#F5ECE4", "#DFCDBF"]} style={styles.container}>
+        <View style={styles.softCircleOne} />
+        <View style={styles.softCircleTwo} />
 
-                    <Text style={styles.title}>Graduation Projects Gallery</Text>
+        <View style={styles.content}>
+          <Image
+            source={require("../assets/images/index.png")}
+            style={styles.image}
+            resizeMode="contain"
+          />
 
-                    <Text style={styles.description}>
-                        Explore innovative graduation projects from Computer Science students
-                        and discover inspiring ideas from previous years.
-                    </Text>
-                </View>
+          <Text style={styles.title}>Explore Graduation Projects</Text>
 
-                <View style={styles.buttonsSection}>
-                    <TouchableOpacity
-                        style={styles.primaryButton}
-                        onPress={() => { }}
-                        activeOpacity={0.85}
-                    >
-                        <Text style={styles.primaryButtonText}>Browse Projects</Text>
-                    </TouchableOpacity>
+          <Text style={styles.subtitle}>
+            Discover, browse, and save inspiring graduation projects in one
+            organized gallery.
+          </Text>
 
-                    <View style={styles.rowButtons}>
-                        <TouchableOpacity
-                            style={styles.secondaryButton}
-                            onPress={() => router.push("/login")}
-                            activeOpacity={0.85}
-                        >
-                            <Text style={styles.secondaryButtonText}>Login</Text>
-                        </TouchableOpacity>
+          <Pressable
+            style={({ pressed }) => [
+              styles.primaryButton,
+              pressed && styles.primaryButtonPressed,
+            ]}
+            onPress={() => router.push("/register")}
+          >
+            <Text style={styles.primaryButtonText}>Get Started</Text>
+          </Pressable>
 
-                        <TouchableOpacity
-                            style={styles.secondaryButton}
-                            onPress={() => router.push("/register")}
-                            activeOpacity={0.85}
-                        >
-                            <Text style={styles.secondaryButtonText}>Create Account</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-
-                <Text style={styles.footerText}>
-                    Search projects by technology, year, and category.
-                </Text>
-            </View>
-        </SafeAreaView>
-    );
+          <Pressable onPress={() => router.push("/login")}>
+            <Text style={styles.loginText}>
+              Already have an account?{" "}
+              <Text style={styles.loginLink}>Login</Text>
+            </Text>
+          </Pressable>
+        </View>
+      </LinearGradient>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-    safeArea: {
-        flex: 1,
-        backgroundColor: "rgb(223, 205, 192)",
-    },
-    container: {
-        flex: 1,
-        backgroundColor: "rgb(223, 205, 192)",
-        paddingHorizontal: 24,
-        paddingTop: 24,
-        paddingBottom: 28,
-        justifyContent: "center",
-    },
-    topSection: {
-        alignItems: "center",
-        marginBottom: 34,
-    },
-    badge: {
-        backgroundColor: "rgb(254, 251, 245)",
-        borderWidth: 1,
-        borderColor: "rgb(164, 132, 109)",
-        borderRadius: 999,
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        marginBottom: 22,
-    },
-    badgeText: {
-        color: "rgb(104, 68, 42)",
-        fontSize: 13,
-        fontWeight: "600",
-        letterSpacing: 0.4,
-    },
-    title: {
-        fontSize: 28,
-        fontWeight: "800",
-        color: "rgb(47, 28, 15)",
-        textAlign: "center",
-        lineHeight: 34,
-        marginBottom: 16,
-        maxWidth: 330,
-    },
-    description: {
-        fontSize: 17,
-        color: "rgb(75, 48, 28)",
-        textAlign: "center",
-        lineHeight: 27,
-        paddingHorizontal: 8,
-        maxWidth: 340,
-    },
-    buttonsSection: {
-        marginTop: 12,
-    },
-    primaryButton: {
-        width: "100%",
-        backgroundColor: "rgb(104, 68, 42)",
-        paddingVertical: 17,
-        borderRadius: 18,
-        alignItems: "center",
-        justifyContent: "center",
-        marginBottom: 16,
-        shadowColor: "rgb(47, 28, 15)",
-        shadowOpacity: 0.12,
-        shadowRadius: 8,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 3,
-    },
-    primaryButtonText: {
-        color: "rgb(254, 251, 245)",
-        fontSize: 17,
-        fontWeight: "700",
-    },
-    rowButtons: {
-        flexDirection: "row",
-        gap: 10,
-    },
-    secondaryButton: {
-        flex: 1,
-        backgroundColor: "rgb(254, 251, 245)",
-        paddingVertical: 16,
-        borderRadius: 18,
-        alignItems: "center",
-        justifyContent: "center",
-        borderWidth: 1,
-        borderColor: "rgb(164, 132, 109)",
-    },
-    secondaryButtonText: {
-        color: "rgb(104, 68, 42)",
-        fontSize: 16,
-        fontWeight: "700",
-    },
-    footerText: {
-        textAlign: "center",
-        color: "rgb(75, 48, 28)",
-        fontSize: 13,
-        lineHeight: 20,
-        marginTop: 24,
-        paddingHorizontal: 18,
-    },
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#DFCDBF",
+  },
+
+  container: {
+    flex: 1,
+    position: "relative",
+  },
+
+  softCircleOne: {
+    position: "absolute",
+    top: -90,
+    right: -80,
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    backgroundColor: "rgba(254, 251, 245, 0.45)",
+  },
+
+  softCircleTwo: {
+    position: "absolute",
+    bottom: -120,
+    left: -90,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: "rgba(254, 251, 245, 0.28)",
+  },
+
+  content: {
+    flex: 1,
+    paddingHorizontal: 30,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  image: {
+    width: "100%",
+    height: 310,
+    marginBottom: 28,
+  },
+
+  title: {
+    fontSize: 32,
+    fontWeight: "900",
+    color: "rgb(47, 28, 15)",
+    textAlign: "center",
+    marginBottom: 16,
+    lineHeight: 40,
+  },
+
+  subtitle: {
+    fontSize: 16,
+    lineHeight: 25,
+    color: "rgb(104, 68, 42)",
+    textAlign: "center",
+    marginBottom: 38,
+    paddingHorizontal: 6,
+  },
+
+  primaryButton: {
+    width: "100%",
+    height: 58,
+    borderRadius: 18,
+    backgroundColor: "rgb(104, 68, 42)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 24,
+    shadowColor: "rgb(47, 28, 15)",
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+  },
+
+  primaryButtonPressed: {
+    backgroundColor: "rgb(50, 30, 15)",
+    transform: [{ scale: 0.98 }],
+  },
+
+  primaryButtonText: {
+    color: "rgb(254, 251, 245)",
+    fontSize: 18,
+    fontWeight: "800",
+  },
+
+  loginText: {
+    fontSize: 15,
+    color: "rgb(104, 68, 42)",
+  },
+
+  loginLink: {
+    color: "rgb(47, 28, 15)",
+    fontWeight: "900",
+  },
 });
