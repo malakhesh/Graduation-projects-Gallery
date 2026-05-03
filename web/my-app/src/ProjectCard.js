@@ -6,19 +6,20 @@ import { getUser, checkRole } from './auth.js';
 import { auth } from './firebase.js';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { addComment, addRate, removeRate, delProj, removeComment, getProj } from './projects.js';
-import { addReport } from './reports.js'; // adjust path if needed
+import { addReport } from './reports.js';
+import EditModal from './EditModal.js';
 import {
   FaUser, FaBookmark, FaRegBookmark, FaGithub, FaStar, FaRegStar,
   FaTimes, FaArrowLeft, FaEnvelope, FaLinkedin, FaGlobe, FaGraduationCap,
-  FaShare, FaFlag, FaTrash
+  FaShare, FaFlag, FaTrash, FaEdit
 } from "react-icons/fa";
 
 // ===========================
 // SHARED CIRCLE BUTTON STYLE
 // ===========================
 const circleBtn = {
-  background: "rgba(254, 251, 245, 0.85)",
-  border: "1.5px solid rgb(185, 174, 167)",
+  background: "var(--bg-card)",
+  border: "1.5px solid var(--border)",
   borderRadius: "50%",
   width: 32,
   height: 32,
@@ -27,7 +28,7 @@ const circleBtn = {
   justifyContent: "center",
   cursor: "pointer",
   fontSize: 13,
-  color: "rgb(104, 68, 42)",
+  color: "var(--text-secondary)",
   transition: "background 0.2s",
 };
 
@@ -41,14 +42,13 @@ const smallCircleBtn = {
 // ===========================
 // STATUS BADGE
 // ===========================
-const STATUS_STYLES = {
-  pending:  { background: "rgb(255, 243, 205)", color: "rgb(133, 100, 4)",  border: "1px solid rgb(255, 224, 102)" },
-  approved: { background: "rgb(212, 237, 218)", color: "rgb(21, 87, 36)",   border: "1px solid rgb(195, 230, 203)" },
-  rejected: { background: "rgb(248, 215, 218)", color: "rgb(114, 28, 36)",  border: "1px solid rgb(245, 198, 203)" },
-};
-
 function StatusBadge({ status }) {
-  const style = STATUS_STYLES[status] || STATUS_STYLES.pending;
+  const styles = {
+    pending:  { background: "var(--warning-bg)",  color: "var(--warning-text)", border: "1px solid var(--border)" },
+    approved: { background: "var(--success-bg)",  color: "var(--success-text)", border: "1px solid var(--border)" },
+    rejected: { background: "var(--danger-bg)",   color: "var(--danger-text)",  border: "1px solid var(--danger-border)" },
+  };
+  const style = styles[status] || styles.pending;
   return (
     <span style={{
       ...style,
@@ -93,23 +93,31 @@ function ReportModal({ target, onClose, onSubmit, submitting }) {
   return createPortal(
     <div
       style={{
-        position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
+        position: "fixed", inset: 0, background: "var(--overlay)",
         zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "16px",
       }}
       onClick={onClose}
     >
       <div
         style={{
-          background: "rgb(254, 251, 245)", borderRadius: 20, padding: "28px 32px",
-          width: 360, display: "flex", flexDirection: "column", gap: 16,
-          border: "1px solid rgb(185, 174, 167)", boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+          background: "var(--bg-surface)",
+          borderRadius: 20,
+          padding: "clamp(18px, 5vw, 28px) clamp(16px, 5vw, 32px)",
+          width: "100%",
+          maxWidth: 360,
+          display: "flex",
+          flexDirection: "column",
+          gap: 16,
+          border: "1px solid var(--border)",
+          boxShadow: "0 8px 32px var(--shadow-lg)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h4 style={{ margin: 0, fontFamily: "'Times New Roman', serif", fontSize: 20, color: "rgb(47, 28, 15)" }}>
+        <h4 style={{ margin: 0, fontFamily: "'Times New Roman', serif", fontSize: "clamp(16px, 4vw, 20px)", color: "var(--text-primary)" }}>
           Report {target === "project" ? "Project" : "Comment"}
         </h4>
-        <p style={{ margin: 0, fontSize: 13, color: "rgb(104, 68, 42)", fontFamily: "Arial, sans-serif" }}>
+        <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)", fontFamily: "Arial, sans-serif" }}>
           Describe the issue and an admin will review it.
         </p>
         <textarea
@@ -118,19 +126,32 @@ function ReportModal({ target, onClose, onSubmit, submitting }) {
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           style={{
-            width: "100%", borderRadius: 12, border: "1.5px solid rgb(185, 174, 167)",
-            padding: "10px 14px", fontSize: 14, fontFamily: "Arial, sans-serif",
-            color: "rgb(47, 28, 15)", background: "rgb(243, 236, 229)",
-            resize: "none", outline: "none", boxSizing: "border-box",
+            width: "100%",
+            borderRadius: 12,
+            border: "1.5px solid var(--border)",
+            padding: "10px 14px",
+            fontSize: 14,
+            fontFamily: "Arial, sans-serif",
+            color: "var(--text-primary)",
+            background: "var(--bg-input)",
+            resize: "none",
+            outline: "none",
+            boxSizing: "border-box",
           }}
         />
-        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", flexWrap: "wrap" }}>
           <button
             onClick={onClose}
             style={{
-              background: "none", border: "1.5px solid rgb(185, 174, 167)", borderRadius: 20,
-              padding: "8px 18px", fontSize: 13, fontWeight: 600, color: "rgb(104, 68, 42)",
-              cursor: "pointer", fontFamily: "Arial, sans-serif",
+              background: "none",
+              border: "1.5px solid var(--border)",
+              borderRadius: 20,
+              padding: "8px 18px",
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--text-secondary)",
+              cursor: "pointer",
+              fontFamily: "Arial, sans-serif",
             }}
           >
             Cancel
@@ -139,10 +160,16 @@ function ReportModal({ target, onClose, onSubmit, submitting }) {
             onClick={() => onSubmit(reason)}
             disabled={submitting || !reason.trim()}
             style={{
-              background: "rgb(180, 60, 40)", border: "none", borderRadius: 20,
-              padding: "8px 18px", fontSize: 13, fontWeight: 600, color: "white",
+              background: "var(--danger)",
+              border: "none",
+              borderRadius: 20,
+              padding: "8px 18px",
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--text-inverse)",
               cursor: reason.trim() && !submitting ? "pointer" : "default",
-              fontFamily: "Arial, sans-serif", opacity: reason.trim() ? 1 : 0.5,
+              fontFamily: "Arial, sans-serif",
+              opacity: reason.trim() ? 1 : 0.5,
             }}
           >
             {submitting ? "Sending..." : "Submit Report"}
@@ -183,58 +210,108 @@ export function AuthorCard({ project, onBack }) {
   const avatar = project.avatar || null;
 
   return (
-    <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "20px" }}>
+    <div style={{ padding: "clamp(16px, 4vw, 24px)", display: "flex", flexDirection: "column", gap: "20px" }}>
       <button className="hg-author-back" onClick={onBack}><FaArrowLeft /> Back to project</button>
       {loadingAuthor ? (
         <div className="hg-spinner-wrapper"><div className="hg-spinner" /></div>
       ) : (
         <div style={{
-          background: "rgb(254, 251, 245)",
-          border: "1px solid rgb(185, 174, 167)",
+          background: "var(--bg-card)",
+          border: "1px solid var(--border)",
           borderRadius: "20px",
-          padding: "48px 52px",
+          padding: "clamp(20px, 5vw, 48px) clamp(16px, 5vw, 52px)",
           display: "flex",
           flexDirection: "row",
+          flexWrap: "wrap",
           alignItems: "flex-start",
-          gap: "52px",
+          gap: "clamp(20px, 4vw, 52px)",
         }}>
-          {/* Left: Avatar */}
+          {/* Avatar */}
           <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "8px" }}>
             {avatar
-              ? <img src={avatar} alt={name} style={{ width: 120, height: 120, borderRadius: "50%", objectFit: "cover", border: "4px solid rgb(185, 174, 167)" }} />
-              : <div style={{ width: 120, height: 120, borderRadius: "50%", background: "rgb(223, 205, 192)", border: "4px solid rgb(185, 174, 167)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48, color: "rgb(104, 68, 42)" }}><FaUser /></div>
+              ? <img src={avatar} alt={name} style={{
+                  width: "clamp(72px, 20vw, 120px)",
+                  height: "clamp(72px, 20vw, 120px)",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: "4px solid var(--border)",
+                }} />
+              : <div style={{
+                  width: "clamp(72px, 20vw, 120px)",
+                  height: "clamp(72px, 20vw, 120px)",
+                  borderRadius: "50%",
+                  background: "var(--accent-light)",
+                  border: "4px solid var(--border)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "clamp(28px, 8vw, 48px)",
+                  color: "var(--text-secondary)",
+                }}>
+                  <FaUser />
+                </div>
             }
           </div>
 
-          {/* Right: Info */}
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "18px" }}>
-            <h2 style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: "26px", fontWeight: 700, color: "rgb(47, 28, 15)", margin: 0 }}>{name}</h2>
-            <div style={{ width: 40, height: 3, background: "rgb(185, 174, 167)", borderRadius: 2 }} />
-
+          {/* Info */}
+          <div style={{ flex: 1, minWidth: "200px", display: "flex", flexDirection: "column", gap: "18px" }}>
+            <h2 style={{
+              fontFamily: "'Times New Roman', Times, serif",
+              fontSize: "clamp(18px, 5vw, 26px)",
+              fontWeight: 700,
+              color: "var(--text-primary)",
+              margin: 0,
+            }}>{name}</h2>
+            <div style={{ width: 40, height: 3, background: "var(--border)", borderRadius: 2 }} />
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {email && (
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: 15, color: "rgb(104, 68, 42)", fontFamily: "Arial, Helvetica, sans-serif" }}>
-                  <FaEnvelope style={{ color: "rgb(164, 132, 109)", fontSize: 14 }} /> {email}
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: 15, color: "var(--text-secondary)", fontFamily: "Arial, Helvetica, sans-serif", wordBreak: "break-word" }}>
+                  <FaEnvelope style={{ color: "var(--text-muted)", fontSize: 14, flexShrink: 0 }} /> {email}
                 </div>
               )}
               {year && (
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: 15, color: "rgb(104, 68, 42)", fontFamily: "Arial, Helvetica, sans-serif" }}>
-                  <FaGraduationCap style={{ color: "rgb(164, 132, 109)", fontSize: 14 }} /> Class of {year}
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: 15, color: "var(--text-secondary)", fontFamily: "Arial, Helvetica, sans-serif" }}>
+                  <FaGraduationCap style={{ color: "var(--text-muted)", fontSize: 14, flexShrink: 0 }} /> Class of {year}
                 </div>
               )}
             </div>
-
             {bio && (
-              <div style={{ background: "rgb(243, 236, 229)", borderLeft: "3px solid rgb(185, 174, 167)", borderRadius: "8px", padding: "14px 18px" }}>
-                <p style={{ fontSize: 15, color: "rgb(104, 68, 42)", lineHeight: 1.7, fontFamily: "Arial, Helvetica, sans-serif", margin: 0 }}>{bio}</p>
+              <div style={{ background: "var(--bg-hover)", borderLeft: "3px solid var(--border)", borderRadius: "8px", padding: "14px 18px" }}>
+                <p style={{ fontSize: 15, color: "var(--text-secondary)", lineHeight: 1.7, fontFamily: "Arial, Helvetica, sans-serif", margin: 0 }}>{bio}</p>
               </div>
             )}
-
             {(github || linkedin || portfolio) && (
               <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                {github && <a href={github} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 18px", border: "1.5px solid rgb(185, 174, 167)", borderRadius: 20, fontSize: 14, fontWeight: 600, color: "rgb(104, 68, 42)", background: "rgb(254, 251, 245)", textDecoration: "none", fontFamily: "Arial, Helvetica, sans-serif" }}><FaGithub /> GitHub</a>}
-                {linkedin && <a href={linkedin} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 18px", border: "1.5px solid rgb(185, 174, 167)", borderRadius: 20, fontSize: 14, fontWeight: 600, color: "rgb(104, 68, 42)", background: "rgb(254, 251, 245)", textDecoration: "none", fontFamily: "Arial, Helvetica, sans-serif" }}><FaLinkedin /> LinkedIn</a>}
-                {portfolio && <a href={portfolio} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 18px", border: "1.5px solid rgb(185, 174, 167)", borderRadius: 20, fontSize: 14, fontWeight: 600, color: "rgb(104, 68, 42)", background: "rgb(254, 251, 245)", textDecoration: "none", fontFamily: "Arial, Helvetica, sans-serif" }}><FaGlobe /> Portfolio</a>}
+                {github && (
+                  <a href={github} target="_blank" rel="noreferrer" style={{
+                    display: "inline-flex", alignItems: "center", gap: 7,
+                    padding: "9px 18px", border: "1.5px solid var(--border)", borderRadius: 20,
+                    fontSize: 14, fontWeight: 600, color: "var(--text-secondary)",
+                    background: "var(--bg-card)", textDecoration: "none", fontFamily: "Arial, Helvetica, sans-serif",
+                  }}>
+                    <FaGithub /> GitHub
+                  </a>
+                )}
+                {linkedin && (
+                  <a href={linkedin} target="_blank" rel="noreferrer" style={{
+                    display: "inline-flex", alignItems: "center", gap: 7,
+                    padding: "9px 18px", border: "1.5px solid var(--border)", borderRadius: 20,
+                    fontSize: 14, fontWeight: 600, color: "var(--text-secondary)",
+                    background: "var(--bg-card)", textDecoration: "none", fontFamily: "Arial, Helvetica, sans-serif",
+                  }}>
+                    <FaLinkedin /> LinkedIn
+                  </a>
+                )}
+                {portfolio && (
+                  <a href={portfolio} target="_blank" rel="noreferrer" style={{
+                    display: "inline-flex", alignItems: "center", gap: 7,
+                    padding: "9px 18px", border: "1.5px solid var(--border)", borderRadius: 20,
+                    fontSize: 14, fontWeight: 600, color: "var(--text-secondary)",
+                    background: "var(--bg-card)", textDecoration: "none", fontFamily: "Arial, Helvetica, sans-serif",
+                  }}>
+                    <FaGlobe /> Portfolio
+                  </a>
+                )}
               </div>
             )}
           </div>
@@ -261,10 +338,9 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
   const [userRole, setUserRole] = useState(null);
   const [authorName, setAuthorName] = useState(null);
   const [userRatings, setUserRatings] = useState(project.userRatings || {});
-
-  // Report state
+  const [editOpen, setEditOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
-  const [reportTarget, setReportTarget] = useState(null); // { type: "project" | "comment", commentIndex: null | number }
+  const [reportTarget, setReportTarget] = useState(null);
   const [submittingReport, setSubmittingReport] = useState(false);
 
   const location = useLocation();
@@ -272,9 +348,7 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
   useEffect(() => {
     const prevPath = location.pathname + location.search;
     window.history.replaceState(null, "", `/project/${project.id}`);
-    return () => {
-      window.history.replaceState(null, "", prevPath);
-    };
+    return () => { window.history.replaceState(null, "", prevPath); };
   }, [project.id]);
 
   useEffect(() => {
@@ -358,19 +432,15 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
     setSubmittingComment(false);
   };
 
-  // ── UPDATED: save commentText with the report ──
   const handleReportSubmit = async (reason) => {
     if (!reason.trim() || !user) return;
     setSubmittingReport(true);
     const targetId = reportTarget?.type === "comment"
       ? `${project.id}_comment_${reportTarget.commentIndex}`
       : project.id;
-
-    // Save comment text so admin can see it without relying on index
     const commentText = reportTarget?.type === "comment"
       ? (comments[reportTarget.commentIndex]?.text || "")
       : null;
-
     await addReport(targetId, user.uid, reason, commentText);
     setSubmittingReport(false);
     setReportOpen(false);
@@ -386,7 +456,9 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
   const description = project.description || project.desc;
   const github = project.github || project.gitLink;
   const ratings = project.ratings || [];
-  const avgRating = ratings.length > 0 ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : null;
+  const avgRating = ratings.length > 0
+    ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1)
+    : null;
 
   return createPortal(
     <>
@@ -394,12 +466,17 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
         <div className="hg-pm" onClick={(e) => e.stopPropagation()}>
 
           {/* Top right buttons */}
-          <div style={{ position: "absolute", top: 14, right: 14, display: "flex", gap: 8, zIndex: 10 }}>
+          <div style={{
+            position: "absolute", top: 14, right: 14,
+            display: "flex", gap: 8, zIndex: 10, flexWrap: "wrap", justifyContent: "flex-end",
+          }}>
             {copied && (
               <div style={{
-                background: "rgb(47, 28, 15)", color: "rgb(254, 251, 245)",
+                background: "var(--text-primary)",
+                color: "var(--text-inverse)",
                 borderRadius: 20, padding: "6px 14px", fontSize: 12, fontWeight: 600,
-                fontFamily: "Arial, Helvetica, sans-serif", display: "flex", alignItems: "center", gap: 5,
+                fontFamily: "Arial, Helvetica, sans-serif",
+                display: "flex", alignItems: "center", gap: 5,
                 animation: "hg-dropdown-in 0.18s cubic-bezier(0.22,1,0.36,1)",
               }}>
                 🔗 link copied!
@@ -408,12 +485,16 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
             <button onClick={handleShare} title="Share project" style={circleBtn}>
               <FaShare />
             </button>
-            {/* Report project button — hidden from owner and admin */}
+            {isOwner && (
+              <button onClick={() => setEditOpen(true)} title="Edit project" style={circleBtn}>
+                <FaEdit />
+              </button>
+            )}
             {user && !isOwner && !isAdmin && (
               <button
                 onClick={() => { setReportTarget({ type: "project" }); setReportOpen(true); }}
                 title="Report project"
-                style={{ ...circleBtn, color: "rgb(180, 60, 40)", borderColor: "rgb(245, 198, 203)" }}
+                style={{ ...circleBtn, color: "var(--danger)", borderColor: "var(--danger-border)" }}
               >
                 <FaFlag />
               </button>
@@ -431,9 +512,7 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
                   <h2 className="hg-pm-title">{title}</h2>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                     {tag && <span className="hg-pm-tag">{tag}</span>}
-                    {project.category && (
-                      <span className="hg-pm-tag hg-pm-tag-category">{project.category}</span>
-                    )}
+                    {project.category && <span className="hg-pm-tag hg-pm-tag-category">{project.category}</span>}
                     {avgRating && (
                       <span className="hg-pm-tag">
                         ⭐ {avgRating} ({ratings.length} {ratings.length === 1 ? "rating" : "ratings"})
@@ -444,12 +523,13 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
               </div>
 
               <div className="hg-pm-body">
+                {/* Author row */}
                 <div className="hg-pm-author-row" onClick={() => setView("author")}>
                   {avatar
                     ? <img src={avatar} alt={author} className="hg-pm-author-avatar" />
                     : <div className="hg-user-avatar-placeholder"><FaUser className="hg-user-avatar-icon" /></div>
                   }
-                  <div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <p className="hg-pm-author-name">{author}</p>
                     <p className="hg-pm-author-date">{date}</p>
                   </div>
@@ -466,11 +546,11 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
                   </div>
                 )}
 
-                <div className="hg-pm-actions">
+                {/* Actions */}
+                <div className="hg-pm-actions" style={{ flexWrap: "wrap", gap: 8 }}>
                   <a href={github} target="_blank" rel="noreferrer" className="hg-pm-github-btn">
                     <FaGithub /> View on GitHub
                   </a>
-
                   {(!project.status || project.status === "approved") && (
                     <button
                       className={`hg-pm-bookmark-btn${bookmarked ? " hg-pm-bookmark-active" : ""}`}
@@ -480,15 +560,15 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
                     </button>
                   )}
                   {canDelete && (
-                    <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
+                    <div style={{ display: "flex", gap: 8, marginLeft: "auto", flexWrap: "wrap" }}>
                       <button
                         onClick={handleDelete}
                         disabled={deleting}
                         style={{
-                          background: confirming ? "rgb(180, 60, 40)" : "none",
-                          border: `1.5px solid ${confirming ? "rgb(180, 60, 40)" : "rgb(185, 174, 167)"}`,
+                          background: confirming ? "var(--danger)" : "none",
+                          border: `1.5px solid ${confirming ? "var(--danger)" : "var(--border)"}`,
                           borderRadius: 20, padding: "8px 16px", fontSize: 13, fontWeight: 600,
-                          color: confirming ? "white" : "rgb(180, 60, 40)",
+                          color: confirming ? "var(--text-inverse)" : "var(--danger)",
                           cursor: "pointer", transition: "all 0.2s", fontFamily: "Arial, Helvetica, sans-serif",
                         }}
                       >
@@ -498,9 +578,9 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
                         <button
                           onClick={() => setConfirming(false)}
                           style={{
-                            background: "none", border: "1.5px solid rgb(185, 174, 167)",
+                            background: "none", border: "1.5px solid var(--border)",
                             borderRadius: 20, padding: "8px 16px", fontSize: 13, fontWeight: 600,
-                            color: "rgb(104, 68, 42)", cursor: "pointer", fontFamily: "Arial, Helvetica, sans-serif",
+                            color: "var(--text-secondary)", cursor: "pointer", fontFamily: "Arial, Helvetica, sans-serif",
                           }}
                         >
                           Cancel
@@ -510,34 +590,36 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
                   )}
                 </div>
 
+                {/* Rating & Comments */}
                 {(!project.status || project.status === "approved") && (
                   <>
                     <div className="hg-pm-comment-section">
                       <h4 className="hg-pm-comment-title">Rate this project</h4>
                       {userHasRated ? (
-                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
                           <StarRating value={userRatings[user.uid]} onChange={() => {}} />
                           <button
                             onClick={handleRemoveRate}
                             disabled={submittingRating}
                             style={{
-                              background: "none", border: "1.5px solid rgb(185, 174, 167)",
+                              background: "none", border: "1.5px solid var(--border)",
                               borderRadius: 20, padding: "5px 12px", fontSize: 12, fontWeight: 600,
-                              color: "rgb(180, 60, 40)", cursor: "pointer", fontFamily: "Arial, Helvetica, sans-serif",
+                              color: "var(--danger)", cursor: "pointer", fontFamily: "Arial, Helvetica, sans-serif",
                             }}
                           >{submittingRating ? "..." : "Remove"}</button>
                         </div>
                       ) : (
-                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
                           <StarRating value={rating} onChange={setRating} />
                           <button
                             onClick={handleRate}
                             disabled={submittingRating || rating === 0}
                             style={{
-                              background: rating > 0 ? "rgb(164, 132, 109)" : "rgb(223, 205, 192)",
+                              background: rating > 0 ? "var(--accent)" : "var(--accent-light)",
                               border: "none", borderRadius: 20, padding: "5px 14px", fontSize: 12, fontWeight: 600,
-                              color: rating > 0 ? "rgb(254, 251, 245)" : "rgb(164, 132, 109)",
-                              cursor: rating > 0 ? "pointer" : "default", fontFamily: "Arial, Helvetica, sans-serif", transition: "all 0.2s",
+                              color: rating > 0 ? "var(--text-inverse)" : "var(--text-muted)",
+                              cursor: rating > 0 ? "pointer" : "default",
+                              fontFamily: "Arial, Helvetica, sans-serif", transition: "all 0.2s",
                             }}
                           >{submittingRating ? "..." : "Submit"}</button>
                         </div>
@@ -564,11 +646,12 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
                           <div key={i} className="hg-pm-comment">
                             <div className="hg-pm-comment-header">
                               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                <span style={{ fontSize: 13, fontWeight: 600, color: "rgb(47, 28, 15)" }}>{c.userName || "Anonymous"}</span>
+                                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+                                  {c.userName || "Anonymous"}
+                                </span>
                               </div>
                               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                                 <span className="hg-pm-comment-date">{c.date}</span>
-                                {/* Trash icon — only for comment owner or admin */}
                                 {(isAdmin || (user && c.userId === user.uid)) && (
                                   <button
                                     onClick={async () => {
@@ -576,17 +659,16 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
                                       setComments(prev => prev.filter((_, idx) => idx !== i));
                                     }}
                                     title="Delete comment"
-                                    style={{ ...smallCircleBtn, color: "rgb(180, 60, 40)", borderColor: "rgb(245, 198, 203)" }}
+                                    style={{ ...smallCircleBtn, color: "var(--danger)", borderColor: "var(--danger-border)" }}
                                   >
                                     <FaTrash />
                                   </button>
                                 )}
-                                {/* Report comment — only for other users */}
                                 {user && c.userId !== user.uid && !isAdmin && (
                                   <button
                                     onClick={() => { setReportTarget({ type: "comment", commentIndex: i }); setReportOpen(true); }}
                                     title="Report comment"
-                                    style={{ ...smallCircleBtn, color: "rgb(164, 132, 109)", borderColor: "rgb(185, 174, 167)" }}
+                                    style={{ ...smallCircleBtn, color: "var(--text-muted)", borderColor: "var(--border)" }}
                                   >
                                     <FaFlag />
                                   </button>
@@ -606,13 +688,20 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
         </div>
       </div>
 
-      {/* Report Modal */}
       {reportOpen && (
         <ReportModal
           target={reportTarget?.type}
           onClose={() => { setReportOpen(false); setReportTarget(null); }}
           onSubmit={handleReportSubmit}
           submitting={submittingReport}
+        />
+      )}
+
+      {editOpen && isOwner && (
+        <EditModal
+          project={project}
+          onClose={() => setEditOpen(false)}
+          onUpdated={() => { setEditOpen(false); onClose(); }}
         />
       )}
     </>,
@@ -625,6 +714,8 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
 // ===========================
 export function ProjectCard({ project, onOpen, bookmarked, onToggleBookmark, showStatus }) {
   const [authorName, setAuthorName] = useState("");
+  const [user] = useAuthState(auth);
+  const [editOpen, setEditOpen] = useState(false);
 
   useEffect(() => {
     const uid = project.userId || project.authorId;
@@ -641,74 +732,102 @@ export function ProjectCard({ project, onOpen, bookmarked, onToggleBookmark, sho
     onToggleBookmark(project.id);
   };
 
+  const handleEditClick = (e) => {
+    e.stopPropagation();
+    setEditOpen(true);
+  };
+
+  const isOwner = user && project.userId === user.uid;
   const image = project.image || project.imgUrl;
   const date = project.date || (project.createdAt?.toDate?.().toLocaleDateString()) || "";
   const tag = project.tag || (project.tags && project.tags[0]) || "";
   const github = project.github || project.gitLink;
   const cardRatings = project.ratings || [];
-  const cardAvgRating = cardRatings.length > 0 ? (cardRatings.reduce((a, b) => a + b, 0) / cardRatings.length).toFixed(1) : null;
+  const cardAvgRating = cardRatings.length > 0
+    ? (cardRatings.reduce((a, b) => a + b, 0) / cardRatings.length).toFixed(1)
+    : null;
 
   return (
-    <div className="hg-project-card" onClick={() => onOpen(project)}>
-      <div className="hg-card-header">
-        <div className="hg-card-title-row">
-          <h3 className="hg-card-title">{project.title}</h3>
-          {showStatus && <StatusBadge status={project.status} />}
-        </div>
-        <div className="hg-card-author">
-          {project.avatar
-            ? <img src={project.avatar} alt={authorName} className="hg-author-avatar" />
-            : <div className="hg-user-avatar-placeholder" style={{ width: 30, height: 30 }}><FaUser style={{ fontSize: 13 }} /></div>
-          }
-          <div>
-            <p className="hg-author-name">{authorName || "..."}</p>
-            <p className="hg-author-date">{date}</p>
+    <>
+      <div className="hg-project-card" onClick={() => onOpen(project)}>
+        <div className="hg-card-header">
+          <div className="hg-card-title-row">
+            <h3 className="hg-card-title">{project.title}</h3>
+            {showStatus && <StatusBadge status={project.status} />}
+          </div>
+          <div className="hg-card-author">
+            {project.avatar
+              ? <img src={project.avatar} alt={authorName} className="hg-author-avatar" />
+              : <div className="hg-user-avatar-placeholder" style={{ width: 30, height: 30 }}><FaUser style={{ fontSize: 13 }} /></div>
+            }
+            <div>
+              <p className="hg-author-name">{authorName || "..."}</p>
+              <p className="hg-author-date">{date}</p>
+            </div>
           </div>
         </div>
-      </div>
-      <div className="hg-card-image-wrapper">
-        <img src={image} alt={project.title} className="hg-card-image" />
-      </div>
-      <div className="hg-card-footer">
-        <span className="hg-tag hg-tag-brown">{tag}</span>
-        {cardAvgRating && (
-          <span className="hg-tag" style={{ background: "rgb(254, 251, 245)", color: "rgb(104, 68, 42)" }}>
-            ⭐ {cardAvgRating}
-          </span>
-        )}
-        <div style={{ display: "flex", gap: 8, marginLeft: "auto", alignItems: "center" }}>
-          {github && (
-            <a
-              href={github}
-              target="_blank"
-              rel="noreferrer"
-              className="hg-tag hg-tag-github"
-              onClick={e => e.stopPropagation()}
-            >
-              <FaGithub style={{ marginRight: 4 }} /> GitHub
-            </a>
-          )}
-          {(!project.status || project.status === "approved") && (
+
+        <div className="hg-card-image-wrapper">
+          <img src={image} alt={project.title} className="hg-card-image" />
+          {isOwner && (
             <button
-              className={`hg-card-bookmark${bookmarked ? " hg-card-bookmark-active" : ""}`}
-              onClick={handleBookmark}
+              onClick={handleEditClick}
+              title="Edit project"
+              className="hg-card-edit-btn"
+              style={{ ...circleBtn, background: "var(--bg-card)" }}
             >
-              {bookmarked ? <FaBookmark /> : <FaRegBookmark />}
+              <FaEdit />
             </button>
           )}
         </div>
-      </div>
-      {showStatus && project.status === "rejected" && (
-        <div style={{
-          padding: "8px 14px",
-          background: "rgb(248, 215, 218)",
-          borderTop: "1px solid rgb(245, 198, 203)",
-          fontSize: 12,
-          color: "rgb(114, 28, 36)",
-        }}>
-          Your project was rejected. Please review and resubmit.
+
+        <div className="hg-card-footer" style={{ flexWrap: "wrap", gap: 6 }}>
+          <span className="hg-tag hg-tag-brown">{tag}</span>
+          {cardAvgRating && (
+            <span className="hg-tag" style={{ background: "var(--bg-card)", color: "var(--text-secondary)" }}>
+              ⭐ {cardAvgRating}
+            </span>
+          )}
+          <div style={{ display: "flex", gap: 8, marginLeft: "auto", alignItems: "center", flexWrap: "wrap" }}>
+            {github && (
+              <a
+                href={github}
+                target="_blank"
+                rel="noreferrer"
+                className="hg-tag hg-tag-github"
+                onClick={e => e.stopPropagation()}
+              >
+                <FaGithub style={{ marginRight: 4 }} /> GitHub
+              </a>
+            )}
+            {(!project.status || project.status === "approved") && (
+              <button
+                className={`hg-card-bookmark${bookmarked ? " hg-card-bookmark-active" : ""}`}
+                onClick={handleBookmark}
+              >
+                {bookmarked ? <FaBookmark /> : <FaRegBookmark />}
+              </button>
+            )}
+          </div>
         </div>
+
+        {showStatus && project.status === "rejected" && (
+          <div style={{
+            padding: "8px 14px",
+            background: "var(--danger-bg)",
+            borderTop: "1px solid var(--danger-border)",
+            fontSize: 12,
+          }} />
+        )}
+      </div>
+
+      {editOpen && isOwner && (
+        <EditModal
+          project={project}
+          onClose={() => setEditOpen(false)}
+          onUpdated={() => setEditOpen(false)}
+        />
       )}
-    </div>
+    </>
   );
 }

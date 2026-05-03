@@ -2,6 +2,7 @@ import { auth, db } from "./firebase.js"
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged, GoogleAuthProvider, GithubAuthProvider, signInWithPopup } from "firebase/auth"
 import { doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore"
 import { createWelcomeNotif, sendNotif } from "./notifications.js"
+import { getSettings, getSuspensionMs } from "./DashSettings.js"
 
 async function regUser(email, pass, name, role, year, techStack) {
   try {
@@ -171,10 +172,18 @@ async function getBookmarks(uid) {
 
 // ── Timed Suspension ──────────────────────────────────────────────────────────
 
+// Reads suspensionDuration + suspensionUnit from site settings and applies them
+// ONLY to the new suspension. Existing suspendedUntil on other users is never touched.
 async function suspendUser(uid) {
   try {
+    const settings       = await getSettings()
+    const duration       = settings?.suspensionDuration ?? 7
+    const unit           = settings?.suspensionUnit     ?? "days"
+    const ms             = getSuspensionMs(duration, unit)
+
     const suspendedAt    = new Date()
-    const suspendedUntil = new Date(suspendedAt.getTime() + 2 * 60 * 1000) // 2 minutes for testing — change to 7 * 24 * 60 * 60 * 1000 for 7 days
+    const suspendedUntil = new Date(suspendedAt.getTime() + ms)
+
     await updateDoc(doc(db, "users", uid), { suspendedAt, suspendedUntil })
     return "suspend-ok"
   } catch { return "suspend-fail" }
@@ -190,21 +199,23 @@ async function checkStatus(uid) {
 
     if (data.status === "suspended") {
 
-      // fix: suspended but no suspendedUntil — set it now
+      // suspended but no suspendedUntil — set it now using current settings
       if (!data.suspendedUntil) {
         await suspendUser(uid)
-        const suspendedUntil = new Date(Date.now() + 2 * 60 * 1000) // 2 minutes for testing — change to 7 * 24 * 60 * 60 * 1000 for 7 days
+        // re-fetch to get the freshly written suspendedUntil
+        const fresh = await getDoc(doc(db, "users", uid))
+        const freshData = fresh.data()
         return {
           status:         "suspended",
-          violations:     data.violations     || 0,
-          suspendReasons: data.suspendReasons || [],
-          suspendedUntil,
+          violations:     freshData.violations     || 0,
+          suspendReasons: freshData.suspendReasons || [],
+          suspendedUntil: freshData.suspendedUntil || null,
         }
       }
 
       // auto-unsuspend if time is up
       const now   = new Date()
-      const until = data.suspendedUntil.toDate
+      const until = data.suspendedUntil?.toDate
         ? data.suspendedUntil.toDate()
         : new Date(data.suspendedUntil)
 
@@ -244,7 +255,7 @@ async function addViolation(targetUid, reason, adminRole) {
 
     await updateDoc(userRef, { violations, suspendReasons, status })
 
-    // fix: call suspendUser when violations hit 3 so suspendedUntil is always set
+    // suspendUser reads duration from settings — old suspensions are unaffected
     if (violations >= 3) {
       await suspendUser(targetUid)
     }

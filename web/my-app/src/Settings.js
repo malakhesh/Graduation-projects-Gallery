@@ -7,9 +7,13 @@ import { auth } from './firebase.js';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import UploadModal from './UploadModal';
 import { listenNotifs, markAllSeen } from './notifications.js';
+import { getUserProjs, setHidden } from './projects.js';
+import { applyTheme } from './applyTheme.js';
 import {
   FaGraduationCap, FaUser, FaCog, FaFolderOpen, FaChevronDown,
-  FaUserEdit, FaEnvelope, FaLock, FaTrash, FaBars, FaBell, FaTimes, FaBookmark
+  FaUserEdit, FaEnvelope, FaLock, FaTrash, FaBars, FaBell, FaTimes,
+  FaBookmark, FaEye, FaEyeSlash, FaExternalLinkAlt, FaPalette,
+  FaSun, FaMoon, FaClock, FaDesktop
 } from "react-icons/fa";
 
 function Navbar({ isAdmin }) {
@@ -30,16 +34,11 @@ function Navbar({ isAdmin }) {
     return () => unsub();
   }, [user]);
 
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [location.pathname]);
+  useEffect(() => { setSidebarOpen(false); }, [location.pathname]);
 
   useEffect(() => {
-    if (sidebarOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    if (sidebarOpen) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
     return () => { document.body.style.overflow = ""; };
   }, [sidebarOpen]);
 
@@ -96,7 +95,6 @@ function Navbar({ isAdmin }) {
           </Link>
         </div>
         <div className="st-navbar-right">
-          {/* Bell — mobile only */}
           <div ref={mobileNotifRef} className="st-mobile-bell-wrapper">
             <button className={`st-mobile-bell${notifOpen ? " st-mobile-bell-active" : ""}`} onClick={handleBellClick} aria-label="Notifications">
               <span className="st-notif-wrapper">
@@ -109,13 +107,19 @@ function Navbar({ isAdmin }) {
                 <div className="st-notif-dropdown-header">Notifications</div>
                 {notifs.length === 0 ? (
                   <div className="st-notif-empty">
-                    <FaBell style={{ fontSize: 36, color: "rgb(185,174,167)" }} />
-                    <p style={{ fontSize: 14, fontWeight: 600, color: "rgb(104,68,42)" }}>No notifications yet</p>
+                    <FaBell style={{ fontSize: 36, color: "var(--text-faint)" }} />
+                    <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-secondary)" }}>No notifications yet</p>
                   </div>
                 ) : (
                   <div style={{ maxHeight: 340, overflowY: "auto" }}>
                     {notifs.map((n) => (
-                      <div key={n.id} style={{ padding: "12px 18px", borderBottom: "1px solid rgb(235,225,215)", fontSize: 13, color: "rgb(47,28,15)", background: n.seen ? "transparent" : "rgb(243,232,220)" }}>
+                      <div key={n.id} style={{
+                        padding: "12px 18px",
+                        borderBottom: "1px solid var(--border)",
+                        fontSize: 13,
+                        color: "var(--text-primary)",
+                        background: n.seen ? "transparent" : "var(--bg-notif-unread)",
+                      }}>
                         {n.message}
                       </div>
                     ))}
@@ -142,12 +146,15 @@ function Navbar({ isAdmin }) {
         </div>
       </nav>
 
-      {/* Sidebar overlay */}
       {sidebarOpen && <div className="st-sidebar-overlay" onClick={closeSidebar} />}
       <div className={`st-admin-sidebar${sidebarOpen ? " st-sidebar-open" : ""}`}>
         <div className="st-sidebar-header">
           <Link to="/home" className="st-sidebar-title" onClick={closeSidebar}>Graduation Gallery</Link>
-          <button onClick={closeSidebar} style={{ marginLeft: "auto", background: "none", border: "none", fontSize: 18, color: "rgb(104,68,42)", cursor: "pointer", padding: "4px 6px", borderRadius: 8 }}>
+          <button onClick={closeSidebar} style={{
+            marginLeft: "auto", background: "none", border: "none",
+            fontSize: 18, color: "var(--accent-dark)", cursor: "pointer",
+            padding: "4px 6px", borderRadius: 8,
+          }}>
             <FaTimes />
           </button>
         </div>
@@ -164,7 +171,7 @@ function Navbar({ isAdmin }) {
           <li className={`st-sidebar-item${location.pathname === '/settings' ? ' st-sidebar-item-active' : ''}`} onClick={() => { closeSidebar(); navigate('/settings'); }}>
             <FaCog style={{ marginRight: 10 }} /> Settings
           </li>
-          <li style={{ height: 1, background: "rgb(185,174,167)", margin: "8px 0", listStyle: "none" }} />
+          <li style={{ height: 1, background: "var(--border)", margin: "8px 0", listStyle: "none" }} />
           <li className="st-sidebar-item" onClick={() => { closeSidebar(); setShowUpload(true); }}>
             <span style={{ marginRight: 10 }}>＋</span> Upload Project
           </li>
@@ -173,8 +180,8 @@ function Navbar({ isAdmin }) {
               Dashboard
             </li>
           )}
-          <li style={{ height: 1, background: "rgb(185,174,167)", margin: "8px 0", listStyle: "none" }} />
-          <li className="st-sidebar-item" style={{ color: "rgb(180,60,60)" }} onClick={async () => { closeSidebar(); await logOut(); navigate('/'); }}>
+          <li style={{ height: 1, background: "var(--border)", margin: "8px 0", listStyle: "none" }} />
+          <li className="st-sidebar-item" style={{ color: "var(--danger)" }} onClick={async () => { closeSidebar(); await logOut(); navigate('/'); }}>
             Log Out
           </li>
         </ul>
@@ -185,11 +192,348 @@ function Navbar({ isAdmin }) {
   );
 }
 
+// ===========================
+// PROJECT MANAGEMENT SECTION
+// ===========================
+function ProjectManagement({ user }) {
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [togglingId, setTogglingId] = useState(null);
+  const [togglingAll, setTogglingAll] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) return;
+    getUserProjs(user.uid).then((data) => {
+      if (Array.isArray(data)) setProjects(data);
+      setLoading(false);
+    });
+  }, [user]);
+
+  const allHidden = projects.length > 0 && projects.every((p) => p.hidden);
+  const anyVisible = projects.some((p) => !p.hidden);
+
+  const toggleOne = async (proj) => {
+    setTogglingId(proj.id);
+    const newHidden = !proj.hidden;
+    await setHidden(proj.id, newHidden);
+    setProjects((prev) => prev.map((p) => p.id === proj.id ? { ...p, hidden: newHidden } : p));
+    setTogglingId(null);
+  };
+
+  const toggleAll = async () => {
+    setTogglingAll(true);
+    const newHidden = anyVisible;
+    await Promise.all(projects.map((p) => setHidden(p.id, newHidden)));
+    setProjects((prev) => prev.map((p) => ({ ...p, hidden: newHidden })));
+    setTogglingAll(false);
+  };
+
+  const STATUS_COLORS = {
+    approved: { bg: "var(--success-bg)",  color: "var(--success-text)", label: "Approved" },
+    pending:  { bg: "var(--warning-bg)",  color: "var(--warning-text)", label: "Pending" },
+    rejected: { bg: "var(--danger-bg)",   color: "var(--danger-text)",  label: "Rejected" },
+  };
+
+  if (loading) return (
+    <div className="st-spinner-wrapper"><div className="st-spinner" /></div>
+  );
+
+  if (projects.length === 0) return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "40px 0", color: "var(--text-muted)" }}>
+      <FaFolderOpen style={{ fontSize: 44, opacity: 0.3 }} />
+      <p style={{ fontSize: 14, fontFamily: "Arial, sans-serif" }}>You haven't uploaded any projects yet.</p>
+    </div>
+  );
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+        <p style={{ fontSize: 13, color: "var(--text-secondary)", fontFamily: "Arial, sans-serif" }}>
+          {projects.length} project{projects.length !== 1 ? "s" : ""} · hidden projects are only visible to you
+        </p>
+        <button
+          onClick={toggleAll}
+          disabled={togglingAll}
+          style={{
+            display: "flex", alignItems: "center", gap: 7,
+            padding: "7px 16px", borderRadius: 20,
+            border: "1.5px solid var(--border)",
+            background: "none", fontSize: 12, fontWeight: 600, cursor: "pointer",
+            color: anyVisible ? "var(--text-secondary)" : "var(--success)",
+            fontFamily: "Arial, sans-serif", transition: "all 0.2s",
+          }}
+        >
+          {togglingAll
+            ? "Updating..."
+            : anyVisible
+              ? <><FaEyeSlash style={{ fontSize: 12 }} /> Hide all</>
+              : <><FaEye style={{ fontSize: 12 }} /> Show all</>
+          }
+        </button>
+      </div>
+
+      {projects.map((proj) => {
+        const statusStyle = STATUS_COLORS[proj.status] || STATUS_COLORS.pending;
+        const isToggling = togglingId === proj.id;
+        const image = proj.imgUrl || proj.image;
+
+        return (
+          <div
+            key={proj.id}
+            style={{
+              display: "flex", alignItems: "center", gap: 12,
+              padding: "10px 14px", borderRadius: 14,
+              border: "1.5px solid var(--border)",
+              background: proj.hidden ? "var(--bg-active)" : "var(--bg-card)",
+              opacity: proj.hidden ? 0.75 : 1,
+              transition: "all 0.2s",
+            }}
+          >
+            {image && (
+              <img
+                src={image}
+                alt={proj.title}
+                style={{ width: 52, height: 38, borderRadius: 8, objectFit: "cover", flexShrink: 0, border: "1px solid var(--border)" }}
+              />
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{
+                fontSize: 14, fontWeight: 600, color: "var(--text-primary)",
+                fontFamily: "Arial, sans-serif", whiteSpace: "nowrap",
+                overflow: "hidden", textOverflow: "ellipsis",
+                textDecoration: proj.hidden ? "line-through" : "none",
+                opacity: proj.hidden ? 0.6 : 1,
+              }}>
+                {proj.title}
+              </p>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3, flexWrap: "wrap" }}>
+                <span style={{
+                  fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20,
+                  background: statusStyle.bg, color: statusStyle.color,
+                  fontFamily: "Arial, sans-serif", textTransform: "capitalize",
+                }}>
+                  {statusStyle.label}
+                </span>
+                {proj.hidden && (
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20,
+                    background: "var(--bg-tag)", color: "var(--text-secondary)",
+                    fontFamily: "Arial, sans-serif",
+                  }}>
+                    Hidden
+                  </span>
+                )}
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+              <button
+                onClick={() => navigate(`/project/${proj.id}`)}
+                title="View project"
+                style={{
+                  background: "none", border: "1.5px solid var(--border)",
+                  borderRadius: "50%", width: 30, height: 30,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: "pointer", color: "var(--text-secondary)", fontSize: 11,
+                  transition: "all 0.2s",
+                }}
+              >
+                <FaExternalLinkAlt />
+              </button>
+              <button
+                onClick={() => toggleOne(proj)}
+                disabled={isToggling}
+                title={proj.hidden ? "Show project" : "Hide project"}
+                style={{
+                  background: proj.hidden ? "var(--accent-dark)" : "none",
+                  border: "1.5px solid var(--border)",
+                  borderRadius: "50%", width: 30, height: 30,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: isToggling ? "default" : "pointer",
+                  color: proj.hidden ? "var(--text-inverse)" : "var(--text-secondary)",
+                  fontSize: 11, transition: "all 0.2s",
+                }}
+              >
+                {isToggling ? "…" : proj.hidden ? <FaEye /> : <FaEyeSlash />}
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ===========================
+// THEME SECTION
+// ===========================
+const THEME_OPTIONS = [
+  {
+    value: "light",
+    label: "Light",
+    desc: "Always use light mode",
+    icon: <FaSun />,
+    preview: { bg: "#fffbf5", accent: "rgb(104,68,42)", dot: "#f3e8dc" },
+  },
+  {
+    value: "caramel",
+    label: "Caramel",
+    desc: "Warm amber tones, easier on the eyes",
+    icon: <FaMoon style={{ color: "#d29a58" }} />,
+    preview: { bg: "#2c1800", accent: "#d29a58", dot: "#3d2510" },
+  },
+  {
+    value: "dark",
+    label: "Dark",
+    desc: "Always use dark mode",
+    icon: <FaMoon />,
+    preview: { bg: "#1a1210", accent: "#c4a882", dot: "#2a1f18" },
+  },
+  {
+    value: "auto",
+    label: "Auto",
+    desc: "Light 6am–6pm · Dark 6pm–6am",
+    icon: <FaClock />,
+    preview: { bg: "linear-gradient(135deg, #fffbf5 50%, #1a1210 50%)", accent: "rgb(104,68,42)", dot: "#888" },
+  },
+  {
+    value: "system",
+    label: "System",
+    desc: "Matches your device setting",
+    icon: <FaDesktop />,
+    preview: { bg: "#e8e0d8", accent: "rgb(104,68,42)", dot: "#c8bdb5" },
+  },
+];
+
+function ThemeSection() {
+  const [theme, setTheme] = useState(() => localStorage.getItem("gg-theme") || "system");
+
+  const handleSelect = (val) => {
+    setTheme(val);
+    localStorage.setItem("gg-theme", val);
+    applyTheme(val);
+  };
+
+  const hour = new Date().getHours();
+  const autoCurrently = hour >= 6 && hour < 18 ? "light" : "dark";
+
+  return (
+    <div className="st-form">
+      <p className="st-form-hint" style={{ marginBottom: 20 }}>
+        Choose how Graduation Gallery looks for you. Changes apply instantly.
+      </p>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {THEME_OPTIONS.map((opt) => {
+          const isActive = theme === opt.value;
+          return (
+            <button
+              key={opt.value}
+              onClick={() => handleSelect(opt.value)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+                padding: "13px 16px",
+                borderRadius: 14,
+                border: isActive ? "2px solid var(--border-strong)" : "1.5px solid var(--border)",
+                background: isActive ? "var(--bg-active)" : "var(--bg-card)",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                textAlign: "left",
+                width: "100%",
+              }}
+            >
+              {/* Mini color preview swatch — keeps hardcoded colors intentionally for preview accuracy */}
+              <div style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                background: opt.preview.bg,
+                border: "1.5px solid var(--border)",
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 14,
+                color: opt.preview.accent,
+                overflow: "hidden",
+              }}>
+                {opt.icon}
+              </div>
+
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{
+                  fontSize: 14, fontWeight: 600,
+                  color: "var(--text-primary)",
+                  margin: 0, fontFamily: "Arial, sans-serif",
+                }}>
+                  {opt.label}
+                  {opt.value === "auto" && (
+                    <span style={{
+                      marginLeft: 8, fontSize: 10, fontWeight: 700,
+                      padding: "2px 8px", borderRadius: 20,
+                      background: autoCurrently === "light" ? "var(--warning-bg)" : "var(--bg-tag)",
+                      color: autoCurrently === "light" ? "var(--warning-text)" : "var(--text-secondary)",
+                      verticalAlign: "middle",
+                    }}>
+                      {autoCurrently === "light" ? "☀ Light now" : "🌙 Dark now"}
+                    </span>
+                  )}
+                </p>
+                <p style={{
+                  fontSize: 12, color: "var(--text-secondary)",
+                  margin: "2px 0 0", fontFamily: "Arial, sans-serif",
+                }}>
+                  {opt.desc}
+                </p>
+              </div>
+
+              <div style={{
+                width: 20, height: 20, borderRadius: "50%",
+                border: isActive ? "none" : "1.5px solid var(--border)",
+                background: isActive ? "var(--accent-dark)" : "transparent",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0, transition: "all 0.2s",
+              }}>
+                {isActive && (
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      <p style={{
+        fontSize: 12, color: "var(--text-muted)", marginTop: 16,
+        fontFamily: "Arial, sans-serif", textAlign: "center",
+      }}>
+        {theme === "system"
+          ? `Showing ${window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"} mode (device setting)`
+          : theme === "auto"
+          ? `Showing ${autoCurrently} mode (${hour}:00 local time)`
+          : theme === "caramel"
+          ? "Caramel mode active"
+          : `${theme.charAt(0).toUpperCase() + theme.slice(1)} mode active`
+        }
+      </p>
+    </div>
+  );
+}
+
+// ===========================
+// SECTIONS CONFIG
+// ===========================
 const SECTIONS = [
-  { key: "name",     label: "Change Name",     icon: <FaUserEdit /> },
-  { key: "email",    label: "Change Email",     icon: <FaEnvelope /> },
-  { key: "password", label: "Change Password",  icon: <FaLock /> },
-  { key: "delete",   label: "Delete Account",   icon: <FaTrash />, danger: true },
+  { key: "theme",    label: "Appearance",        icon: <FaPalette /> },
+  { key: "projects", label: "Project Management", icon: <FaFolderOpen /> },
+  { key: "name",     label: "Change Name",        icon: <FaUserEdit /> },
+  { key: "email",    label: "Change Email",       icon: <FaEnvelope /> },
+  { key: "password", label: "Change Password",    icon: <FaLock /> },
+  { key: "delete",   label: "Delete Account",     icon: <FaTrash />, danger: true },
 ];
 
 function SectionContent({ sectionKey, user }) {
@@ -202,6 +546,9 @@ function SectionContent({ sectionKey, user }) {
   const [success, setSuccess] = useState("");
 
   const reset = () => { setError(""); setSuccess(""); };
+
+  if (sectionKey === "theme")    return <ThemeSection />;
+  if (sectionKey === "projects") return <ProjectManagement user={user} />;
 
   if (sectionKey === "name") return (
     <div className="st-form">

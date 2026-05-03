@@ -1,11 +1,8 @@
 import './login.css';
-import React, { useState, useEffect } from 'react';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import { FaGoogle, FaGithub } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { FaEye, FaEyeSlash, FaGoogle, FaGithub } from 'react-icons/fa';
 import { logUser, logWithGoogle, logWithGithub, checkRole } from './auth.js';
-import { useNavigate } from 'react-router-dom'; 
-import { Link } from "react-router-dom";
-
+import { useNavigate, Link } from 'react-router-dom';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -13,24 +10,6 @@ function Login() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    document.body.style.backgroundColor = 'rgb(223, 205, 192)';
-    document.body.style.display = 'flex';
-    document.body.style.justifyContent = 'center';
-    document.body.style.alignItems = 'center';
-    document.body.style.height = '100vh';
-    document.body.style.margin = '0';
-
-    return () => {
-      document.body.style.backgroundColor = '';
-      document.body.style.display = '';
-      document.body.style.justifyContent = '';
-      document.body.style.alignItems = '';
-      document.body.style.height = '';
-      document.body.style.margin = '';
-    };
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -84,63 +63,61 @@ function Login() {
   };
 
   return (
-    <div className="login-container">
-      <h1>Login</h1>
-      <div className='l'>Access your account to upload projects</div>
-      <form onSubmit={handleSubmit}>
-        <label className='label-email'>Email</label>
-        <div>
+    <div className="login-page">
+      <div className="login-container">
+        <h1>Login</h1>
+        <div className="login-subtitle">Access your account to upload projects</div>
+
+        <form onSubmit={handleSubmit}>
+          <label className="login-label">Email</label>
           <input
-            className='input-email'
+            className="login-input"
             type="email"
             placeholder="Gmail only"
             value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              setError('');
-            }}
+            onChange={(e) => { setEmail(e.target.value); setError(''); }}
             required
           />
-        </div>
-        <label className='label-pass'>Password</label>
-        <div className='password-wrapper'>
-          <input
-            className='input-password'
-            type={showPassword ? 'text' : 'password'}
-            placeholder="Password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              setError('');
-            }}
-            required
-          />
-          <span
-            className='toggle-password'
-            onClick={() => setShowPassword(!showPassword)}
-          >
-            {showPassword ? <FaEyeSlash /> : <FaEye />}
-          </span>
-        </div>
-        <div className='swapper'>
-          <Link to="/forgot-password">Forgot your password?</Link>
-        </div>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        <button type="submit">Login</button>
-      </form>
 
-      <div className='divider'>or continue with</div>
+          <label className="login-label">Password</label>
+          <div className="password-wrapper">
+            <input
+              className="login-input"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); setError(''); }}
+              required
+            />
+            <span className="toggle-password" onClick={() => setShowPassword(!showPassword)}>
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </span>
+          </div>
 
-      <div className='social-buttons'>
-        <button className='google-btn' onClick={handleGoogle} type="button">
-          <FaGoogle /> Google
-        </button>
-        <button className='github-btn' onClick={handleGithub} type="button">
-          <FaGithub /> GitHub
-        </button>
+          <div className="login-swapper">
+            <Link to="/forgot-password">Forgot your password?</Link>
+          </div>
+
+          {error && <p className="login-error">{error}</p>}
+
+          <button type="submit" className="login-btn">Login</button>
+        </form>
+
+        <div className="login-divider">or continue with</div>
+
+        <div className="social-buttons">
+          <button className="google-btn" onClick={handleGoogle} type="button">
+            <FaGoogle /> Google
+          </button>
+          <button className="github-btn" onClick={handleGithub} type="button">
+            <FaGithub /> GitHub
+          </button>
+        </div>
+
+        <div className="login-swapper">
+          Don't have an account? <Link to="/signup">Sign up</Link>
+        </div>
       </div>
-
-      <div className='swapper'>don't have an account? <Link to="/signup">Sign up</Link></div>
     </div>
   );
 }
