@@ -11,11 +11,12 @@ import {
   TextInput,
   Alert,
   Share,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Clipboard from "expo-clipboard";
-import { Feather, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 
 import { auth } from "../backend/firebase";
 import {
@@ -24,7 +25,13 @@ import {
   removeBookmark,
   getBookmarks,
 } from "../backend/auth";
-import { getProj, addComment, addRate } from "../backend/projects";
+import {
+  getProj,
+  addComment,
+  addRate,
+  removeComment,
+} from "../backend/projects";
+import { addReport } from "../backend/reports";
 
 const C = {
   bg: "rgb(223, 205, 192)",
@@ -37,6 +44,7 @@ const C = {
   input: "rgb(185, 174, 167)",
   border: "rgba(104, 68, 42, 0.15)",
   gold: "rgb(216, 174, 48)",
+  danger: "rgb(150, 55, 45)",
 };
 
 export default function ProjectDetails() {
@@ -55,9 +63,26 @@ export default function ProjectDetails() {
   const [ratingLoading, setRatingLoading] = useState(false);
   const [commentLoading, setCommentLoading] = useState(false);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
+  const [deleteCommentLoading, setDeleteCommentLoading] = useState<number | null>(
+    null
+  );
 
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [projectReportReason, setProjectReportReason] = useState("");
+  const [projectReportLoading, setProjectReportLoading] = useState(false);
+
+  const [commentReportModalVisible, setCommentReportModalVisible] =
+    useState(false);
+  const [commentReportReason, setCommentReportReason] = useState("");
+  const [commentReportLoading, setCommentReportLoading] = useState(false);
+  const [selectedCommentToReport, setSelectedCommentToReport] =
+    useState<any>(null);
+  const [selectedCommentIndex, setSelectedCommentIndex] = useState<
+    number | null
+  >(null);
 
   const fetchProject = async () => {
     setLoading(true);
@@ -116,6 +141,7 @@ export default function ProjectDetails() {
 
     if (currentUid && id) {
       const bookmarks = await getBookmarks(currentUid);
+
       if (Array.isArray(bookmarks)) {
         setIsBookmarked(bookmarks.includes(id));
       } else {
@@ -187,6 +213,58 @@ export default function ProjectDetails() {
       Alert.alert("Error", "Something went wrong.");
     } finally {
       setBookmarkLoading(false);
+    }
+  };
+
+  const handleOpenProjectReport = () => {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      Alert.alert("Login Required", "Please login first to report this project.");
+      return;
+    }
+
+    setProjectReportReason("");
+    setReportModalVisible(true);
+  };
+
+  const handleSubmitProjectReport = async () => {
+    if (!id) return;
+
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      Alert.alert("Login Required", "Please login first to report this project.");
+      return;
+    }
+
+    if (!projectReportReason.trim()) {
+      Alert.alert("Reason Required", "Please write the report reason.");
+      return;
+    }
+
+    try {
+      setProjectReportLoading(true);
+
+      const reason = `Project report: ${projectReportReason.trim()}`;
+      const result = await addReport(id, currentUser.uid, reason);
+
+      if (result === "report-added") {
+        setReportModalVisible(false);
+        setProjectReportReason("");
+
+        Alert.alert(
+          "Report Sent",
+          "Your project report has been submitted for review."
+        );
+        return;
+      }
+
+      Alert.alert("Error", "Could not submit report. Please try again.");
+    } catch {
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    } finally {
+      setProjectReportLoading(false);
     }
   };
 
@@ -276,6 +354,129 @@ export default function ProjectDetails() {
     }
   };
 
+  const handleDeleteComment = async (comment: any, commentIndex: number) => {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      Alert.alert("Login Required", "Please login first.");
+      return;
+    }
+
+    if (!id) {
+      Alert.alert("Error", "Project ID not found.");
+      return;
+    }
+
+    if (comment.userId !== currentUser.uid) {
+      Alert.alert("Not Allowed", "You can only delete your own comments.");
+      return;
+    }
+
+    Alert.alert("Delete Comment", "Are you sure you want to delete this comment?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            setDeleteCommentLoading(commentIndex);
+
+            const result = await removeComment(id, comment);
+
+            if (result === "comment-removed") {
+              await fetchProject();
+              return;
+            }
+
+            Alert.alert("Error", "Could not delete comment. Please try again.");
+          } catch {
+            Alert.alert("Error", "Something went wrong. Please try again.");
+          } finally {
+            setDeleteCommentLoading(null);
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleOpenCommentReport = (comment: any, commentIndex: number) => {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      Alert.alert("Login Required", "Please login first to report a comment.");
+      return;
+    }
+
+    if (comment.userId === currentUser.uid) {
+      Alert.alert("Not Allowed", "You cannot report your own comment.");
+      return;
+    }
+
+    setSelectedCommentToReport(comment);
+    setSelectedCommentIndex(commentIndex);
+    setCommentReportReason("");
+    setCommentReportModalVisible(true);
+  };
+
+  const handleSubmitCommentReport = async () => {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      Alert.alert("Login Required", "Please login first to report a comment.");
+      return;
+    }
+
+    if (!id) {
+      Alert.alert("Error", "Project ID not found.");
+      return;
+    }
+
+    if (!selectedCommentToReport || selectedCommentIndex === null) {
+      Alert.alert("Error", "Comment not found.");
+      return;
+    }
+
+    if (!commentReportReason.trim()) {
+      Alert.alert("Reason Required", "Please write the report reason.");
+      return;
+    }
+
+    try {
+      setCommentReportLoading(true);
+
+      const encodedProjectId = `${id}_comment_${selectedCommentIndex}`;
+
+      const reason = `Comment report: ${commentReportReason.trim()} | Comment by ${
+        selectedCommentToReport.userName || "Anonymous"
+      }: ${selectedCommentToReport.text || ""}`;
+
+      const result = await addReport(encodedProjectId, currentUser.uid, reason);
+
+      if (result === "report-added") {
+        setCommentReportModalVisible(false);
+        setCommentReportReason("");
+        setSelectedCommentToReport(null);
+        setSelectedCommentIndex(null);
+
+        Alert.alert(
+          "Report Sent",
+          "Your comment report has been submitted for review."
+        );
+
+        return;
+      }
+
+      Alert.alert("Error", "Could not submit report. Please try again.");
+    } catch {
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    } finally {
+      setCommentReportLoading(false);
+    }
+  };
+
   if (error) {
     return (
       <SafeAreaView style={styles.center}>
@@ -317,10 +518,11 @@ export default function ProjectDetails() {
         ).toFixed(1)
       : "0.0";
 
+  const currentUid = auth.currentUser?.uid;
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* COVER */}
         <View style={styles.coverWrapper}>
           <Image
             source={{ uri: project.imgUrl }}
@@ -330,7 +532,6 @@ export default function ProjectDetails() {
 
           <View style={styles.coverOverlay} />
 
-          {/* TOP ACTIONS */}
           <View style={styles.topActionsRow}>
             <TouchableOpacity
               style={styles.copyLinkPill}
@@ -344,20 +545,12 @@ export default function ProjectDetails() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.topIconButton}
+              style={styles.reportProjectPill}
               activeOpacity={0.85}
-              onPress={handleBookmark}
-              disabled={bookmarkLoading}
+              onPress={handleOpenProjectReport}
             >
-              {bookmarkLoading ? (
-                <ActivityIndicator size="small" color={C.black} />
-              ) : (
-                <Ionicons
-                  name={isBookmarked ? "bookmark" : "bookmark-outline"}
-                  size={18}
-                  color={C.black}
-                />
-              )}
+              <Ionicons name="flag-outline" size={14} color={C.white} />
+              <Text style={styles.reportProjectText}>Report</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -377,7 +570,6 @@ export default function ProjectDetails() {
             </TouchableOpacity>
           </View>
 
-          {/* COVER CONTENT */}
           <View style={styles.coverContent}>
             <Text style={styles.coverTitle}>{project.title}</Text>
 
@@ -404,9 +596,7 @@ export default function ProjectDetails() {
           </View>
         </View>
 
-        {/* WHITE CARD */}
         <View style={styles.card}>
-          {/* OWNER */}
           <View style={styles.ownerBox}>
             <View style={styles.avatarCircle}>
               <Text style={styles.avatarText}>
@@ -416,8 +606,14 @@ export default function ProjectDetails() {
 
             <View style={styles.ownerInfo}>
               <Text style={styles.ownerName}>{ownerName}</Text>
-              {ownerYear ? <Text style={styles.ownerYear}>{ownerYear}</Text> : null}
-              {ownerEmail ? <Text style={styles.ownerEmail}>{ownerEmail}</Text> : null}
+
+              {ownerYear ? (
+                <Text style={styles.ownerYear}>{ownerYear}</Text>
+              ) : null}
+
+              {ownerEmail ? (
+                <Text style={styles.ownerEmail}>{ownerEmail}</Text>
+              ) : null}
             </View>
 
             <TouchableOpacity activeOpacity={0.8}>
@@ -425,12 +621,10 @@ export default function ProjectDetails() {
             </TouchableOpacity>
           </View>
 
-          {/* DESCRIPTION */}
           <Text style={styles.description}>
             {project.desc || "No description added"}
           </Text>
 
-          {/* STACK */}
           <View style={styles.stackRow}>
             {stack.length > 0 ? (
               stack.map((item: string, index: number) => (
@@ -443,7 +637,6 @@ export default function ProjectDetails() {
             )}
           </View>
 
-          {/* ACTION BUTTONS */}
           <View style={styles.actionButtonsRow}>
             {project.gitLink ? (
               <TouchableOpacity
@@ -477,7 +670,6 @@ export default function ProjectDetails() {
             </TouchableOpacity>
           </View>
 
-          {/* RATE */}
           <View style={styles.ratingSection}>
             <Text style={styles.sectionTitle}>Rate this project</Text>
 
@@ -521,7 +713,6 @@ export default function ProjectDetails() {
 
           <View style={styles.divider} />
 
-          {/* COMMENTS */}
           <View style={styles.commentsSection}>
             <Text style={styles.sectionTitle}>Comments:</Text>
 
@@ -546,24 +737,61 @@ export default function ProjectDetails() {
               {commentLoading ? (
                 <ActivityIndicator size="small" color={C.white} />
               ) : (
-                <Text style={styles.commentButtonText}>Submit Comment</Text>
+                <Text style={styles.commentButtonText}>Post Comment</Text>
               )}
             </TouchableOpacity>
 
             {comments.length > 0 ? (
-              comments.map((item: any, index: number) => (
-                <View key={index} style={styles.commentCard}>
-                  <View style={styles.commentHeader}>
-                    <Text style={styles.commentUser}>
-                      {item.userName || "Anonymous"}
-                    </Text>
+              comments.map((item: any, index: number) => {
+                const isMyComment = item.userId === currentUid;
 
-                    <Text style={styles.commentDate}>{item.date || ""}</Text>
+                return (
+                  <View key={index} style={styles.commentCard}>
+                    <View style={styles.commentHeader}>
+                      <Text style={styles.commentUser}>
+                        {item.userName || "Anonymous"}
+                      </Text>
+
+                      <View style={styles.commentActions}>
+                        <Text style={styles.commentDate}>{item.date || ""}</Text>
+
+                        {isMyComment ? (
+                          <TouchableOpacity
+                            style={styles.deleteCommentButton}
+                            activeOpacity={0.8}
+                            onPress={() => handleDeleteComment(item, index)}
+                            disabled={deleteCommentLoading === index}
+                          >
+                            {deleteCommentLoading === index ? (
+                              <ActivityIndicator size="small" color={C.danger} />
+                            ) : (
+                              <Ionicons
+                                name="trash-outline"
+                                size={14}
+                                color={C.danger}
+                              />
+                            )}
+                          </TouchableOpacity>
+                        ) : (
+                          <TouchableOpacity
+                            style={styles.reportCommentButton}
+                            activeOpacity={0.8}
+                            onPress={() => handleOpenCommentReport(item, index)}
+                          >
+                            <Ionicons
+                              name="flag-outline"
+                              size={14}
+                              color="rgba(47, 28, 15, 0.55)"
+                            />
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    </View>
+
+                    <Text style={styles.commentBody}>{item.text || ""}</Text>
                   </View>
-
-                  <Text style={styles.commentBody}>{item.text || ""}</Text>
-                </View>
-              ))
+                );
+              })
             ) : (
               <View style={styles.noCommentsCard}>
                 <Text style={styles.noCommentsText}>No comments yet</Text>
@@ -572,6 +800,113 @@ export default function ProjectDetails() {
           </View>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={commentReportModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCommentReportModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.reportModal}>
+            <Text style={styles.reportModalTitle}>Report Comment</Text>
+
+            <Text style={styles.reportModalSubtitle}>
+              Describe the issue and an admin will review it.
+            </Text>
+
+            <TextInput
+              style={styles.reportReasonInput}
+              placeholder="What's wrong with this?"
+              placeholderTextColor="rgba(47, 28, 15, 0.35)"
+              multiline
+              value={commentReportReason}
+              onChangeText={setCommentReportReason}
+            />
+
+            <View style={styles.reportModalActions}>
+              <TouchableOpacity
+                style={styles.cancelReportButton}
+                onPress={() => {
+                  setCommentReportModalVisible(false);
+                  setCommentReportReason("");
+                  setSelectedCommentToReport(null);
+                  setSelectedCommentIndex(null);
+                }}
+                disabled={commentReportLoading}
+              >
+                <Text style={styles.cancelReportText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.submitReportButton,
+                  commentReportLoading && styles.disabledButton,
+                ]}
+                onPress={handleSubmitCommentReport}
+                disabled={commentReportLoading}
+              >
+                {commentReportLoading ? (
+                  <ActivityIndicator size="small" color={C.white} />
+                ) : (
+                  <Text style={styles.submitReportText}>Submit Report</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={reportModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setReportModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.reportModal}>
+            <Text style={styles.reportModalTitle}>Report Project</Text>
+
+            <Text style={styles.reportModalSubtitle}>
+              Describe the issue and an admin will review it.
+            </Text>
+
+            <TextInput
+              style={styles.reportReasonInput}
+              placeholder="What's wrong with this project?"
+              placeholderTextColor="rgba(47, 28, 15, 0.35)"
+              multiline
+              value={projectReportReason}
+              onChangeText={setProjectReportReason}
+            />
+
+            <View style={styles.reportModalActions}>
+              <TouchableOpacity
+                style={styles.cancelReportButton}
+                onPress={() => setReportModalVisible(false)}
+                disabled={projectReportLoading}
+              >
+                <Text style={styles.cancelReportText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.submitReportButton,
+                  projectReportLoading && styles.disabledButton,
+                ]}
+                onPress={handleSubmitProjectReport}
+                disabled={projectReportLoading}
+              >
+                {projectReportLoading ? (
+                  <ActivityIndicator size="small" color={C.white} />
+                ) : (
+                  <Text style={styles.submitReportText}>Submit Report</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -659,6 +994,23 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     marginLeft: 6,
     textTransform: "lowercase",
+  },
+
+  reportProjectPill: {
+    height: 33,
+    backgroundColor: "rgba(150, 55, 45, 0.9)",
+    borderRadius: 18,
+    paddingHorizontal: 11,
+    marginRight: 8,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  reportProjectText: {
+    color: C.white,
+    fontSize: 12,
+    fontWeight: "800",
+    marginLeft: 5,
   },
 
   topIconButton: {
@@ -943,6 +1295,7 @@ const styles = StyleSheet.create({
   commentHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: 8,
   },
 
@@ -951,12 +1304,36 @@ const styles = StyleSheet.create({
     fontSize: 14.2,
     fontWeight: "900",
     flex: 1,
+    marginRight: 8,
+  },
+
+  commentActions: {
+    flexDirection: "row",
+    alignItems: "center",
   },
 
   commentDate: {
     color: "rgba(47, 28, 15, 0.55)",
     fontSize: 11,
-    marginLeft: 8,
+    marginRight: 6,
+  },
+
+  deleteCommentButton: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "rgba(150, 55, 45, 0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  reportCommentButton: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "rgba(254, 251, 245, 0.75)",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   commentBody: {
@@ -976,6 +1353,82 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
     textAlign: "center",
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(47, 28, 15, 0.35)",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
+
+  reportModal: {
+    width: "100%",
+    backgroundColor: C.white,
+    borderRadius: 18,
+    padding: 18,
+  },
+
+  reportModalTitle: {
+    color: C.black,
+    fontSize: 18,
+    fontWeight: "900",
+    marginBottom: 8,
+  },
+
+  reportModalSubtitle: {
+    color: C.linkDark,
+    fontSize: 13,
+    lineHeight: 19,
+    marginBottom: 14,
+  },
+
+  reportReasonInput: {
+    minHeight: 105,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: C.black,
+    textAlignVertical: "top",
+    backgroundColor: C.white,
+    marginBottom: 16,
+  },
+
+  reportModalActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+  },
+
+  cancelReportButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginRight: 8,
+  },
+
+  cancelReportText: {
+    color: C.linkDark,
+    fontSize: 13,
+    fontWeight: "800",
+  },
+
+  submitReportButton: {
+    backgroundColor: C.danger,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 14,
+    minWidth: 120,
+    alignItems: "center",
+  },
+
+  submitReportText: {
+    color: C.white,
+    fontSize: 13,
+    fontWeight: "900",
   },
 
   disabledButton: {
