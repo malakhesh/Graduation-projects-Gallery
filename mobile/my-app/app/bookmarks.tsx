@@ -46,18 +46,19 @@ export default function BookmarksScreen() {
     try {
       setLoading(true);
 
-      const bookmarkIds = await getBookmarks(currentUser.uid);
+      const ids = await getBookmarks(currentUser.uid);
 
-      if (!Array.isArray(bookmarkIds) || bookmarkIds.length === 0) {
+      if (!Array.isArray(ids) || ids.length === 0) {
         setBookmarks([]);
         return;
       }
 
       const projects = await Promise.all(
-        bookmarkIds.map(async (projectId: string) => {
+        ids.map(async (projectId: string) => {
           const project = await getProj(projectId);
 
           if (
+            !project ||
             project === "no-proj" ||
             project === "get-fail" ||
             typeof project === "string"
@@ -67,7 +68,7 @@ export default function BookmarksScreen() {
 
           return {
             ...project,
-            projectId,
+            id: projectId,
           };
         })
       );
@@ -86,19 +87,21 @@ export default function BookmarksScreen() {
     }, [])
   );
 
-  const filtered = bookmarks.filter((p) => {
-    const title = p.title || "";
-    const desc = p.desc || "";
-    const category = p.category || "";
-    const stack = Array.isArray(p.stack) ? p.stack : [];
+  const filteredBookmarks = bookmarks.filter((project) => {
+    const keyword = search.toLowerCase();
+
+    const title = project.title || "";
+    const desc = project.desc || "";
+    const category = project.category || "";
+    const tags = Array.isArray(project.tags) ? project.tags : [];
+    const stack = Array.isArray(project.stack) ? project.stack : [];
 
     return (
-      title.toLowerCase().includes(search.toLowerCase()) ||
-      desc.toLowerCase().includes(search.toLowerCase()) ||
-      category.toLowerCase().includes(search.toLowerCase()) ||
-      stack.some((t: string) =>
-        t.toLowerCase().includes(search.toLowerCase())
-      )
+      title.toLowerCase().includes(keyword) ||
+      desc.toLowerCase().includes(keyword) ||
+      category.toLowerCase().includes(keyword) ||
+      tags.some((tag: string) => tag.toLowerCase().includes(keyword)) ||
+      stack.some((tech: string) => tech.toLowerCase().includes(keyword))
     );
   });
 
@@ -117,7 +120,7 @@ export default function BookmarksScreen() {
 
       if (result === "bookmark-removed") {
         setBookmarks((prev) =>
-          prev.filter((project) => project.projectId !== projectId)
+          prev.filter((project) => project.id !== projectId)
         );
         return;
       }
@@ -130,16 +133,17 @@ export default function BookmarksScreen() {
     }
   };
 
-  const getRating = (project: any) => {
+  const getAverageRating = (project: any) => {
     const ratings = Array.isArray(project.ratings) ? project.ratings : [];
 
     if (ratings.length === 0) return "0.0";
 
-    const avg =
-      ratings.reduce((sum: number, r: number) => sum + Number(r || 0), 0) /
-      ratings.length;
+    const total = ratings.reduce(
+      (sum: number, rating: number) => sum + Number(rating || 0),
+      0
+    );
 
-    return avg.toFixed(1);
+    return (total / ratings.length).toFixed(1);
   };
 
   return (
@@ -184,118 +188,136 @@ export default function BookmarksScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.list}
         >
-          {filtered.length === 0 ? (
+          {filteredBookmarks.length === 0 ? (
             <View style={styles.emptyState}>
-              <Ionicons
-                name="bookmark-outline"
-                size={64}
-                color={C.input}
-              />
-              <Text style={styles.emptyTitle}>No bookmarks yet</Text>
-              <Text style={styles.emptySubtitle}>
-                Save projects you like to find them here
+              <Ionicons name="bookmark-outline" size={64} color={C.input} />
+
+              <Text style={styles.emptyTitle}>
+                {search ? "No matching bookmarks" : "No bookmarks yet"}
               </Text>
 
-              <TouchableOpacity
-                style={styles.exploreBtn}
-                onPress={() => router.push("/Gallery")}
-              >
-                <Text style={styles.exploreBtnText}>Explore Projects</Text>
-              </TouchableOpacity>
+              <Text style={styles.emptySubtitle}>
+                {search
+                  ? "Try searching with another keyword"
+                  : "Save projects you like to find them here"}
+              </Text>
+
+              {!search ? (
+                <TouchableOpacity
+                  style={styles.exploreBtn}
+                  onPress={() => router.push("/home")}
+                >
+                  <Text style={styles.exploreBtnText}>Explore Projects</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
           ) : (
-            filtered.map((project) => (
-              <TouchableOpacity
-                key={project.projectId}
-                style={styles.card}
-                activeOpacity={0.92}
-                onPress={() =>
-                  router.push({
-                    pathname: "/project-details",
-                    params: { id: project.projectId },
-                  })
-                }
-              >
-                <View style={styles.cardImgWrapper}>
-                  <Image
-                    source={{
-                      uri:
-                        project.imgUrl ||
-                        "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80",
-                    }}
-                    style={styles.cardImg}
-                  />
+            filteredBookmarks.map((project) => {
+              const stack = Array.isArray(project.stack) ? project.stack : [];
 
-                  <LinearGradient
-                    colors={["transparent", "rgba(0,0,0,0.7)"]}
-                    style={styles.cardGradient}
-                  />
+              return (
+                <TouchableOpacity
+                  key={project.id}
+                  style={styles.card}
+                  activeOpacity={0.92}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/project-details",
+                      params: {
+                        id: project.id,
+                      },
+                    })
+                  }
+                >
+                  <View style={styles.cardImgWrapper}>
+                    <Image
+                      source={{
+                        uri:
+                          project.imgUrl ||
+                          "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80",
+                      }}
+                      style={styles.cardImg}
+                    />
 
-                  <TouchableOpacity
-                    style={styles.removeBtn}
-                    onPress={() => handleRemoveBookmark(project.projectId)}
-                    disabled={removingId === project.projectId}
-                  >
-                    {removingId === project.projectId ? (
-                      <ActivityIndicator size="small" color={C.button} />
-                    ) : (
-                      <Ionicons name="bookmark" size={18} color={C.button} />
-                    )}
-                  </TouchableOpacity>
+                    <LinearGradient
+                      colors={["transparent", "rgba(0,0,0,0.7)"]}
+                      style={styles.cardGradient}
+                    />
 
-                  <View style={styles.ratingBadge}>
-                    <Ionicons name="star" size={12} color="#f59e0b" />
-                    <Text style={styles.ratingText}>
-                      {getRating(project)}
-                    </Text>
-                  </View>
-                </View>
+                    <TouchableOpacity
+                      style={styles.removeBtn}
+                      onPress={() => handleRemoveBookmark(project.id)}
+                      disabled={removingId === project.id}
+                    >
+                      {removingId === project.id ? (
+                        <ActivityIndicator size="small" color={C.button} />
+                      ) : (
+                        <Ionicons name="bookmark" size={18} color={C.button} />
+                      )}
+                    </TouchableOpacity>
 
-                <View style={styles.cardBody}>
-                  <Text style={styles.cardTitle}>
-                    {project.title || "Untitled Project"}
-                  </Text>
-
-                  <View style={styles.cardMeta}>
-                    <View style={styles.authorDot}>
-                      <Text style={styles.authorInitial}>
-                        {(project.category || project.title || "P")
-                          .charAt(0)
-                          .toUpperCase()}
+                    <View style={styles.ratingBadge}>
+                      <Ionicons name="star" size={12} color="#f59e0b" />
+                      <Text style={styles.ratingText}>
+                        {getAverageRating(project)}
                       </Text>
                     </View>
-
-                    <Text style={styles.authorName}>
-                      {project.category || "Graduation Project"}
-                    </Text>
-
-                    <Text style={styles.cardYear}>{project.year || ""}</Text>
                   </View>
 
-                  <View style={styles.tagsRow}>
-                    {(Array.isArray(project.stack) ? project.stack : [])
-                      .slice(0, 4)
-                      .map((tag: string) => (
-                        <View key={tag} style={styles.tag}>
+                  <View style={styles.cardBody}>
+                    <Text style={styles.cardTitle} numberOfLines={1}>
+                      {project.title || "Untitled Project"}
+                    </Text>
+
+                    <Text style={styles.cardDesc} numberOfLines={2}>
+                      {project.desc || "No description added"}
+                    </Text>
+
+                    <View style={styles.cardMeta}>
+                      <View style={styles.authorDot}>
+                        <Text style={styles.authorInitial}>
+                          {(project.category || project.title || "P")
+                            .charAt(0)
+                            .toUpperCase()}
+                        </Text>
+                      </View>
+
+                      <Text style={styles.authorName} numberOfLines={1}>
+                        {project.category || "Graduation Project"}
+                      </Text>
+
+                      {project.year ? (
+                        <Text style={styles.cardYear}>{project.year}</Text>
+                      ) : null}
+                    </View>
+
+                    <View style={styles.tagsRow}>
+                      {stack.slice(0, 4).map((tag: string, index: number) => (
+                        <View key={index} style={styles.tag}>
                           <Text style={styles.tagText}>{tag}</Text>
                         </View>
                       ))}
-                  </View>
-
-                  <View style={styles.cardFooter}>
-                    <View style={styles.savedInfo}>
-                      <Ionicons name="bookmark-outline" size={14} color={C.link} />
-                      <Text style={styles.savedDate}>Saved</Text>
                     </View>
 
-                    <View style={styles.viewBtn}>
-                      <Text style={styles.viewBtnText}>View Details</Text>
-                      <Ionicons name="arrow-forward" size={14} color="#fff" />
+                    <View style={styles.cardFooter}>
+                      <View style={styles.savedInfo}>
+                        <Ionicons
+                          name="bookmark-outline"
+                          size={14}
+                          color={C.link}
+                        />
+                        <Text style={styles.savedDate}>Saved</Text>
+                      </View>
+
+                      <View style={styles.viewBtn}>
+                        <Text style={styles.viewBtnText}>View Details</Text>
+                        <Ionicons name="arrow-forward" size={14} color="#fff" />
+                      </View>
                     </View>
                   </View>
-                </View>
-              </TouchableOpacity>
-            ))
+                </TouchableOpacity>
+              );
+            })
           )}
         </ScrollView>
       )}
@@ -485,7 +507,14 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "800",
     color: C.black,
-    marginBottom: 8,
+    marginBottom: 6,
+  },
+
+  cardDesc: {
+    fontSize: 13,
+    color: C.link,
+    lineHeight: 19,
+    marginBottom: 10,
   },
 
   cardMeta: {
