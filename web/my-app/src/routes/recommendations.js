@@ -115,11 +115,13 @@ router.get("/:uid", async (req, res) => {
     console.log("viewedProjects:", viewedProjects)
     console.log("unseenProjects count:", unseenProjects.length)
 
+    // ✅ FIX: student has seen everything → fall back to top rated instead of empty
     if (unseenProjects.length === 0) {
+      const topRated = getTopRatedProjects(allProjects, 10)
       return res.json({ 
         success: true, 
         type: "all_viewed",
-        projects: [] 
+        projects: topRated
       })
     }
 

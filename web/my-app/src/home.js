@@ -364,7 +364,18 @@ function SearchBar({ search, setSearch, filtersOpen, setFiltersOpen, hasActiveFi
   );
 }
 
-function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProject }) {
+// ✅ Helper: map backend type to a user-facing section label
+function getRecommendationLabel(type) {
+  switch (type) {
+    case "qwen_ai":       return "Recommended For You";
+    case "top_rated":     return "Top Rated Projects";
+    case "all_viewed":    return "You've Explored Everything · Top Rated";
+    case "popular":       return "Popular Projects";
+    default:              return "Recommended Projects";
+  }
+}
+
+function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProject, allProjects }) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [label, setLabel] = useState("Recommended Projects");
@@ -394,18 +405,31 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
 
   useEffect(() => {
     if (!uid) return;
+
+    // Client-side top-rated fallback using already-fetched allProjects
+    const getClientTopRated = () => {
+      const avg = (p) => {
+        const vals = Object.values(p.userRatings || {});
+        if (vals.length) return vals.reduce((s, v) => s + v, 0) / vals.length;
+        const r = p.ratings || [];
+        return r.length ? r.reduce((s, v) => s + v, 0) / r.length : 0;
+      };
+      return [...allProjects].sort((a, b) => avg(b) - avg(a)).slice(0, 10);
+    };
+
     fetchRecommendations(uid).then((data) => {
-      if (data) {
-        setProjects(data.projects || []);
-        setLabel(
-          data.type === "popular" || data.type === "fallback_popular"
-            ? "Popular Projects"
-            : "Recommended For You"
-        );
+      if (data && data.projects && data.projects.length > 0) {
+        // Server is up and returned projects
+        setProjects(data.projects);
+        setLabel(getRecommendationLabel(data.type));
+      } else {
+        // Server is down, or returned empty → fall back to client-side top rated
+        setProjects(getClientTopRated());
+        setLabel("Top Rated Projects");
       }
       setLoading(false);
     });
-  }, [uid]);
+  }, [uid, allProjects]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -720,6 +744,7 @@ function Home() {
               bookmarkedIds={bookmarkedIds}
               onToggleBookmark={toggleBookmark}
               onOpenProject={handleOpenProject}
+              allProjects={allProjects}
             />
             <ExploreTags selectedTag={selectedTag} onSelectTag={handleSelectTag} />
             {selectedTag && (
