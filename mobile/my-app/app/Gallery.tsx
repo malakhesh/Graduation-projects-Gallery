@@ -27,6 +27,76 @@ const C = {
 
 const CATEGORIES = ["All", "Mobile", "Web", "AI", "Security", "Data Science"];
 
+const FILTER_KEYWORDS: Record<string, string[]> = {
+  All: [],
+  Mobile: [
+    "mobile",
+    "react native",
+    "flutter",
+    "android",
+    "ios",
+    "swift",
+    "kotlin",
+    "dart",
+  ],
+  Web: [
+    "web",
+    "web dev",
+    "frontend",
+    "backend",
+    "full stack",
+    "react",
+    "vue",
+    "angular",
+    "node",
+    "express",
+    "next",
+    "laravel",
+    "django",
+    "fastapi",
+    "html",
+    "css",
+    "javascript",
+    "typescript",
+  ],
+  AI: [
+    "ai",
+    "ai / ml",
+    "ml",
+    "machine learning",
+    "deep learning",
+    "data mining",
+    "neural",
+    "tensorflow",
+    "pytorch",
+    "opencv",
+  ],
+  Security: [
+    "security",
+    "cybersecurity",
+    "cyber",
+    "network security",
+    "encryption",
+    "malware",
+    "penetration",
+    "auth",
+  ],
+  "Data Science": [
+    "data science",
+    "data",
+    "analytics",
+    "analysis",
+    "python",
+    "pandas",
+    "numpy",
+    "sql",
+    "mysql",
+    "database",
+    "firebase",
+    "mongodb",
+  ],
+};
+
 function ProjectCard({ item, onPress }: any) {
   const stack = Array.isArray(item.stack) ? item.stack : [];
   const ratings = Array.isArray(item.ratings) ? item.ratings : [];
@@ -34,8 +104,10 @@ function ProjectCard({ item, onPress }: any) {
   const averageRating =
     ratings.length > 0
       ? (
-          ratings.reduce((sum: number, rate: number) => sum + Number(rate || 0), 0) /
-          ratings.length
+          ratings.reduce(
+            (sum: number, rate: number) => sum + Number(rate || 0),
+            0
+          ) / ratings.length
         ).toFixed(1)
       : "0.0";
 
@@ -141,28 +213,36 @@ export default function GalleryScreen() {
     const q = search.trim().toLowerCase();
 
     return projects.filter((p) => {
-      const title = p.title || "";
-      const desc = p.desc || "";
-      const userId = p.userId || "";
-      const category = p.category || "";
-      const year = p.year || "";
+      const title = String(p.title || "");
+      const desc = String(p.desc || "");
+      const userId = String(p.userId || "");
+      const category = String(p.category || "");
+      const year = String(p.year || "");
 
       const stack = Array.isArray(p.stack) ? p.stack : [];
       const tags = Array.isArray(p.tags) ? p.tags : [];
 
-      const matchSearch =
-        !q ||
-        title.toLowerCase().includes(q) ||
-        desc.toLowerCase().includes(q) ||
-        userId.toLowerCase().includes(q) ||
-        category.toLowerCase().includes(q) ||
-        year.toString().toLowerCase().includes(q) ||
-        stack.some((tech: string) => tech.toLowerCase().includes(q)) ||
-        tags.some((tag: string) => tag.toLowerCase().includes(q));
+      const searchableText = [
+        title,
+        desc,
+        userId,
+        category,
+        year,
+        ...stack,
+        ...tags,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      const matchSearch = !q || searchableText.includes(q);
+
+      const keywords = FILTER_KEYWORDS[activeFilter] || [];
 
       const matchFilter =
         activeFilter === "All" ||
-        category.toLowerCase() === activeFilter.toLowerCase();
+        keywords.some((keyword) =>
+          searchableText.includes(keyword.toLowerCase())
+        );
 
       return matchSearch && matchFilter;
     });
