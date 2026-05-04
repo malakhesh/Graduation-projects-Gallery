@@ -176,11 +176,6 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.uploadBtn}>
-            <Ionicons name="arrow-up-outline" size={14} color="#fff" />
-            <Text style={styles.uploadBtnText}>Upload Project</Text>
-          </TouchableOpacity>
-
           <TouchableOpacity onPress={() => setMenuVisible(true)}>
             <Image
               source={require("../assets/avatar.jpg")}
@@ -492,23 +487,6 @@ const styles = StyleSheet.create({
   headerRight: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-  },
-
-  uploadBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: "rgb(104, 68, 42)",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-
-  uploadBtnText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "700",
   },
 
   avatarSmall: {
