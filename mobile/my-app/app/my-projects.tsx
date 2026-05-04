@@ -144,16 +144,22 @@ export default function MyProjectsScreen() {
     });
   };
 
- const handleEditProject = (project: any) => {
-  Alert.alert(
-    "Edit Project",
-    "Edit project screen is not created yet."
-  );
-};
+  const handleEditProject = (project: any) => {
+    Alert.alert(
+      "Edit Project",
+      "Edit project screen is not created yet."
+    );
+  };
 
   const handleAddProject = () => {
-  router.push("/home");
-};
+    router.push({
+      pathname: "/Gallery",
+      params: {
+        openUpload: "true",
+      },
+    });
+  };
+
   const handleDeleteProject = (projectId: string) => {
     Alert.alert(
       "Delete Project",

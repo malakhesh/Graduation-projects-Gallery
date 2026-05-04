@@ -11,7 +11,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import Toast from "react-native-toast-message";
 import UploadProjectModal from "../components/modals/UploadProjectModal";
 import { getApproved } from "../backend/projects";
@@ -84,6 +84,8 @@ function ProjectCard({ item, onPress }: any) {
 }
 
 export default function GalleryScreen() {
+  const params = useLocalSearchParams();
+
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
   const [modalVisible, setModalVisible] = useState(false);
@@ -124,6 +126,16 @@ export default function GalleryScreen() {
   useEffect(() => {
     loadProjects();
   }, []);
+
+  useEffect(() => {
+    const openUploadParam = Array.isArray(params.openUpload)
+      ? params.openUpload[0]
+      : params.openUpload;
+
+    if (openUploadParam === "true") {
+      setModalVisible(true);
+    }
+  }, [params.openUpload]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
