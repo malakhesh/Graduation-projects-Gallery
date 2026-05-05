@@ -13,15 +13,6 @@ export default function WelcomeScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <LinearGradient colors={["#F5ECE4", "#DFCDBF"]} style={styles.container}>
-        
-        {/* About Button */}
-        <Pressable
-          style={styles.aboutButton}
-          onPress={() => router.push("/about")}
-        >
-          <Text style={styles.aboutText}>About</Text>
-        </Pressable>
-
         <View style={styles.softCircleOne} />
         <View style={styles.softCircleTwo} />
 
@@ -74,20 +65,6 @@ const styles = StyleSheet.create({
     position: "relative",
   },
 
-  // ✅ About Button
-  aboutButton: {
-    position: "absolute",
-    top: 50,
-    right: 28,
-    zIndex: 10,
-  },
-
-  aboutText: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "rgb(104, 68, 42)",
-  },
-
   softCircleOne: {
     position: "absolute",
     top: -90,
@@ -131,7 +108,7 @@ const styles = StyleSheet.create({
   },
 
   highlight: {
-    fontSize:23,
+    fontSize: 23,
     fontWeight: "800",
     fontStyle: "italic",
     color: "rgba(164, 132, 109, 0.8)",
