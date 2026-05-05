@@ -11,11 +11,22 @@ export default function ForgotPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus("loading");
-    try {
-      await resetPass(email);
+
+    const result = await resetPass(email);
+
+    if (result === "reset-sent") {
       setStatus("success");
       setMessage("Check your email for a reset link!");
-    } catch {
+    } else if (result === "no-user") {
+      setStatus("error");
+      setMessage("No account found with this email.");
+    } else if (result === "invalid-email") {
+      setStatus("error");
+      setMessage("Please enter a valid email.");
+    } else if (result === "too-many-requests") {
+      setStatus("error");
+      setMessage("Too many attempts. Please try again later.");
+    } else {
       setStatus("error");
       setMessage("Something went wrong. Please try again.");
     }
