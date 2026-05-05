@@ -18,26 +18,16 @@ import {
   markRead,
   markAllSeen,
 } from "../backend/notifications";
+import { useTheme } from "../context/ThemeContext";
+import { Colors } from "../constants/theme";
 
-const C = {
-  bg: "rgb(240, 234, 228)",
-  white: "rgb(254, 251, 245)",
-  black: "rgb(47, 28, 15)",
-  link: "rgb(164, 132, 109)",
-  button: "rgb(104, 68, 42)",
-  input: "rgb(185, 174, 167)",
-  gold: "#f59e0b",
-  danger: "#dc2626",
-  success: "#16a34a",
-};
-
-function getNotifStyle(type: string) {
+function getNotifStyle(type: string, colors: any) {
   const lowerType = type?.toLowerCase() || "";
 
   if (lowerType.includes("bookmark")) {
     return {
       icon: "bookmark",
-      color: C.gold,
+      color: colors.gold || "#f59e0b",
       label: "BOOKMARKED",
     };
   }
@@ -45,7 +35,7 @@ function getNotifStyle(type: string) {
   if (lowerType.includes("rating") || lowerType.includes("rate")) {
     return {
       icon: "star",
-      color: C.gold,
+      color: colors.gold || "#f59e0b",
       label: "NEW RATING",
     };
   }
@@ -53,7 +43,7 @@ function getNotifStyle(type: string) {
   if (lowerType.includes("comment")) {
     return {
       icon: "chatbubble",
-      color: C.button,
+      color: colors.button,
       label: "NEW COMMENT",
     };
   }
@@ -61,7 +51,7 @@ function getNotifStyle(type: string) {
   if (lowerType.includes("welcome")) {
     return {
       icon: "sparkles",
-      color: C.button,
+      color: colors.button,
       label: "WELCOME",
     };
   }
@@ -69,7 +59,7 @@ function getNotifStyle(type: string) {
   if (lowerType.includes("warning")) {
     return {
       icon: "warning",
-      color: C.gold,
+      color: colors.gold || "#f59e0b",
       label: "WARNING",
     };
   }
@@ -77,7 +67,7 @@ function getNotifStyle(type: string) {
   if (lowerType.includes("danger")) {
     return {
       icon: "alert-circle",
-      color: C.danger,
+      color: colors.error,
       label: "FINAL WARNING",
     };
   }
@@ -85,7 +75,7 @@ function getNotifStyle(type: string) {
   if (lowerType.includes("suspended")) {
     return {
       icon: "lock-closed",
-      color: C.danger,
+      color: colors.error,
       label: "SUSPENDED",
     };
   }
@@ -93,14 +83,14 @@ function getNotifStyle(type: string) {
   if (lowerType.includes("info")) {
     return {
       icon: "information-circle",
-      color: C.success,
+      color: colors.success || "#16a34a",
       label: "INFO",
     };
   }
 
   return {
     icon: "notifications",
-    color: C.button,
+    color: colors.button,
     label: "NOTIFICATION",
   };
 }
@@ -129,6 +119,9 @@ function formatTime(createdAt: any) {
 }
 
 export default function NotificationsScreen() {
+  const { theme } = useTheme();
+  const C = Colors[theme];
+
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
@@ -149,7 +142,6 @@ export default function NotificationsScreen() {
       setNotifications(notifs || []);
       setLoading(false);
 
-      // ده بيخلي red dot بتاع "seen" يختفي لو بتستخدميه في navbar أو tab icon
       await markAllSeen(currentUser.uid);
     });
 
@@ -215,6 +207,186 @@ export default function NotificationsScreen() {
     }
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: C.bg,
+    },
+
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+    },
+
+    backBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: C.white,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+
+    headerTextBox: {
+      flex: 1,
+      alignItems: "center",
+    },
+
+    headerTitle: {
+      fontSize: 20,
+      fontWeight: "800",
+      color: C.black,
+    },
+
+    headerSubtitle: {
+      fontSize: 13,
+      color: C.link,
+      fontWeight: "500",
+      marginTop: 2,
+    },
+
+    markAllBtn: {
+      backgroundColor: C.button,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 12,
+      minWidth: 92,
+      alignItems: "center",
+    },
+
+    markAllText: {
+      color: C.white,
+      fontSize: 12,
+      fontWeight: "700",
+    },
+
+    headerRightSpace: {
+      width: 92,
+    },
+
+    loadingBox: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
+    loadingText: {
+      marginTop: 10,
+      color: C.black,
+      fontSize: 14,
+      fontWeight: "700",
+    },
+
+    list: {
+      paddingHorizontal: 16,
+      gap: 12,
+      paddingBottom: 30,
+    },
+
+    emptyState: {
+      alignItems: "center",
+      paddingVertical: 80,
+      gap: 12,
+    },
+
+    emptyTitle: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: C.link,
+    },
+
+    emptySubtitle: {
+      fontSize: 14,
+      color: C.link,
+    },
+
+    card: {
+      flexDirection: "row",
+      gap: 14,
+      backgroundColor: C.white,
+      borderRadius: 18,
+      padding: 16,
+      elevation: 2,
+      alignItems: "flex-start",
+      shadowColor: C.black,
+      shadowOpacity: 0.08,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 2 },
+    },
+
+    cardUnread: {
+      backgroundColor: C.white,
+      borderLeftWidth: 3,
+      borderLeftColor: C.button,
+    },
+
+    iconWrapper: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+
+    cardContent: {
+      flex: 1,
+      gap: 4,
+    },
+
+    cardTop: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+
+    typeBadge: {
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 8,
+    },
+
+    typeText: {
+      fontSize: 11,
+      fontWeight: "700",
+    },
+
+    unreadDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: C.button,
+    },
+
+    message: {
+      fontSize: 14,
+      color: C.black,
+      fontWeight: "600",
+      lineHeight: 20,
+    },
+
+    project: {
+      fontSize: 12,
+      color: C.link,
+      fontWeight: "500",
+    },
+
+    time: {
+      fontSize: 11,
+      color: C.input,
+    },
+
+    chevron: {
+      marginTop: 15,
+    },
+  });
+
+  if (!auth.currentUser) {
+    return null;
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -239,7 +411,7 @@ export default function NotificationsScreen() {
             disabled={markingAll}
           >
             {markingAll ? (
-              <ActivityIndicator size="small" color="#fff" />
+              <ActivityIndicator size="small" color={C.white} />
             ) : (
               <Text style={styles.markAllText}>Mark all read</Text>
             )}
@@ -273,7 +445,7 @@ export default function NotificationsScreen() {
             </View>
           ) : (
             notifications.map((notif) => {
-              const notifStyle = getNotifStyle(notif.type);
+              const notifStyle = getNotifStyle(notif.type, C);
 
               return (
                 <TouchableOpacity
@@ -357,175 +529,3 @@ export default function NotificationsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: C.bg,
-  },
-
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: C.white,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  headerTextBox: {
-    flex: 1,
-    alignItems: "center",
-  },
-
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: C.black,
-  },
-
-  headerSubtitle: {
-    fontSize: 13,
-    color: C.link,
-    fontWeight: "500",
-    marginTop: 2,
-  },
-
-  markAllBtn: {
-    backgroundColor: C.button,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    minWidth: 92,
-    alignItems: "center",
-  },
-
-  markAllText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-
-  headerRightSpace: {
-    width: 92,
-  },
-
-  loadingBox: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  loadingText: {
-    marginTop: 10,
-    color: C.black,
-    fontSize: 14,
-    fontWeight: "700",
-  },
-
-  list: {
-    paddingHorizontal: 16,
-    gap: 12,
-    paddingBottom: 30,
-  },
-
-  emptyState: {
-    alignItems: "center",
-    paddingVertical: 80,
-    gap: 12,
-  },
-
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "rgb(92, 64, 51)",
-  },
-
-  emptySubtitle: {
-    fontSize: 14,
-    color: C.link,
-  },
-
-  card: {
-    flexDirection: "row",
-    gap: 14,
-    backgroundColor: "#fff",
-    borderRadius: 18,
-    padding: 16,
-    elevation: 2,
-    alignItems: "flex-start",
-  },
-
-  cardUnread: {
-    backgroundColor: C.white,
-    borderLeftWidth: 3,
-    borderLeftColor: C.button,
-  },
-
-  iconWrapper: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  cardContent: {
-    flex: 1,
-    gap: 4,
-  },
-
-  cardTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-
-  typeBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-
-  typeText: {
-    fontSize: 11,
-    fontWeight: "700",
-  },
-
-  unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: C.button,
-  },
-
-  message: {
-    fontSize: 14,
-    color: C.black,
-    fontWeight: "600",
-    lineHeight: 20,
-  },
-
-  project: {
-    fontSize: 12,
-    color: C.link,
-    fontWeight: "500",
-  },
-
-  time: {
-    fontSize: 11,
-    color: C.input,
-  },
-
-  chevron: {
-    marginTop: 15,
-  },
-});
