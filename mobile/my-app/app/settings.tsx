@@ -32,14 +32,20 @@ export default function SettingsScreen() {
   const [changeNameModal, setChangeNameModal] = useState(false);
   const [newName, setNewName] = useState('');
   const [currentName, setCurrentName] = useState('');
-  const [loadingName, setLoadingName] = useState(false);
   const [updatingName, setUpdatingName] = useState(false);
+
+  // Change Email States
+  const [changeEmailModal, setChangeEmailModal] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [currentEmail, setCurrentEmail] = useState('');
+  const [updatingEmail, setUpdatingEmail] = useState(false);
 
   // Load current user data
   useEffect(() => {
     const loadUserData = async () => {
       const user = auth.currentUser;
       if (user) {
+        setCurrentEmail(user.email || '');
         const userData = await getUser(user.uid);
         if (userData && typeof userData === 'object' && userData.name) {
           setCurrentName(userData.name);
@@ -50,6 +56,7 @@ export default function SettingsScreen() {
     loadUserData();
   }, []);
 
+  // ========== Change Name ==========
   const handleChangeName = async () => {
     if (!newName.trim()) {
       Toast.show({
@@ -92,6 +99,19 @@ export default function SettingsScreen() {
     }
   };
 
+  // ========== Change Email (Coming Soon - needs Firebase re-auth) ==========
+  const handleChangeEmail = () => {
+    Toast.show({
+      type: 'info',
+      text1: 'Coming Soon',
+      text2: 'Email change feature will be available in the next update',
+      position: 'top',
+      visibilityTime: 2000,
+    });
+    setChangeEmailModal(false);
+  };
+
+  // ========== Logout ==========
   const handleLogout = async () => {
     Alert.alert(
       'Log Out',
@@ -280,6 +300,17 @@ export default function SettingsScreen() {
       color: C.button,
       fontWeight: '600',
     },
+    comingSoonBadge: {
+      backgroundColor: C.chip,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 12,
+    },
+    comingSoonText: {
+      fontSize: 10,
+      color: C.link,
+      fontWeight: '600',
+    },
   });
 
   const ThemeSelector = () => (
@@ -362,18 +393,26 @@ export default function SettingsScreen() {
               <Text style={[styles.menuText, { color: C.button }]}>›</Text>
             </TouchableOpacity>
 
-            {/* Change Email (coming soon) */}
-            <TouchableOpacity style={styles.menuItem} disabled>
+            {/* Change Email (Coming Soon) */}
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => setChangeEmailModal(true)}
+            >
               <View style={styles.menuLeft}>
                 <Text style={styles.menuIcon}>📧</Text>
                 <View>
                   <Text style={styles.menuText}>Change Email</Text>
-                  <Text style={styles.menuSubtext}>Coming soon</Text>
+                  <Text style={styles.menuSubtext}>
+                    Current: <Text style={styles.nameValue}>{currentEmail || 'Not set'}</Text>
+                  </Text>
                 </View>
+              </View>
+              <View style={styles.comingSoonBadge}>
+                <Text style={styles.comingSoonText}>Soon</Text>
               </View>
             </TouchableOpacity>
 
-            {/* Change Password (coming soon) */}
+            {/* Change Password (Coming Soon) */}
             <TouchableOpacity style={styles.menuItem} disabled>
               <View style={styles.menuLeft}>
                 <Text style={styles.menuIcon}>🔒</Text>
@@ -382,9 +421,12 @@ export default function SettingsScreen() {
                   <Text style={styles.menuSubtext}>Coming soon</Text>
                 </View>
               </View>
+              <View style={styles.comingSoonBadge}>
+                <Text style={styles.comingSoonText}>Soon</Text>
+              </View>
             </TouchableOpacity>
 
-            {/* Delete Account (coming soon) */}
+            {/* Delete Account (Coming Soon) */}
             <TouchableOpacity 
               style={[styles.menuItem, styles.lastMenuItem]}
               disabled
@@ -395,6 +437,9 @@ export default function SettingsScreen() {
                   <Text style={[styles.menuText, { color: C.error }]}>Delete Account</Text>
                   <Text style={styles.menuSubtext}>Coming soon</Text>
                 </View>
+              </View>
+              <View style={styles.comingSoonBadge}>
+                <Text style={styles.comingSoonText}>Soon</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -439,7 +484,7 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        {/* Logout Section */}
+        {/* Security Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Security</Text>
           <View style={styles.card}>
@@ -505,6 +550,31 @@ export default function SettingsScreen() {
                 ) : (
                   <Text style={[styles.modalButtonText, styles.modalButtonSaveText]}>Save</Text>
                 )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Change Email Modal (Coming Soon - Info only) */}
+      <Modal
+        visible={changeEmailModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setChangeEmailModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Change Email</Text>
+            <Text style={{ color: C.link, textAlign: 'center', marginBottom: 20 }}>
+              This feature is coming soon. You will be able to change your email address in the next update.
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSave]}
+                onPress={() => setChangeEmailModal(false)}
+              >
+                <Text style={[styles.modalButtonText, styles.modalButtonSaveText]}>OK</Text>
               </TouchableOpacity>
             </View>
           </View>
