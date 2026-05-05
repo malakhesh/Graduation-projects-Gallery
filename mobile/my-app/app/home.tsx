@@ -9,8 +9,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { auth } from "../backend/firebase";
 import { getUser, logOut } from "../backend/auth";
-
-import { addBookmark, isBookmarked } from "../../backend/notifications";
+import { useTheme } from "../context/ThemeContext";
+import { Colors } from "../constants/theme";
 
 const CATEGORIES = ["All Projects", "AI / ML", "Web Dev", "Mobile", "Design"];
 
@@ -32,6 +32,9 @@ const TAGS = [
 ];
 
 export default function HomeScreen() {
+  const { theme } = useTheme();
+  const C = Colors[theme];
+
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -40,375 +43,194 @@ export default function HomeScreen() {
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (!user) {
-        router.replace("/login");
-        return;
-      }
-
+      if (!user) { router.replace("/login"); return; }
       const data = await getUser(user.uid);
       setUserData(data);
       setLoading(false);
     });
-
     return unsubscribe;
   }, []);
 
   const filteredProjects = RECOMMENDED.filter((p) => {
     const q = search.toLowerCase().trim();
-
-    const matchSearch =
-      q === "" ||
-      p.title.toLowerCase().includes(q) ||
-      p.author.toLowerCase().includes(q) ||
-      p.tags.some((t) => t.toLowerCase().includes(q));
-
-    const matchCategory =
-      activeCategory === "All Projects" ||
-      p.tags.some((t) =>
-        t.toLowerCase().includes(activeCategory.toLowerCase())
-      );
-
+    const matchSearch = q === "" || p.title.toLowerCase().includes(q) || p.author.toLowerCase().includes(q) || p.tags.some((t) => t.toLowerCase().includes(q));
+    const matchCategory = activeCategory === "All Projects" || p.tags.some((t) => t.toLowerCase().includes(activeCategory.toLowerCase()));
     return matchSearch && matchCategory;
   });
 
-  const handleLogout = async () => {
-    setMenuVisible(false);
-    await logOut();
-    router.replace("/login");
-  };
-
-  const handleGoToProfile = () => {
-    setMenuVisible(false);
-    router.push("/profile");
-  };
-
-  const handleGoToSettings = () => {
-    setMenuVisible(false);
-    router.push("/settings");
-  };
+  const handleLogout = async () => { setMenuVisible(false); await logOut(); router.replace("/login"); };
+  const handleGoToProfile = () => { setMenuVisible(false); router.push("/profile"); };
+  const handleGoToSettings = () => { setMenuVisible(false); router.push("/settings"); };
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="rgb(104, 68, 42)" />
+      <View style={[styles.loadingContainer, { backgroundColor: C.bg }]}>
+        <ActivityIndicator size="large" color={C.button} />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Modal
-        visible={menuVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setMenuVisible(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setMenuVisible(false)}
-        >
-          <View style={styles.menuCard}>
+    <SafeAreaView style={[styles.container, { backgroundColor: C.bg }]}>
+      <Modal visible={menuVisible} transparent animationType="fade" onRequestClose={() => setMenuVisible(false)}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setMenuVisible(false)}>
+          <View style={[styles.menuCard, { backgroundColor: C.white }]}>
             <View style={styles.menuHeader}>
-              <Image
-                source={require("../assets/avatar.jpg")}
-                style={styles.menuAvatar}
-              />
-
+              <Image source={require("../assets/avatar.jpg")} style={styles.menuAvatar} />
               <View>
-                <Text style={styles.menuName}>
-                  {userData?.name || "User"}
-                </Text>
-
-                <Text style={styles.menuEmail}>
-                  {userData?.email || auth.currentUser?.email || ""}
-                </Text>
+                <Text style={[styles.menuName, { color: C.black }]}>{userData?.name || "User"}</Text>
+                <Text style={[styles.menuEmail, { color: C.link }]}>{userData?.email || auth.currentUser?.email || ""}</Text>
               </View>
             </View>
-
-            <View style={styles.menuDivider} />
-
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={handleGoToProfile}
-            >
-              <Ionicons
-                name="person-outline"
-                size={20}
-                color="rgb(104, 68, 42)"
-              />
-              <Text style={styles.menuItemText}>My Profile</Text>
+            <View style={[styles.menuDivider, { backgroundColor: C.border }]} />
+            <TouchableOpacity style={styles.menuItem} onPress={handleGoToProfile}>
+              <Ionicons name="person-outline" size={20} color={C.button} />
+              <Text style={[styles.menuItemText, { color: C.black }]}>My Profile</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={handleGoToSettings}
-            >
-              <Ionicons
-                name="settings-outline"
-                size={20}
-                color="rgb(104, 68, 42)"
-              />
-              <Text style={styles.menuItemText}>Settings</Text>
+            <TouchableOpacity style={styles.menuItem} onPress={handleGoToSettings}>
+              <Ionicons name="settings-outline" size={20} color={C.button} />
+              <Text style={[styles.menuItemText, { color: C.black }]}>Settings</Text>
             </TouchableOpacity>
-
-            <View style={styles.menuDivider} />
-
+            <View style={[styles.menuDivider, { backgroundColor: C.border }]} />
             <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
-              <Ionicons name="log-out-outline" size={20} color="#e53e3e" />
-              <Text style={[styles.menuItemText, { color: "#e53e3e" }]}>
-                Log Out
-              </Text>
+              <Ionicons name="log-out-outline" size={20} color={C.error} />
+              <Text style={[styles.menuItemText, { color: C.error }]}>Log Out</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
       </Modal>
 
-      {/* Header with Logo */}
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.logoWrapper}>
           <Text style={styles.logoIcon}>🎓</Text>
-
           <View>
-            <Text style={styles.logoTextBold}>Graduation</Text>
-            <Text style={styles.logoTextLight}>Gallery</Text>
+            <Text style={[styles.logoTextBold, { color: C.black }]}>Graduation</Text>
+            <Text style={[styles.logoTextLight, { color: C.button }]}>Gallery</Text>
           </View>
         </View>
-
-        <View style={styles.headerRight}>
-          <TouchableOpacity onPress={() => setMenuVisible(true)}>
-            <Image
-              source={require("../assets/avatar.jpg")}
-              style={styles.avatarSmall}
-            />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={() => setMenuVisible(true)}>
+          <Image source={require("../assets/avatar.jpg")} style={[styles.avatarSmall, { borderColor: C.button }]} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Quick Links */}
         <View style={styles.quickLinks}>
-          <TouchableOpacity
-            style={styles.quickLink}
-            onPress={() => router.push("/my-projects")}
-          >
-            <Text style={styles.quickLinkIcon}>📁</Text>
-            <Text style={styles.quickLinkText}>My Projects</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.quickLink}
-            onPress={() => router.push("/bookmarks")}
-          >
-            <Text style={styles.quickLinkIcon}>🔖</Text>
-            <Text style={styles.quickLinkText}>Bookmarks</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.quickLink}
-            onPress={() => router.push("/Gallery")}
-          >
-            <Text style={styles.quickLinkIcon}>🖼️</Text>
-            <Text style={styles.quickLinkText}>Gallery</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.quickLink}
-            onPress={() => router.push("/notifications")}
-          >
-            <Text style={styles.quickLinkIcon}>🔔</Text>
-            <Text style={styles.quickLinkText}>Notifications</Text>
-          </TouchableOpacity>
+          {[
+            { icon: "📁", label: "My Projects", route: "/my-projects" },
+            { icon: "🔖", label: "Bookmarks", route: "/bookmarks" },
+            { icon: "🖼️", label: "Gallery", route: "/Gallery" },
+            { icon: "🔔", label: "Notifications", route: "/notifications" },
+          ].map((item) => (
+            <TouchableOpacity key={item.label} style={styles.quickLink} onPress={() => router.push(item.route as any)}>
+              <Text style={styles.quickLinkIcon}>{item.icon}</Text>
+              <Text style={[styles.quickLinkText, { color: C.black }]}>{item.label}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
         {/* Search */}
         <View style={styles.searchRow}>
-          <View style={styles.searchBox}>
-            <Ionicons
-              name="search-outline"
-              size={18}
-              color="rgb(164, 132, 109)"
-            />
-
+          <View style={[styles.searchBox, { backgroundColor: C.white, borderColor: C.input }]}>
+            <Ionicons name="search-outline" size={18} color={C.link} />
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: C.black }]}
               placeholder="Search projects, authors, tags..."
-              placeholderTextColor="rgb(164, 132, 109)"
+              placeholderTextColor={C.link}
               value={search}
               onChangeText={setSearch}
             />
-
             {search.length > 0 && (
               <TouchableOpacity onPress={() => setSearch("")}>
-                <Ionicons
-                  name="close-circle"
-                  size={18}
-                  color="rgb(164, 132, 109)"
-                />
+                <Ionicons name="close-circle" size={18} color={C.link} />
               </TouchableOpacity>
             )}
           </View>
-
-          <TouchableOpacity
-            style={styles.allProjectsBtn}
-            onPress={() => router.push("/Gallery")}
-          >
+          <TouchableOpacity style={[styles.allProjectsBtn, { backgroundColor: C.button }]} onPress={() => router.push("/Gallery")}>
             <Text style={styles.allProjectsBtnText}>All Projects</Text>
           </TouchableOpacity>
         </View>
 
         {/* Categories */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.categoriesScroll}
-          contentContainerStyle={styles.categoriesContent}
-        >
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll} contentContainerStyle={styles.categoriesContent}>
           {CATEGORIES.map((cat) => (
             <TouchableOpacity
               key={cat}
-              style={[
-                styles.categoryChip,
-                activeCategory === cat && styles.categoryChipActive,
-              ]}
+              style={[styles.categoryChip, { backgroundColor: C.white, borderColor: C.input }, activeCategory === cat && { backgroundColor: C.button, borderColor: C.button }]}
               onPress={() => setActiveCategory(cat)}
             >
-              <Text
-                style={[
-                  styles.categoryChipText,
-                  activeCategory === cat && styles.categoryChipTextActive,
-                ]}
-              >
-                {cat}
-              </Text>
+              <Text style={[styles.categoryChipText, { color: C.button }, activeCategory === cat && { color: C.white }]}>{cat}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
 
-        {/* Recommended Projects */}
+        {/* Recommended */}
         <View style={styles.sectionTitleRow}>
-          <Text style={styles.sectionTitle}>Recommended Projects</Text>
-
+          <Text style={[styles.sectionTitle, { color: C.black }]}>Recommended Projects</Text>
           {(search.length > 0 || activeCategory !== "All Projects") && (
-            <Text style={styles.resultsCount}>
-              {filteredProjects.length} results
-            </Text>
+            <Text style={[styles.resultsCount, { color: C.button }]}>{filteredProjects.length} results</Text>
           )}
         </View>
 
         {filteredProjects.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons
-              name="search-outline"
-              size={48}
-              color="rgb(185, 174, 167)"
-            />
-
-            <Text style={styles.emptyText}>No projects found</Text>
-
-            <TouchableOpacity
-              onPress={() => {
-                setSearch("");
-                setActiveCategory("All Projects");
-              }}
-            >
-              <Text style={styles.emptyReset}>Clear search</Text>
+            <Ionicons name="search-outline" size={48} color={C.input} />
+            <Text style={[styles.emptyText, { color: C.link }]}>No projects found</Text>
+            <TouchableOpacity onPress={() => { setSearch(""); setActiveCategory("All Projects"); }}>
+              <Text style={[styles.emptyReset, { color: C.button }]}>Clear search</Text>
             </TouchableOpacity>
           </View>
         ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.cardsScroll}
-          >
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardsScroll}>
             {filteredProjects.map((project) => (
               <TouchableOpacity
                 key={project.id}
-                style={styles.projectCard}
+                style={[styles.projectCard, { backgroundColor: C.white }]}
                 activeOpacity={0.92}
-                onPress={() =>
-                  router.push({
-                    pathname: "/project-details",
-                    params: {
-                      title: project.title,
-                      year: project.year,
-                      image: project.image,
-                      description: `${project.title} by ${project.author}`,
-                      tags: project.tags.join(","),
-                    },
-                  })
-                }
+                onPress={() => router.push({ pathname: "/project-details", params: { title: project.title, year: project.year, image: project.image, description: `${project.title} by ${project.author}`, tags: project.tags.join(",") } })}
               >
                 <View style={styles.projectImgWrapper}>
                   <Image source={{ uri: project.image }} style={styles.projectImg} />
-
-                  <LinearGradient
-                    colors={["transparent", "rgba(0,0,0,0.75)"]}
-                    style={styles.projectGradient}
-                  />
-
+                  <LinearGradient colors={["transparent", "rgba(0,0,0,0.75)"]} style={styles.projectGradient} />
                   <View style={styles.projectBadge}>
                     <Text style={styles.projectBadgeText}>{project.badge}</Text>
                   </View>
-
                   <TouchableOpacity style={styles.bookmarkBtn}>
                     <Ionicons name="bookmark-outline" size={16} color="#fff" />
                   </TouchableOpacity>
-
                   <View style={styles.projectOverlayInfo}>
                     <View style={styles.projectRatingBadge}>
                       <Ionicons name="star" size={12} color="#f59e0b" />
-                      <Text style={styles.projectRatingText}>
-                        {project.rating}
-                      </Text>
+                      <Text style={styles.projectRatingText}>{project.rating}</Text>
                     </View>
                   </View>
                 </View>
-
                 <View style={styles.projectCardBody}>
-                  <Text style={styles.projectTitle} numberOfLines={2}>
-                    {project.title}
-                  </Text>
-
+                  <Text style={[styles.projectTitle, { color: C.black }]} numberOfLines={2}>{project.title}</Text>
                   <View style={styles.projectMeta}>
-                    <View style={styles.projectAuthorDot}>
-                      <Text style={styles.projectAuthorInitial}>
-                        {project.author.charAt(0)}
-                      </Text>
+                    <View style={[styles.projectAuthorDot, { backgroundColor: C.button }]}>
+                      <Text style={styles.projectAuthorInitial}>{project.author.charAt(0)}</Text>
                     </View>
-
-                    <Text style={styles.projectAuthor} numberOfLines={1}>
-                      {project.author}
-                    </Text>
-
-                    <Text style={styles.projectYear}>{project.year}</Text>
+                    <Text style={[styles.projectAuthor, { color: C.link }]} numberOfLines={1}>{project.author}</Text>
+                    <Text style={[styles.projectYear, { color: C.link }]}>{project.year}</Text>
                   </View>
-
                   <View style={styles.projectTags}>
                     {project.tags.slice(0, 2).map((tag) => (
-                      <View key={tag} style={styles.projectTag}>
-                        <Text style={styles.projectTagText}>{tag}</Text>
+                      <View key={tag} style={[styles.projectTag, { backgroundColor: C.chip }]}>
+                        <Text style={[styles.projectTagText, { color: C.button }]}>{tag}</Text>
                       </View>
                     ))}
                   </View>
-
-                  <View style={styles.projectStats}>
+                  <View style={[styles.projectStats, { borderTopColor: C.border }]}>
                     <View style={styles.statItem}>
                       <Ionicons name="star" size={13} color="#f59e0b" />
-                      <Text style={styles.statText}>{project.rating}</Text>
+                      <Text style={[styles.statText, { color: C.link }]}>{project.rating}</Text>
                     </View>
-
-                    <View style={styles.statDivider} />
-
+                    <View style={[styles.statDivider, { backgroundColor: C.input }]} />
                     <View style={styles.statItem}>
-                      <Ionicons
-                        name="chatbubble-outline"
-                        size={13}
-                        color="rgb(164, 132, 109)"
-                      />
-                      <Text style={styles.statText}>
-                        {project.comments} comments
-                      </Text>
+                      <Ionicons name="chatbubble-outline" size={13} color={C.link} />
+                      <Text style={[styles.statText, { color: C.link }]}>{project.comments} comments</Text>
                     </View>
                   </View>
                 </View>
@@ -417,24 +239,13 @@ export default function HomeScreen() {
           </ScrollView>
         )}
 
-        {/* Explore by Tags */}
-        <Text style={[styles.sectionTitle, { marginTop: 20 }]}>
-          Explore by Tags
-        </Text>
-
+        {/* Tags */}
+        <Text style={[styles.sectionTitle, { marginTop: 20, color: C.black }]}>Explore by Tags</Text>
         <View style={styles.tagsGrid}>
           {TAGS.map((tag) => (
-            <TouchableOpacity
-              key={tag.label}
-              style={styles.tagChip}
-              onPress={() => setSearch(tag.label)}
-            >
-              <Ionicons
-                name={tag.icon as any}
-                size={18}
-                color="rgb(104, 68, 42)"
-              />
-              <Text style={styles.tagChipText}>{tag.label}</Text>
+            <TouchableOpacity key={tag.label} style={[styles.tagChip, { backgroundColor: C.white, borderColor: C.input }]} onPress={() => setSearch(tag.label)}>
+              <Ionicons name={tag.icon as any} size={18} color={C.button} />
+              <Text style={[styles.tagChipText, { color: C.black }]}>{tag.label}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -446,450 +257,68 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "rgb(240, 234, 228)" },
-
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-
-  logoWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-
+  container: { flex: 1 },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12 },
+  logoWrapper: { flexDirection: "row", alignItems: "center", gap: 8 },
   logoIcon: { fontSize: 28 },
-
-  logoTextBold: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "rgb(47, 28, 15)",
-    lineHeight: 20,
-  },
-
-  logoTextLight: {
-    fontSize: 14,
-    fontWeight: "400",
-    color: "rgb(104, 68, 42)",
-    lineHeight: 16,
-  },
-
-  headerRight: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  avatarSmall: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 2,
-    borderColor: "rgb(104, 68, 42)",
-  },
-
-  quickLinks: {
-    flexDirection: "row",
-    paddingHorizontal: 16,
-    gap: 16,
-    marginBottom: 14,
-    flexWrap: "wrap",
-  },
-
-  quickLink: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-
+  logoTextBold: { fontSize: 18, fontWeight: "800", lineHeight: 20 },
+  logoTextLight: { fontSize: 14, fontWeight: "400", lineHeight: 16 },
+  avatarSmall: { width: 38, height: 38, borderRadius: 19, borderWidth: 2 },
+  quickLinks: { flexDirection: "row", paddingHorizontal: 16, gap: 16, marginBottom: 14, flexWrap: "wrap" },
+  quickLink: { flexDirection: "row", alignItems: "center", gap: 6 },
   quickLinkIcon: { fontSize: 16 },
-
-  quickLinkText: {
-    fontSize: 13,
-    color: "rgb(47, 28, 15)",
-    fontWeight: "600",
-  },
-
-  searchRow: {
-    flexDirection: "row",
-    paddingHorizontal: 16,
-    gap: 8,
-    marginBottom: 14,
-    alignItems: "center",
-  },
-
-  searchBox: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgb(254, 251, 245)",
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: "rgb(185, 174, 167)",
-  },
-
-  searchInput: {
-    flex: 1,
-    fontSize: 13,
-    color: "rgb(47, 28, 15)",
-  },
-
-  allProjectsBtn: {
-    backgroundColor: "rgb(104, 68, 42)",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 14,
-  },
-
-  allProjectsBtnText: {
-    color: "#fff",
-    fontSize: 13,
-    fontWeight: "700",
-  },
-
+  quickLinkText: { fontSize: 13, fontWeight: "600" },
+  searchRow: { flexDirection: "row", paddingHorizontal: 16, gap: 8, marginBottom: 14, alignItems: "center" },
+  searchBox: { flex: 1, flexDirection: "row", alignItems: "center", borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10, gap: 8, borderWidth: 1 },
+  searchInput: { flex: 1, fontSize: 13 },
+  allProjectsBtn: { paddingHorizontal: 12, paddingVertical: 10, borderRadius: 14 },
+  allProjectsBtnText: { color: "#fff", fontSize: 13, fontWeight: "700" },
   categoriesScroll: { marginBottom: 18 },
-
-  categoriesContent: {
-    paddingHorizontal: 16,
-    gap: 8,
-  },
-
-  categoryChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-    borderRadius: 22,
-    backgroundColor: "rgb(254, 251, 245)",
-    borderWidth: 1,
-    borderColor: "rgb(185, 174, 167)",
-  },
-
-  categoryChipActive: {
-    backgroundColor: "rgb(104, 68, 42)",
-    borderColor: "rgb(104, 68, 42)",
-  },
-
-  categoryChipText: {
-    fontSize: 13,
-    color: "rgb(104, 68, 42)",
-    fontWeight: "600",
-  },
-
-  categoryChipTextActive: { color: "#fff" },
-
-  sectionTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    marginBottom: 14,
-  },
-
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: "rgb(47, 28, 15)",
-    paddingHorizontal: 16,
-    marginBottom: 14,
-  },
-
-  resultsCount: {
-    fontSize: 13,
-    color: "rgb(104, 68, 42)",
-    fontWeight: "600",
-    paddingRight: 16,
-  },
-
-  emptyState: {
-    alignItems: "center",
-    paddingVertical: 40,
-    gap: 10,
-  },
-
-  emptyText: {
-    fontSize: 16,
-    color: "rgb(164, 132, 109)",
-    fontWeight: "600",
-  },
-
-  emptyReset: {
-    fontSize: 14,
-    color: "rgb(104, 68, 42)",
-    fontWeight: "700",
-    textDecorationLine: "underline",
-  },
-
-  cardsScroll: {
-    paddingHorizontal: 16,
-    gap: 16,
-    paddingBottom: 8,
-  },
-
-  projectCard: {
-    width: 230,
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    overflow: "hidden",
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-  },
-
-  projectImgWrapper: {
-    width: "100%",
-    height: 160,
-    position: "relative",
-  },
-
-  projectImg: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-
-  projectGradient: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 80,
-  },
-
-  projectBadge: {
-    position: "absolute",
-    top: 12,
-    left: 12,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-  },
-
-  projectBadgeText: {
-    color: "#fff",
-    fontSize: 11,
-    fontWeight: "700",
-  },
-
-  bookmarkBtn: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    padding: 7,
-    borderRadius: 10,
-  },
-
-  projectOverlayInfo: {
-    position: "absolute",
-    bottom: 10,
-    right: 12,
-  },
-
-  projectRatingBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    backgroundColor: "rgba(0,0,0,0.55)",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-
-  projectRatingText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-
+  categoriesContent: { paddingHorizontal: 16, gap: 8 },
+  categoryChip: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 22, borderWidth: 1 },
+  categoryChipText: { fontSize: 13, fontWeight: "600" },
+  sectionTitleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, marginBottom: 14 },
+  sectionTitle: { fontSize: 20, fontWeight: "800", paddingHorizontal: 16, marginBottom: 14 },
+  resultsCount: { fontSize: 13, fontWeight: "600", paddingRight: 16 },
+  emptyState: { alignItems: "center", paddingVertical: 40, gap: 10 },
+  emptyText: { fontSize: 16, fontWeight: "600" },
+  emptyReset: { fontSize: 14, fontWeight: "700", textDecorationLine: "underline" },
+  cardsScroll: { paddingHorizontal: 16, gap: 16, paddingBottom: 8 },
+  projectCard: { width: 230, borderRadius: 20, overflow: "hidden", elevation: 5, shadowColor: "#000", shadowOpacity: 0.12, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } },
+  projectImgWrapper: { width: "100%", height: 160, position: "relative" },
+  projectImg: { width: "100%", height: "100%", resizeMode: "cover" },
+  projectGradient: { position: "absolute", bottom: 0, left: 0, right: 0, height: 80 },
+  projectBadge: { position: "absolute", top: 12, left: 12, backgroundColor: "rgba(0,0,0,0.6)", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 },
+  projectBadgeText: { color: "#fff", fontSize: 11, fontWeight: "700" },
+  bookmarkBtn: { position: "absolute", top: 12, right: 12, backgroundColor: "rgba(0,0,0,0.4)", padding: 7, borderRadius: 10 },
+  projectOverlayInfo: { position: "absolute", bottom: 10, right: 12 },
+  projectRatingBadge: { flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: "rgba(0,0,0,0.55)", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10 },
+  projectRatingText: { color: "#fff", fontSize: 12, fontWeight: "700" },
   projectCardBody: { padding: 14 },
-
-  projectTitle: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: "rgb(47, 28, 15)",
-    marginBottom: 8,
-    lineHeight: 20,
-  },
-
-  projectMeta: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-    marginBottom: 10,
-  },
-
-  projectAuthorDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "rgb(104, 68, 42)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  projectAuthorInitial: {
-    color: "#fff",
-    fontSize: 11,
-    fontWeight: "bold",
-  },
-
-  projectAuthor: {
-    fontSize: 12,
-    color: "rgb(92, 64, 51)",
-    flex: 1,
-    fontWeight: "500",
-  },
-
-  projectYear: {
-    fontSize: 12,
-    color: "rgb(164, 132, 109)",
-    fontWeight: "600",
-  },
-
-  projectTags: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-    marginBottom: 10,
-  },
-
-  projectTag: {
-    backgroundColor: "rgb(240, 234, 228)",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-  },
-
-  projectTagText: {
-    fontSize: 11,
-    color: "rgb(92, 64, 51)",
-    fontWeight: "600",
-  },
-
-  projectStats: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: "rgb(240, 234, 228)",
-  },
-
-  statItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-
-  statText: {
-    fontSize: 12,
-    color: "rgb(92, 64, 51)",
-    fontWeight: "600",
-  },
-
-  statDivider: {
-    width: 1,
-    height: 14,
-    backgroundColor: "rgb(185, 174, 167)",
-  },
-
-  tagsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    paddingHorizontal: 16,
-    gap: 10,
-  },
-
-  tagChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "rgb(254, 251, 245)",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 25,
-    borderWidth: 1,
-    borderColor: "rgb(185, 174, 167)",
-    width: "47%",
-  },
-
-  tagChipText: {
-    fontSize: 14,
-    color: "rgb(47, 28, 15)",
-    fontWeight: "600",
-  },
-
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.3)",
-    justifyContent: "flex-start",
-    alignItems: "flex-end",
-    paddingTop: 70,
-    paddingRight: 16,
-  },
-
-  menuCard: {
-    backgroundColor: "#fff",
-    borderRadius: 18,
-    width: 270,
-    elevation: 12,
-    overflow: "hidden",
-  },
-
-  menuHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    padding: 16,
-  },
-
-  menuAvatar: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-  },
-
-  menuName: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "rgb(47, 28, 15)",
-  },
-
-  menuEmail: {
-    fontSize: 12,
-    color: "rgb(164, 132, 109)",
-    marginTop: 2,
-  },
-
-  menuDivider: {
-    height: 1,
-    backgroundColor: "rgb(240, 234, 228)",
-  },
-
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    padding: 16,
-  },
-
-  menuItemText: {
-    fontSize: 15,
-    color: "rgb(47, 28, 15)",
-    fontWeight: "500",
-  },
+  projectTitle: { fontSize: 15, fontWeight: "800", marginBottom: 8, lineHeight: 20 },
+  projectMeta: { flexDirection: "row", alignItems: "center", gap: 7, marginBottom: 10 },
+  projectAuthorDot: { width: 24, height: 24, borderRadius: 12, justifyContent: "center", alignItems: "center" },
+  projectAuthorInitial: { color: "#fff", fontSize: 11, fontWeight: "bold" },
+  projectAuthor: { fontSize: 12, flex: 1, fontWeight: "500" },
+  projectYear: { fontSize: 12, fontWeight: "600" },
+  projectTags: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 10 },
+  projectTag: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 },
+  projectTagText: { fontSize: 11, fontWeight: "600" },
+  projectStats: { flexDirection: "row", alignItems: "center", gap: 8, paddingTop: 8, borderTopWidth: 1 },
+  statItem: { flexDirection: "row", alignItems: "center", gap: 4 },
+  statText: { fontSize: 12, fontWeight: "600" },
+  statDivider: { width: 1, height: 14 },
+  tagsGrid: { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 16, gap: 10 },
+  tagChip: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 14, borderRadius: 25, borderWidth: 1, width: "47%" },
+  tagChipText: { fontSize: 14, fontWeight: "600" },
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.3)", justifyContent: "flex-start", alignItems: "flex-end", paddingTop: 70, paddingRight: 16 },
+  menuCard: { borderRadius: 18, width: 270, elevation: 12, overflow: "hidden" },
+  menuHeader: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16 },
+  menuAvatar: { width: 46, height: 46, borderRadius: 23 },
+  menuName: { fontSize: 16, fontWeight: "700" },
+  menuEmail: { fontSize: 12, marginTop: 2 },
+  menuDivider: { height: 1 },
+  menuItem: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16 },
+  menuItemText: { fontSize: 15, fontWeight: "500" },
 });
