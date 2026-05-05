@@ -17,10 +17,10 @@ import {
 const MESSAGES_COL = "contactMessages";
 const SETTINGS_REF = () => doc(db, "settings", "siteConfig");
 
-// ── Send a message (max 3 per day per sender email) ─────────────────────────
+// ── Send a message (max N per day per sender email, N from Firestore) ────────
 export async function sendContactMessage({ name, email, message }) {
   try {
-    // 1. Check if contact is enabled
+    // 1. Check if contact is enabled + read dynamic limit
     const settingsSnap = await getDoc(SETTINGS_REF());
     if (settingsSnap.exists()) {
       const data = settingsSnap.data();
@@ -28,6 +28,11 @@ export async function sendContactMessage({ name, email, message }) {
         return { ok: false, reason: "disabled" };
       }
     }
+
+    // Dynamic daily limit (fallback → 3)
+    const dailyLimit = settingsSnap.exists()
+      ? (settingsSnap.data().maxMessagesPerDay ?? 3)
+      : 3;
 
     // 2. Get all messages for this email (ONLY equality → no index needed)
     const q = query(
@@ -46,16 +51,15 @@ export async function sendContactMessage({ name, email, message }) {
     snap.forEach((doc) => {
       const data = doc.data();
       if (!data.createdAt) return;
-
       const msgDate = data.createdAt.toDate();
-
       if (msgDate >= startOfDay) {
         todayCount++;
       }
     });
 
-    if (todayCount >= 3) {
-      return { ok: false, reason: "limit" };
+    if (todayCount >= dailyLimit) {
+      // ← dailyLimit مبعوت مع الـ reason عشان الـ UI يعرضه
+      return { ok: false, reason: "limit", limit: dailyLimit };
     }
 
     // 4. Save message
