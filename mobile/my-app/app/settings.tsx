@@ -11,6 +11,9 @@ import {
   Modal,
   ActivityIndicator,
   Animated,
+  KeyboardAvoidingView,
+  Platform,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -23,7 +26,17 @@ import {
   updateUserPassword,
   deleteAccount,
 } from '../backend/Dashsettings';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
+
+// ─── Font Size Context ────────────────────────────────────────────────────────
+const FONT_SIZES = {
+  small: { scale: 0.85, label: 'Small' },
+  medium: { scale: 1, label: 'Medium' },
+  large: { scale: 1.15, label: 'Large' },
+};
+
+const FONT_SIZE_KEY = '@font_size';
 
 // ─── Animated Row ────────────────────────────────────────────────────────────
 function SettingRow({
@@ -88,17 +101,32 @@ function Section({ title, children, C }: any) {
   );
 }
 
-// ─── Modal Shell ─────────────────────────────────────────────────────────────
+// ─── Modal Shell with Keyboard Avoidance ──────────────────────────────────────
 function ModalShell({ visible, onClose, title, children, C }: any) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={[styles.modalBox, { backgroundColor: C.white }]}>
-          <View style={[styles.modalHandle, { backgroundColor: C.border }]} />
-          <Text style={[styles.modalTitle, { color: C.black }]}>{title}</Text>
-          {children}
-        </View>
-      </View>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.modalOverlay}
+      >
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
+          <TouchableOpacity
+            style={[styles.modalBox, { backgroundColor: C.white }]}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: 20 }}
+            >
+              <View style={[styles.modalHandle, { backgroundColor: C.border }]} />
+              <Text style={[styles.modalTitle, { color: C.black }]}>{title}</Text>
+              {children}
+            </ScrollView>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -110,6 +138,8 @@ export default function SettingsScreen() {
 
   const [notifications, setNotifications] = useState(true);
   const [language, setLanguage] = useState('English');
+  const [fontSize, setFontSizeState] = useState('medium');
+  const [dataSaver, setDataSaver] = useState(false);
 
   // user data
   const [currentName, setCurrentName] = useState('');
@@ -141,6 +171,26 @@ export default function SettingsScreen() {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showDeletePw, setShowDeletePw] = useState(false);
+
+  // Load font size from storage
+  useEffect(() => {
+    const loadFontSize = async () => {
+      try {
+        const saved = await AsyncStorage.getItem(FONT_SIZE_KEY);
+        if (saved) setFontSizeState(saved);
+      } catch (error) {}
+    };
+    loadFontSize();
+  }, []);
+
+  // Save font size
+  const setFontSize = async (size: string) => {
+    setFontSizeState(size);
+    await AsyncStorage.setItem(FONT_SIZE_KEY, size);
+  };
+
+  // Scale function for fonts
+  const getFontScale = () => FONT_SIZES[fontSize as keyof typeof FONT_SIZES]?.scale || 1;
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -227,6 +277,32 @@ export default function SettingsScreen() {
     ]);
   };
 
+  const handleClearCache = async () => {
+    Alert.alert(
+      'Clear Cache',
+      'Are you sure you want to clear app cache? You will remain logged in.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const keys = await AsyncStorage.getAllKeys();
+              const keysToRemove = keys.filter(
+                k => k !== '@theme_mode' && k !== FONT_SIZE_KEY && !k.includes('user')
+              );
+              await AsyncStorage.multiRemove(keysToRemove);
+              toast('success', 'Cache cleared successfully');
+            } catch (error) {
+              toast('error', 'Could not clear cache');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const toast = (type: string, msg: string) =>
     Toast.show({ type, text1: msg, position: 'top' });
 
@@ -252,7 +328,6 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: C.bg }]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: C.border }]}>
           <Text style={[styles.headerTitle, { color: C.black }]}>Settings</Text>
@@ -274,6 +349,60 @@ export default function SettingsScreen() {
                 <ThemePill mode="system" label="⚙️" />
               </View>
             }
+          />
+        </Section>
+
+        {/* ── Font Size ── */}
+        <Section title="🔤  Display" C={C}>
+          <SettingRow
+            icon="🔤"
+            label="Font Size"
+            sublabel={FONT_SIZES[fontSize as keyof typeof FONT_SIZES]?.label || 'Medium'}
+            C={C}
+            isLast
+            right={
+              <View style={styles.themeRow}>
+                <TouchableOpacity
+                  onPress={() => setFontSize('small')}
+                  style={[styles.themePill, { backgroundColor: fontSize === 'small' ? C.button : C.chip }]}
+                >
+                  <Text style={[styles.themePillText, { color: fontSize === 'small' ? C.white : C.link }]}>A⁻</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setFontSize('medium')}
+                  style={[styles.themePill, { backgroundColor: fontSize === 'medium' ? C.button : C.chip }]}
+                >
+                  <Text style={[styles.themePillText, { color: fontSize === 'medium' ? C.white : C.link }]}>A</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setFontSize('large')}
+                  style={[styles.themePill, { backgroundColor: fontSize === 'large' ? C.button : C.chip }]}
+                >
+                  <Text style={[styles.themePillText, { color: fontSize === 'large' ? C.white : C.link }]}>A⁺</Text>
+                </TouchableOpacity>
+              </View>
+            }
+          />
+        </Section>
+
+        {/* ── Project Management ── */}
+        <Section title="📁  Project Management" C={C}>
+          <SettingRow
+            icon="📂"
+            label="My Projects"
+            sublabel="View, edit, or delete your projects"
+            onPress={() => router.push('/my-projects')}
+            C={C}
+            right={<ChevronRight />}
+          />
+          <SettingRow
+            icon="📊"
+            label="Project Stats"
+            sublabel="Views, ratings, and engagement"
+            onPress={() => toast('info', 'Coming soon')}
+            C={C}
+            isLast
+            right={<ChevronRight />}
           />
         </Section>
 
@@ -322,6 +451,19 @@ export default function SettingsScreen() {
             }
           />
           <SettingRow
+            icon="📡" label="Data Saver"
+            sublabel={dataSaver ? 'Low quality images' : 'High quality images'}
+            C={C}
+            right={
+              <Switch
+                value={dataSaver}
+                onValueChange={setDataSaver}
+                trackColor={{ false: C.input, true: C.button }}
+                thumbColor={C.white}
+              />
+            }
+          />
+          <SettingRow
             icon="🌐" label="Language"
             sublabel="App display language"
             C={C} isLast
@@ -333,6 +475,18 @@ export default function SettingsScreen() {
                 <Text style={[styles.badgeText, { color: C.button }]}>{language}</Text>
               </TouchableOpacity>
             }
+          />
+        </Section>
+
+        {/* ── Storage ── */}
+        <Section title="🗑️  Storage" C={C}>
+          <SettingRow
+            icon="🧹"
+            label="Clear Cache"
+            sublabel="Free up storage space"
+            onPress={handleClearCache}
+            C={C}
+            right={<ChevronRight />}
           />
         </Section>
 
@@ -349,6 +503,20 @@ export default function SettingsScreen() {
 
         {/* ── About ── */}
         <Section title="ℹ️  About" C={C}>
+          <SettingRow
+            icon="📜" label="Privacy Policy"
+            sublabel="Read our privacy policy"
+            onPress={() => Linking.openURL('https://your-privacy-policy-url.com')}
+            C={C}
+            right={<ChevronRight />}
+          />
+          <SettingRow
+            icon="⚖️" label="Terms of Service"
+            sublabel="Read our terms"
+            onPress={() => Linking.openURL('https://your-terms-url.com')}
+            C={C}
+            right={<ChevronRight />}
+          />
           <SettingRow
             icon="📱" label="App Version"
             sublabel="GradHub Mobile"
@@ -556,6 +724,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
     padding: 24,
     paddingBottom: 36,
+    maxHeight: '85%',
   },
   modalHandle: {
     width: 40,
