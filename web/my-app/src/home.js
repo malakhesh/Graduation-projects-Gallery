@@ -12,6 +12,7 @@ import { listenNotifs, markAllSeen, markRead } from './notifications.js';
 import { ProjectCard, ProjectModal } from './ProjectCard.js';
 import { FilterPanel } from './FilterPanel.js';
 import { useFilters } from './useFilters.js';
+import { getUploadOptions } from './configs.js';
 import {
   FaGraduationCap, FaUser, FaBell, FaSearch, FaFilter, FaChevronDown,
   FaBookOpen, FaBookmark, FaFolderOpen, FaBriefcase, FaShoppingCart, FaFilm, FaNewspaper,
@@ -21,13 +22,8 @@ import {
 // ✅ Fixed: correct port (your backend runs on 5000)
 const API_BASE = "http://localhost:5000";
 
-const exploreTags = [
-  { label: "Business", icon: <FaBriefcase /> },
-  { label: "Education", icon: <FaBookOpen /> },
-  { label: "E-commerce", icon: <FaShoppingCart /> },
-  { label: "Entertainment", icon: <FaFilm /> },
-  { label: "Blog", icon: <FaNewspaper /> },
-];
+// ── REMOVED hardcoded exploreTags array ──
+// Tags are now fetched dynamically from Firestore via uploadOptions
 
 // ── API helpers ──────────────────────────────────────────────
 async function trackView(uid, projectId) {
@@ -406,7 +402,6 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
   useEffect(() => {
     if (!uid) return;
 
-    // Client-side top-rated fallback using already-fetched allProjects
     const getClientTopRated = () => {
       const avg = (p) => {
         const vals = Object.values(p.userRatings || {});
@@ -419,11 +414,9 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
 
     fetchRecommendations(uid).then((data) => {
       if (data && data.projects && data.projects.length > 0) {
-        // Server is up and returned projects
         setProjects(data.projects);
         setLabel(getRecommendationLabel(data.type));
       } else {
-        // Server is down, or returned empty → fall back to client-side top rated
         setProjects(getClientTopRated());
         setLabel("Top Rated Projects");
       }
@@ -504,7 +497,6 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
       ) : projects.length === 0 ? (
         <p className="hg-no-results">No recommendations yet. Start exploring projects!</p>
       ) : (
-        // ✅ FIX: outer div clips side-bleed, inner div keeps hover scale room
         <div style={{ overflow: "hidden", width: "100%", margin: "-12px 0" }}>
           <div ref={containerRef} style={{ overflow: "visible", width: "100%", padding: "12px 0" }}>
             <div
@@ -566,19 +558,35 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
   );
 }
 
-function ExploreTags({ selectedTag, onSelectTag }) {
+// ── Icon mapping for known tag names (fallback to FaBookOpen) ──────────────
+const TAG_ICON_MAP = {
+  business:      <FaBriefcase />,
+  education:     <FaBookOpen />,
+  "e-commerce":  <FaShoppingCart />,
+  entertainment: <FaFilm />,
+  blog:          <FaNewspaper />,
+};
+
+function getTagIcon(label) {
+  return TAG_ICON_MAP[label.toLowerCase()] || <FaBookOpen />;
+}
+
+// ── ExploreTags now receives tags as a prop from Home ─────────────────────
+function ExploreTags({ tags, selectedTag, onSelectTag }) {
+  if (!tags || tags.length === 0) return null;
+
   return (
     <section className="hg-section">
       <h2 className="hg-section-title">Explore by Tags</h2>
       <div className="hg-tags-grid">
-        {exploreTags.map((tag) => (
+        {tags.map((label) => (
           <div
-            key={tag.label}
-            className={`hg-tag-card${selectedTag === tag.label ? " hg-tag-card-active" : ""}`}
-            onClick={() => onSelectTag(selectedTag === tag.label ? null : tag.label)}
+            key={label}
+            className={`hg-tag-card${selectedTag === label ? " hg-tag-card-active" : ""}`}
+            onClick={() => onSelectTag(selectedTag === label ? null : label)}
           >
-            <span className="hg-tag-icon">{tag.icon}</span>
-            <span className="hg-tag-label">{tag.label}</span>
+            <span className="hg-tag-icon">{getTagIcon(label)}</span>
+            <span className="hg-tag-label">{label}</span>
           </div>
         ))}
       </div>
@@ -648,11 +656,16 @@ function Home() {
   const [allProjects, setAllProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [selectedProject, setSelectedProject] = useState(null);
+
+  // ── Upload options from Firestore (tags, categories, techStacks) ──
+  const [uploadOptions, setUploadOptions] = useState({ tags: [], categories: [], techStacks: [] });
+  const [optionsLoaded, setOptionsLoaded] = useState(false);
+
   const [user] = useAuthState(auth);
 
   const {
     search, setSearch, filters, updateFilter, toggleArrayFilter,
-    clearFilters, hasActiveFilters, isSearchOrFilter, allStacks, filtered,
+    clearFilters, hasActiveFilters, isSearchOrFilter, filtered,
   } = useFilters(allProjects);
 
   useEffect(() => {
@@ -668,6 +681,24 @@ function Home() {
       setLoadingProjects(false);
     });
   }, []);
+
+  // ── Fetch tags, categories, techStacks from Firestore ──
+  useEffect(() => {
+    getUploadOptions().then((data) => {
+      if (data && data !== "get-options-fail") {
+        setUploadOptions({
+          tags: data.tags || [],
+          categories: data.categories || [],
+          techStacks: data.techStacks || [],
+        });
+      }
+      setOptionsLoaded(true);
+    });
+  }, []);
+
+  // ── Derive exploreTags dynamically from Firestore tags ──
+  // Falls back to a known icon if the tag name matches, otherwise uses FaBookOpen
+  const exploreTags = uploadOptions.tags;
 
   const toggleBookmark = async (id) => {
     if (!user) return;
@@ -709,7 +740,9 @@ function Home() {
           toggleArrayFilter={toggleArrayFilter}
           clearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}
-          allStacks={allStacks}
+          allStacks={uploadOptions.techStacks}
+          tags={uploadOptions.tags}
+          categories={uploadOptions.categories}
         />
 
         {isSearchOrFilter ? (
@@ -746,7 +779,14 @@ function Home() {
               onOpenProject={handleOpenProject}
               allProjects={allProjects}
             />
-            <ExploreTags selectedTag={selectedTag} onSelectTag={handleSelectTag} />
+            {/* Only render ExploreTags once Firestore options have loaded */}
+            {optionsLoaded && (
+              <ExploreTags
+                tags={exploreTags}
+                selectedTag={selectedTag}
+                onSelectTag={handleSelectTag}
+              />
+            )}
             {selectedTag && (
               <TagProjects
                 tag={selectedTag}

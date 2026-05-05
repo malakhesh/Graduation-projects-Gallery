@@ -1,33 +1,25 @@
 import { 
-  collection, addDoc, doc, getDoc, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, query, where, serverTimestamp, Timestamp
+  collection, addDoc, doc, getDoc, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, query, where, serverTimestamp, orderBy, limit, startAfter
 } from "firebase/firestore"
 import { db } from "./firebase.js"
 import { sendNotif } from "./notifications.js"
 import { getUser } from "./auth.js"
-import { getSettings } from "./DashSettings.js"
+import { getSettings, getDailyProjCount, incrementDailyProjCount } from "./DashSettings.js"
 
 async function addProj(title, desc, userId, year, stack, category, gitLink, imgUrl, tags) {
   try {
-    // Load site settings to check autoApprove and maxProjectsPerUserPerDay
-    const settings = await getSettings()
+    const [settings, dailyCount] = await Promise.all([
+      getSettings(),
+      getDailyProjCount(userId),
+    ])
 
-    // Check daily project limit
-    const maxPerDay = settings?.maxProjectsPerUserPerDay ?? 3
-    const startOfToday = new Date()
-    startOfToday.setHours(0, 0, 0, 0)
-    const todayTimestamp = Timestamp.fromDate(startOfToday)
+    // Check uploads are open
+    if (settings?.projectUploadOpen === false) return "uploads-closed"
 
-    const dailyQuery = query(
-      collection(db, "projects"),
-      where("userId", "==", userId),
-      where("createdAt", ">=", todayTimestamp)
-    )
-    const dailySnap = await getDocs(dailyQuery)
-    if (dailySnap.size >= maxPerDay) {
-      return "daily-limit-reached"
-    }
+    // Check daily limit (server-side enforcement — cannot be bypassed client-side)
+    const limit = settings?.maxProjectsPerUserPerDay ?? 3
+    if (dailyCount >= limit) return "daily-limit-reached"
 
-    // Determine status based on autoApprove
     const status = settings?.autoApprove === true ? "approved" : "pending"
 
     const r = await addDoc(collection(db, "projects"), {
@@ -47,7 +39,9 @@ async function addProj(title, desc, userId, year, stack, category, gitLink, imgU
       hidden: false,
     })
 
-    // If auto-approved, notify the user immediately
+    // Increment the daily counter AFTER successful Firestore write
+    await incrementDailyProjCount(userId)
+
     if (status === "approved") {
       await sendNotif(userId, {
         type: "approved",
@@ -79,7 +73,6 @@ async function getApproved() {
     const q = query(collection(db, "projects"), where("status", "==", "approved"))
     const s = await getDocs(q)
     let arr = []
-    // Filter hidden in JS — avoids excluding docs where the field doesn't exist yet
     s.forEach((d) => {
       const data = d.data()
       if (data.hidden !== true) arr.push({ id: d.id, ...data })
@@ -345,26 +338,9 @@ async function notifyBookmark(projectId, bookmarkerUid) {
   } catch {}
 }
 
-async function getDailyProjCount(userId) {
-  try {
-    const startOfToday = new Date()
-    startOfToday.setHours(0, 0, 0, 0)
-    const todayTimestamp = Timestamp.fromDate(startOfToday)
-    const q = query(
-      collection(db, "projects"),
-      where("userId", "==", userId),
-      where("createdAt", ">=", todayTimestamp)
-    )
-    const snap = await getDocs(q)
-    return snap.size
-  } catch {
-    return 0
-  }
-}
-
 export { 
   addProj, getProj, getApproved, getPending, getRejected, setStatus, 
   getUserProjs, getByTag, getByCategory, getByStack,
   addComment, addRate, removeRate, delProj, updProj, removeComment,
-  notifyBookmark, setHidden, getDailyProjCount
+  notifyBookmark, setHidden
 }

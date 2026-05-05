@@ -8,6 +8,7 @@ import { ProjectCard, ProjectModal } from './ProjectCard.js';
 import { FilterPanel } from './FilterPanel.js';
 import { useFilters } from './useFilters.js';
 import { getApproved, notifyBookmark } from './projects.js';
+import { getUploadOptions } from './configs.js';
 import { FaSearch, FaFilter } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -64,9 +65,10 @@ function AllProjects() {
   const [selectedProject, setSelectedProject] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [uploadOptions, setUploadOptions] = useState({ tags: [], categories: [], techStacks: [] });
   const [user] = useAuthState(auth);
 
-  const { search, setSearch, filters, updateFilter, toggleArrayFilter, clearFilters, hasActiveFilters, isSearchOrFilter, allStacks, filtered } = useFilters(projects);
+  const { search, setSearch, filters, updateFilter, toggleArrayFilter, clearFilters, hasActiveFilters, isSearchOrFilter, filtered } = useFilters(projects);
 
   useEffect(() => {
     if (user) {
@@ -79,6 +81,19 @@ function AllProjects() {
     getApproved().then((data) => {
       if (Array.isArray(data)) setProjects(data);
       setLoading(false);
+    });
+  }, []);
+
+  // Fetch tags, categories, techStacks from Firestore
+  useEffect(() => {
+    getUploadOptions().then((data) => {
+      if (data && data !== "get-options-fail") {
+        setUploadOptions({
+          tags: data.tags || [],
+          categories: data.categories || [],
+          techStacks: data.techStacks || [],
+        });
+      }
     });
   }, []);
 
@@ -112,7 +127,9 @@ function AllProjects() {
           toggleArrayFilter={toggleArrayFilter}
           clearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}
-          allStacks={allStacks}
+          allStacks={uploadOptions.techStacks}
+          tags={uploadOptions.tags}
+          categories={uploadOptions.categories}
         />
         <section className="hg-section">
           <h2 className="hg-section-title">

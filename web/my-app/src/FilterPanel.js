@@ -1,9 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FaStar, FaRegStar, FaChevronDown, FaTimes } from "react-icons/fa";
 
-const TAGS = ["Business", "Education", "E-commerce", "Entertainment", "Blog"];
-const CATEGORIES = ["Web", "Mobile", "Desktop", "AI/ML", "Other"];
-
 function Chip({ label, active, onClick }) {
   return (
     <button
@@ -140,7 +137,11 @@ function StackDropdown({ allStacks, selected, onToggle }) {
   );
 }
 
-export function FilterPanel({ filters, updateFilter, toggleArrayFilter, clearFilters, hasActiveFilters, allStacks, open }) {
+export function FilterPanel({
+  filters, updateFilter, toggleArrayFilter, clearFilters,
+  hasActiveFilters, allStacks, open,
+  tags = [], categories = [],
+}) {
   if (!open) return null;
 
   return (
@@ -162,18 +163,24 @@ export function FilterPanel({ filters, updateFilter, toggleArrayFilter, clearFil
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>Tag</span>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {TAGS.map((t) => (
-              <Chip key={t} label={t} active={filters.tags.includes(t)} onClick={() => toggleArrayFilter("tags", t)} />
-            ))}
+            {tags.length === 0
+              ? <span style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>No tags available</span>
+              : tags.map((t) => (
+                <Chip key={t} label={t} active={filters.tags.includes(t)} onClick={() => toggleArrayFilter("tags", t)} />
+              ))
+            }
           </div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>Category</span>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {CATEGORIES.map((c) => (
-              <Chip key={c} label={c} active={filters.categories.includes(c)} onClick={() => toggleArrayFilter("categories", c)} />
-            ))}
+            {categories.length === 0
+              ? <span style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>No categories available</span>
+              : categories.map((c) => (
+                <Chip key={c} label={c} active={filters.categories.includes(c)} onClick={() => toggleArrayFilter("categories", c)} />
+              ))
+            }
           </div>
         </div>
       </div>
