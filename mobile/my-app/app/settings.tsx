@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   TextInput,
   Modal,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -17,571 +18,593 @@ import { useTheme } from '../context/ThemeContext';
 import { Colors } from '../constants/theme';
 import { auth } from '../backend/firebase';
 import { getUser, updateUser } from '../backend/auth';
+import {
+  updateUserEmail,
+  updateUserPassword,
+  deleteAccount,
+} from '../backend/Dashsettings';
 import Toast from 'react-native-toast-message';
 
-export default function SettingsScreen() {
-  const { theme, themeMode, setThemeMode, isDark } = useTheme();
-  const C = Colors[theme];
+// ─── Animated Row ────────────────────────────────────────────────────────────
+function SettingRow({
+  icon,
+  label,
+  sublabel,
+  onPress,
+  right,
+  danger = false,
+  disabled = false,
+  isLast = false,
+  C,
+}: any) {
+  const scale = useRef(new Animated.Value(1)).current;
 
-  // States
+  const handlePressIn = () =>
+    Animated.spring(scale, { toValue: 0.97, useNativeDriver: true }).start();
+  const handlePressOut = () =>
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true }).start();
+
+  return (
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <TouchableOpacity
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        disabled={disabled}
+        activeOpacity={0.85}
+        style={[
+          styles.row,
+          { borderBottomColor: C.border },
+          isLast && { borderBottomWidth: 0 },
+          danger && { backgroundColor: C.errorBg },
+        ]}
+      >
+        <View style={[styles.iconBox, { backgroundColor: danger ? '#ffd6d6' : C.chip }]}>
+          <Text style={styles.iconText}>{icon}</Text>
+        </View>
+        <View style={styles.rowMid}>
+          <Text style={[styles.rowLabel, { color: danger ? C.error : C.black }]}>{label}</Text>
+          {sublabel ? (
+            <Text style={[styles.rowSub, { color: C.link }]} numberOfLines={1}>
+              {sublabel}
+            </Text>
+          ) : null}
+        </View>
+        <View style={styles.rowRight}>{right}</View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
+// ─── Section ─────────────────────────────────────────────────────────────────
+function Section({ title, children, C }: any) {
+  return (
+    <View style={styles.section}>
+      <Text style={[styles.sectionTitle, { color: C.button }]}>{title}</Text>
+      <View style={[styles.card, { backgroundColor: C.white, borderColor: C.border }]}>
+        {children}
+      </View>
+    </View>
+  );
+}
+
+// ─── Modal Shell ─────────────────────────────────────────────────────────────
+function ModalShell({ visible, onClose, title, children, C }: any) {
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <View style={[styles.modalBox, { backgroundColor: C.white }]}>
+          <View style={[styles.modalHandle, { backgroundColor: C.border }]} />
+          <Text style={[styles.modalTitle, { color: C.black }]}>{title}</Text>
+          {children}
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+// ─── Main Screen ─────────────────────────────────────────────────────────────
+export default function SettingsScreen() {
+  const { theme, themeMode, setThemeMode } = useTheme();
+  const C = { ...Colors[theme], errorBg: theme === 'dark' ? '#3a1a1a' : '#fff0f0' };
+
   const [notifications, setNotifications] = useState(true);
   const [language, setLanguage] = useState('English');
-  const [fontSize, setFontSize] = useState('Medium');
-  
-  // Change Name States
-  const [changeNameModal, setChangeNameModal] = useState(false);
-  const [newName, setNewName] = useState('');
+
+  // user data
   const [currentName, setCurrentName] = useState('');
-  const [updatingName, setUpdatingName] = useState(false);
-
-  // Change Email States
-  const [changeEmailModal, setChangeEmailModal] = useState(false);
-  const [newEmail, setNewEmail] = useState('');
   const [currentEmail, setCurrentEmail] = useState('');
-  const [updatingEmail, setUpdatingEmail] = useState(false);
 
-  // Load current user data
+  // modals
+  const [nameModal, setNameModal] = useState(false);
+  const [emailModal, setEmailModal] = useState(false);
+  const [passwordModal, setPasswordModal] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
+
+  // fields
+  const [newName, setNewName] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [emailPassword, setEmailPassword] = useState('');
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
+
+  // loading
+  const [loadingName, setLoadingName] = useState(false);
+  const [loadingEmail, setLoadingEmail] = useState(false);
+  const [loadingPassword, setLoadingPassword] = useState(false);
+  const [loadingDelete, setLoadingDelete] = useState(false);
+
+  // show/hide password toggles
+  const [showOld, setShowOld] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showDeletePw, setShowDeletePw] = useState(false);
+
   useEffect(() => {
-    const loadUserData = async () => {
-      const user = auth.currentUser;
-      if (user) {
-        setCurrentEmail(user.email || '');
-        const userData = await getUser(user.uid);
-        if (userData && typeof userData === 'object' && userData.name) {
-          setCurrentName(userData.name);
-          setNewName(userData.name);
-        }
-      }
-    };
-    loadUserData();
+    const user = auth.currentUser;
+    if (user) {
+      setCurrentEmail(user.email || '');
+      getUser(user.uid).then((data: any) => {
+        if (data?.name) { setCurrentName(data.name); setNewName(data.name); }
+      });
+    }
   }, []);
 
-  // ========== Change Name ==========
+  // ── handlers ──
   const handleChangeName = async () => {
-    if (!newName.trim()) {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Name cannot be empty',
-        position: 'top',
-      });
-      return;
-    }
-
-    setUpdatingName(true);
+    if (!newName.trim()) return toast('error', 'Name cannot be empty');
+    setLoadingName(true);
     try {
       const user = auth.currentUser;
-      if (!user) throw new Error('No user logged in');
-
-      const result = await updateUser(user.uid, { name: newName.trim() });
-      
-      if (result === 'update-ok') {
+      if (!user) throw new Error();
+      const res = await updateUser(user.uid, { name: newName.trim() });
+      if (res === 'update-ok') {
         setCurrentName(newName.trim());
-        setChangeNameModal(false);
-        Toast.show({
-          type: 'success',
-          text1: 'Success',
-          text2: 'Your name has been updated',
-          position: 'top',
-        });
-      } else {
-        throw new Error('Update failed');
-      }
-    } catch (error) {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Could not update name. Please try again.',
-        position: 'top',
-      });
-    } finally {
-      setUpdatingName(false);
-    }
+        setNameModal(false);
+        toast('success', 'Name updated successfully');
+      } else throw new Error();
+    } catch { toast('error', 'Could not update name'); }
+    finally { setLoadingName(false); }
   };
 
-  // ========== Change Email (Coming Soon - needs Firebase re-auth) ==========
-  const handleChangeEmail = () => {
-    Toast.show({
-      type: 'info',
-      text1: 'Coming Soon',
-      text2: 'Email change feature will be available in the next update',
-      position: 'top',
-      visibilityTime: 2000,
-    });
-    setChangeEmailModal(false);
+  const handleChangeEmail = async () => {
+    if (!newEmail.trim() || !emailPassword) return toast('error', 'Fill all fields');
+    setLoadingEmail(true);
+    try {
+      const res = await updateUserEmail(newEmail.trim(), emailPassword);
+      if (res === 'email-updated') {
+        setCurrentEmail(newEmail.trim());
+        setEmailModal(false);
+        setEmailPassword('');
+        toast('success', 'Email updated successfully');
+      } else throw new Error();
+    } catch { toast('error', 'Could not update email. Check your password.'); }
+    finally { setLoadingEmail(false); }
   };
 
-  // ========== Logout ==========
-  const handleLogout = async () => {
-    Alert.alert(
-      'Log Out',
-      'Are you sure you want to log out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Log Out',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await auth.signOut();
-              Toast.show({
-                type: 'success',
-                text1: 'Logged out',
-                text2: 'You have been logged out successfully.',
-              });
-              router.replace('/login');
-            } catch (error) {
-              Toast.show({
-                type: 'error',
-                text1: 'Error',
-                text2: 'Failed to log out. Please try again.',
-              });
-            }
-          },
+  const handleChangePassword = async () => {
+    if (!oldPassword || !newPassword || !confirmPassword)
+      return toast('error', 'Fill all fields');
+    if (newPassword !== confirmPassword)
+      return toast('error', 'Passwords do not match');
+    if (newPassword.length < 6)
+      return toast('error', 'Password must be at least 6 characters');
+    setLoadingPassword(true);
+    try {
+      const res = await updateUserPassword(oldPassword, newPassword);
+      if (res === 'password-updated') {
+        setPasswordModal(false);
+        setOldPassword(''); setNewPassword(''); setConfirmPassword('');
+        toast('success', 'Password updated successfully');
+      } else throw new Error();
+    } catch { toast('error', 'Could not update password. Check your current password.'); }
+    finally { setLoadingPassword(false); }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) return toast('error', 'Enter your password to confirm');
+    setLoadingDelete(true);
+    try {
+      const res = await deleteAccount(deletePassword);
+      if (res === 'account-deleted') {
+        router.replace('/login');
+      } else throw new Error();
+    } catch { toast('error', 'Could not delete account. Check your password.'); }
+    finally { setLoadingDelete(false); }
+  };
+
+  const handleLogout = () => {
+    Alert.alert('Log Out', 'Are you sure you want to log out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Log Out', style: 'destructive', onPress: async () => {
+          await auth.signOut();
+          router.replace('/login');
         },
-      ],
-      { cancelable: true }
-    );
+      },
+    ]);
   };
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: C.bg,
-    },
-    header: {
-      paddingHorizontal: 20,
-      paddingTop: 20,
-      paddingBottom: 12,
-      borderBottomWidth: 1,
-      borderBottomColor: C.border,
-    },
-    headerTitle: {
-      fontSize: 28,
-      fontWeight: 'bold',
-      color: C.black,
-    },
-    section: {
-      marginTop: 24,
-      paddingHorizontal: 20,
-    },
-    sectionTitle: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: C.link,
-      marginBottom: 12,
-      textTransform: 'uppercase',
-      letterSpacing: 0.5,
-    },
-    card: {
-      backgroundColor: C.white,
-      borderRadius: 16,
-      overflow: 'hidden',
-      marginBottom: 12,
-      shadowColor: C.black,
-      shadowOpacity: 0.05,
-      shadowRadius: 8,
-      shadowOffset: { width: 0, height: 2 },
-      elevation: 2,
-    },
-    menuItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingVertical: 14,
-      paddingHorizontal: 16,
-      borderBottomWidth: 1,
-      borderBottomColor: C.border,
-    },
-    lastMenuItem: {
-      borderBottomWidth: 0,
-    },
-    menuLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-    },
-    menuIcon: {
-      fontSize: 20,
-    },
-    menuText: {
-      fontSize: 16,
-      color: C.black,
-      fontWeight: '500',
-    },
-    menuSubtext: {
-      fontSize: 14,
-      color: C.link,
-      marginTop: 2,
-    },
-    themeOption: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-    },
-    themeButton: {
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 20,
-      backgroundColor: C.input,
-    },
-    themeButtonActive: {
-      backgroundColor: C.button,
-    },
-    themeButtonText: {
-      fontSize: 13,
-      color: C.black,
-    },
-    themeButtonTextActive: {
-      color: C.white,
-      fontWeight: '600',
-    },
-    dangerButton: {
-      backgroundColor: '#ffeeee',
-    },
-    dangerText: {
-      color: '#d32f2f',
-    },
-    modalOverlay: {
-      flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    modalContent: {
-      backgroundColor: C.white,
-      borderRadius: 20,
-      padding: 24,
-      width: '85%',
-      maxWidth: 320,
-    },
-    modalTitle: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: C.black,
-      marginBottom: 16,
-      textAlign: 'center',
-    },
-    modalInput: {
-      backgroundColor: C.input,
-      borderRadius: 12,
-      padding: 12,
-      fontSize: 16,
-      color: C.black,
-      marginBottom: 20,
-    },
-    modalButtons: {
-      flexDirection: 'row',
-      gap: 12,
-    },
-    modalButton: {
-      flex: 1,
-      paddingVertical: 12,
-      borderRadius: 25,
-      alignItems: 'center',
-    },
-    modalButtonCancel: {
-      backgroundColor: C.input,
-    },
-    modalButtonSave: {
-      backgroundColor: C.button,
-    },
-    modalButtonText: {
-      fontSize: 14,
-      fontWeight: '600',
-    },
-    modalButtonCancelText: {
-      color: C.black,
-    },
-    modalButtonSaveText: {
-      color: C.white,
-    },
-    nameValue: {
-      color: C.button,
-      fontWeight: '600',
-    },
-    comingSoonBadge: {
-      backgroundColor: C.chip,
-      paddingHorizontal: 8,
-      paddingVertical: 2,
-      borderRadius: 12,
-    },
-    comingSoonText: {
-      fontSize: 10,
-      color: C.link,
-      fontWeight: '600',
-    },
-  });
+  const toast = (type: string, msg: string) =>
+    Toast.show({ type, text1: msg, position: 'top' });
 
-  const ThemeSelector = () => (
-    <View style={styles.themeOption}>
-      <TouchableOpacity
-        style={[styles.themeButton, themeMode === 'light' && styles.themeButtonActive]}
-        onPress={() => setThemeMode('light')}
-      >
-        <Text style={[styles.themeButtonText, themeMode === 'light' && styles.themeButtonTextActive]}>
-          ☀️ Light
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.themeButton, themeMode === 'dark' && styles.themeButtonActive]}
-        onPress={() => setThemeMode('dark')}
-      >
-        <Text style={[styles.themeButtonText, themeMode === 'dark' && styles.themeButtonTextActive]}>
-          🌙 Dark
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.themeButton, themeMode === 'system' && styles.themeButtonActive]}
-        onPress={() => setThemeMode('system')}
-      >
-        <Text style={[styles.themeButtonText, themeMode === 'system' && styles.themeButtonTextActive]}>
-          ⚙️ System
-        </Text>
-      </TouchableOpacity>
-    </View>
+  // ── theme pill ──
+  const ThemePill = ({ mode, label }: { mode: string; label: string }) => (
+    <TouchableOpacity
+      onPress={() => setThemeMode(mode as any)}
+      style={[
+        styles.themePill,
+        { backgroundColor: themeMode === mode ? C.button : C.chip },
+      ]}
+    >
+      <Text style={[styles.themePillText, { color: themeMode === mode ? C.white : C.link }]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  const ChevronRight = () => (
+    <Text style={[styles.chevron, { color: C.link }]}>›</Text>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Settings</Text>
+    <SafeAreaView style={[styles.safe, { backgroundColor: C.bg }]}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+
+        {/* Header */}
+        <View style={[styles.header, { borderBottomColor: C.border }]}>
+          <Text style={[styles.headerTitle, { color: C.black }]}>Settings</Text>
+          <Text style={[styles.headerSub, { color: C.link }]}>Manage your account & preferences</Text>
         </View>
 
-        {/* Appearance Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Appearance</Text>
-          <View style={styles.card}>
-            <View style={styles.menuItem}>
-              <View style={styles.menuLeft}>
-                <Text style={styles.menuIcon}>🎨</Text>
-                <View>
-                  <Text style={styles.menuText}>Theme</Text>
-                  <Text style={styles.menuSubtext}>
-                    {themeMode === 'light' ? 'Light mode' : themeMode === 'dark' ? 'Dark mode' : 'Follow system'}
-                  </Text>
-                </View>
+        {/* ── Appearance ── */}
+        <Section title="🎨  Appearance" C={C}>
+          <SettingRow
+            icon="🌗"
+            label="Theme"
+            sublabel={themeMode === 'light' ? 'Light mode' : themeMode === 'dark' ? 'Dark mode' : 'System default'}
+            C={C}
+            isLast
+            right={
+              <View style={styles.themeRow}>
+                <ThemePill mode="light" label="☀️" />
+                <ThemePill mode="dark" label="🌙" />
+                <ThemePill mode="system" label="⚙️" />
               </View>
-              <ThemeSelector />
-            </View>
-          </View>
-        </View>
+            }
+          />
+        </Section>
 
-        {/* Account Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
-          <View style={styles.card}>
-            
-            {/* Change Name */}
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => {
-                setNewName(currentName);
-                setChangeNameModal(true);
-              }}
-            >
-              <View style={styles.menuLeft}>
-                <Text style={styles.menuIcon}>✏️</Text>
-                <View>
-                  <Text style={styles.menuText}>Change Name</Text>
-                  <Text style={styles.menuSubtext}>
-                    Current: <Text style={styles.nameValue}>{currentName || 'Not set'}</Text>
-                  </Text>
-                </View>
-              </View>
-              <Text style={[styles.menuText, { color: C.button }]}>›</Text>
-            </TouchableOpacity>
+        {/* ── Account ── */}
+        <Section title="👤  Account" C={C}>
+          <SettingRow
+            icon="✏️" label="Change Name"
+            sublabel={currentName || 'Not set'}
+            onPress={() => { setNewName(currentName); setNameModal(true); }}
+            right={<ChevronRight />} C={C}
+          />
+          <SettingRow
+            icon="📧" label="Change Email"
+            sublabel={currentEmail || 'Not set'}
+            onPress={() => { setNewEmail(currentEmail); setEmailModal(true); }}
+            right={<ChevronRight />} C={C}
+          />
+          <SettingRow
+            icon="🔒" label="Change Password"
+            sublabel="Update your password"
+            onPress={() => setPasswordModal(true)}
+            right={<ChevronRight />} C={C}
+          />
+          <SettingRow
+            icon="🗑️" label="Delete Account"
+            sublabel="Permanently remove your account"
+            onPress={() => setDeleteModal(true)}
+            danger isLast C={C}
+            right={<ChevronRight />}
+          />
+        </Section>
 
-            {/* Change Email (Coming Soon) */}
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={() => setChangeEmailModal(true)}
-            >
-              <View style={styles.menuLeft}>
-                <Text style={styles.menuIcon}>📧</Text>
-                <View>
-                  <Text style={styles.menuText}>Change Email</Text>
-                  <Text style={styles.menuSubtext}>
-                    Current: <Text style={styles.nameValue}>{currentEmail || 'Not set'}</Text>
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.comingSoonBadge}>
-                <Text style={styles.comingSoonText}>Soon</Text>
-              </View>
-            </TouchableOpacity>
-
-            {/* Change Password (Coming Soon) */}
-            <TouchableOpacity style={styles.menuItem} disabled>
-              <View style={styles.menuLeft}>
-                <Text style={styles.menuIcon}>🔒</Text>
-                <View>
-                  <Text style={styles.menuText}>Change Password</Text>
-                  <Text style={styles.menuSubtext}>Coming soon</Text>
-                </View>
-              </View>
-              <View style={styles.comingSoonBadge}>
-                <Text style={styles.comingSoonText}>Soon</Text>
-              </View>
-            </TouchableOpacity>
-
-            {/* Delete Account (Coming Soon) */}
-            <TouchableOpacity 
-              style={[styles.menuItem, styles.lastMenuItem]}
-              disabled
-            >
-              <View style={styles.menuLeft}>
-                <Text style={styles.menuIcon}>🗑️</Text>
-                <View>
-                  <Text style={[styles.menuText, { color: C.error }]}>Delete Account</Text>
-                  <Text style={styles.menuSubtext}>Coming soon</Text>
-                </View>
-              </View>
-              <View style={styles.comingSoonBadge}>
-                <Text style={styles.comingSoonText}>Soon</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Preferences Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Preferences</Text>
-          <View style={styles.card}>
-            <View style={styles.menuItem}>
-              <View style={styles.menuLeft}>
-                <Text style={styles.menuIcon}>🔔</Text>
-                <Text style={styles.menuText}>Notifications</Text>
-              </View>
+        {/* ── Preferences ── */}
+        <Section title="⚙️  Preferences" C={C}>
+          <SettingRow
+            icon="🔔" label="Notifications"
+            sublabel={notifications ? 'Enabled' : 'Disabled'}
+            C={C}
+            right={
               <Switch
                 value={notifications}
                 onValueChange={setNotifications}
                 trackColor={{ false: C.input, true: C.button }}
                 thumbColor={C.white}
               />
-            </View>
-
-            <View style={styles.menuItem}>
-              <View style={styles.menuLeft}>
-                <Text style={styles.menuIcon}>🌐</Text>
-                <Text style={styles.menuText}>Language</Text>
-              </View>
-              <TouchableOpacity onPress={() => setLanguage(language === 'English' ? 'العربية' : 'English')}>
-                <Text style={[styles.menuText, { color: C.button }]}>{language}</Text>
+            }
+          />
+          <SettingRow
+            icon="🌐" label="Language"
+            sublabel="App display language"
+            C={C} isLast
+            right={
+              <TouchableOpacity
+                onPress={() => setLanguage(l => l === 'English' ? 'العربية' : 'English')}
+                style={[styles.badge, { backgroundColor: C.chip }]}
+              >
+                <Text style={[styles.badgeText, { color: C.button }]}>{language}</Text>
               </TouchableOpacity>
-            </View>
+            }
+          />
+        </Section>
 
-            <View style={[styles.menuItem, styles.lastMenuItem]}>
-              <View style={styles.menuLeft}>
-                <Text style={styles.menuIcon}>🔤</Text>
-                <Text style={styles.menuText}>Font Size</Text>
-              </View>
-              <TouchableOpacity onPress={() => setFontSize(fontSize === 'Medium' ? 'Large' : 'Medium')}>
-                <Text style={[styles.menuText, { color: C.button }]}>{fontSize}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+        {/* ── Security ── */}
+        <Section title="🔐  Security" C={C}>
+          <SettingRow
+            icon="🚪" label="Log Out"
+            sublabel="Sign out of your account"
+            onPress={handleLogout}
+            danger isLast C={C}
+            right={<ChevronRight />}
+          />
+        </Section>
 
-        {/* Security Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Security</Text>
-          <View style={styles.card}>
-            <TouchableOpacity
-              style={[styles.menuItem, styles.lastMenuItem, styles.dangerButton]}
-              onPress={handleLogout}
-            >
-              <View style={styles.menuLeft}>
-                <Text style={styles.menuIcon}>🚪</Text>
-                <Text style={[styles.menuText, styles.dangerText]}>Log Out</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* About Section */}
-        <View style={[styles.section, { marginBottom: 40 }]}>
-          <Text style={styles.sectionTitle}>About</Text>
-          <View style={styles.card}>
-            <View style={[styles.menuItem, styles.lastMenuItem]}>
-              <View style={styles.menuLeft}>
-                <Text style={styles.menuIcon}>ℹ️</Text>
-                <Text style={styles.menuText}>Version</Text>
-              </View>
-              <Text style={[styles.menuText, { color: C.link }]}>1.0.0</Text>
-            </View>
-          </View>
-        </View>
+        {/* ── About ── */}
+        <Section title="ℹ️  About" C={C}>
+          <SettingRow
+            icon="📱" label="App Version"
+            sublabel="GradHub Mobile"
+            C={C} isLast
+            right={<Text style={[styles.versionText, { color: C.link }]}>v1.0.0</Text>}
+          />
+        </Section>
       </ScrollView>
 
-      {/* Change Name Modal */}
-      <Modal
-        visible={changeNameModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setChangeNameModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Change Name</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Enter new name"
-              placeholderTextColor={C.link}
-              value={newName}
-              onChangeText={setNewName}
-              autoFocus
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => setChangeNameModal(false)}
-              >
-                <Text style={[styles.modalButtonText, styles.modalButtonCancelText]}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonSave]}
-                onPress={handleChangeName}
-                disabled={updatingName}
-              >
-                {updatingName ? (
-                  <ActivityIndicator size="small" color={C.white} />
-                ) : (
-                  <Text style={[styles.modalButtonText, styles.modalButtonSaveText]}>Save</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* ══ MODALS ══ */}
 
-      {/* Change Email Modal (Coming Soon - Info only) */}
-      <Modal
-        visible={changeEmailModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setChangeEmailModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Change Email</Text>
-            <Text style={{ color: C.link, textAlign: 'center', marginBottom: 20 }}>
-              This feature is coming soon. You will be able to change your email address in the next update.
-            </Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonSave]}
-                onPress={() => setChangeEmailModal(false)}
-              >
-                <Text style={[styles.modalButtonText, styles.modalButtonSaveText]}>OK</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* Change Name */}
+      <ModalShell visible={nameModal} onClose={() => setNameModal(false)} title="Change Name" C={C}>
+        <InputField label="Full Name" value={newName} onChangeText={setNewName} placeholder="Enter new name" C={C} />
+        <ModalActions
+          onCancel={() => setNameModal(false)}
+          onSave={handleChangeName}
+          loading={loadingName} C={C}
+        />
+      </ModalShell>
+
+      {/* Change Email */}
+      <ModalShell visible={emailModal} onClose={() => setEmailModal(false)} title="Change Email" C={C}>
+        <InputField label="New Email" value={newEmail} onChangeText={setNewEmail} placeholder="Enter new email" keyboardType="email-address" C={C} />
+        <InputField label="Current Password" value={emailPassword} onChangeText={setEmailPassword} placeholder="Confirm with password" secure C={C} />
+        <ModalActions
+          onCancel={() => { setEmailModal(false); setEmailPassword(''); }}
+          onSave={handleChangeEmail}
+          loading={loadingEmail} C={C}
+        />
+      </ModalShell>
+
+      {/* Change Password */}
+      <ModalShell visible={passwordModal} onClose={() => setPasswordModal(false)} title="Change Password" C={C}>
+        <PasswordField label="Current Password" value={oldPassword} onChange={setOldPassword} show={showOld} toggleShow={() => setShowOld(v => !v)} C={C} />
+        <PasswordField label="New Password" value={newPassword} onChange={setNewPassword} show={showNew} toggleShow={() => setShowNew(v => !v)} C={C} />
+        <PasswordField label="Confirm New Password" value={confirmPassword} onChange={setConfirmPassword} show={showConfirm} toggleShow={() => setShowConfirm(v => !v)} C={C} />
+        <ModalActions
+          onCancel={() => { setPasswordModal(false); setOldPassword(''); setNewPassword(''); setConfirmPassword(''); }}
+          onSave={handleChangePassword}
+          loading={loadingPassword} C={C}
+        />
+      </ModalShell>
+
+      {/* Delete Account */}
+      <ModalShell visible={deleteModal} onClose={() => setDeleteModal(false)} title="Delete Account" C={C}>
+        <Text style={[styles.deleteWarning, { color: C.error }]}>
+          ⚠️ This action is permanent and cannot be undone. All your data will be deleted.
+        </Text>
+        <PasswordField label="Enter Password to Confirm" value={deletePassword} onChange={setDeletePassword} show={showDeletePw} toggleShow={() => setShowDeletePw(v => !v)} C={C} />
+        <ModalActions
+          onCancel={() => { setDeleteModal(false); setDeletePassword(''); }}
+          onSave={handleDeleteAccount}
+          loading={loadingDelete}
+          saveLabel="Delete"
+          danger C={C}
+        />
+      </ModalShell>
 
       <Toast />
     </SafeAreaView>
   );
 }
+
+// ─── Small helpers ────────────────────────────────────────────────────────────
+function InputField({ label, value, onChangeText, placeholder, keyboardType, secure, C }: any) {
+  return (
+    <View style={styles.fieldGroup}>
+      <Text style={[styles.fieldLabel, { color: C.link }]}>{label}</Text>
+      <TextInput
+        style={[styles.fieldInput, { backgroundColor: C.input, color: C.black }]}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={C.link}
+        keyboardType={keyboardType}
+        secureTextEntry={secure}
+        autoCapitalize="none"
+        autoCorrect={false}
+      />
+    </View>
+  );
+}
+
+function PasswordField({ label, value, onChange, show, toggleShow, C }: any) {
+  return (
+    <View style={styles.fieldGroup}>
+      <Text style={[styles.fieldLabel, { color: C.link }]}>{label}</Text>
+      <View style={[styles.pwRow, { backgroundColor: C.input }]}>
+        <TextInput
+          style={[styles.pwInput, { color: C.black }]}
+          value={value}
+          onChangeText={onChange}
+          placeholder="••••••••"
+          placeholderTextColor={C.link}
+          secureTextEntry={!show}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        <TouchableOpacity onPress={toggleShow} style={styles.eyeBtn}>
+          <Text style={[styles.eyeText, { color: C.button }]}>{show ? 'Hide' : 'Show'}</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+function ModalActions({ onCancel, onSave, loading, saveLabel = 'Save', danger = false, C }: any) {
+  return (
+    <View style={styles.modalActions}>
+      <TouchableOpacity
+        style={[styles.modalBtn, { backgroundColor: C.chip }]}
+        onPress={onCancel}
+      >
+        <Text style={[styles.modalBtnText, { color: C.black }]}>Cancel</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.modalBtn, { backgroundColor: danger ? C.error : C.button }]}
+        onPress={onSave}
+        disabled={loading}
+      >
+        {loading
+          ? <ActivityIndicator size="small" color={C.white} />
+          : <Text style={[styles.modalBtnText, { color: C.white }]}>{saveLabel}</Text>
+        }
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+const styles = StyleSheet.create({
+  safe: { flex: 1 },
+  header: {
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+  },
+  headerTitle: { fontSize: 30, fontWeight: '800', letterSpacing: -0.5 },
+  headerSub: { fontSize: 14, marginTop: 2 },
+
+  section: { marginTop: 24, paddingHorizontal: 16 },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+  card: {
+    borderRadius: 18,
+    overflow: 'hidden',
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
+  },
+
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 13,
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    gap: 12,
+  },
+  iconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconText: { fontSize: 18 },
+  rowMid: { flex: 1 },
+  rowLabel: { fontSize: 15, fontWeight: '600' },
+  rowSub: { fontSize: 13, marginTop: 1 },
+  rowRight: { alignItems: 'flex-end' },
+  chevron: { fontSize: 22, fontWeight: '300' },
+
+  themeRow: { flexDirection: 'row', gap: 6 },
+  themePill: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  themePillText: { fontSize: 14 },
+
+  badge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20 },
+  badgeText: { fontSize: 13, fontWeight: '600' },
+  versionText: { fontSize: 14, fontWeight: '600' },
+
+  // modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
+  },
+  modalBox: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: 24,
+    paddingBottom: 36,
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 18,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 20,
+    letterSpacing: -0.3,
+  },
+
+  fieldGroup: { marginBottom: 14 },
+  fieldLabel: { fontSize: 13, fontWeight: '600', marginBottom: 6 },
+  fieldInput: {
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    fontSize: 15,
+  },
+  pwRow: {
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingRight: 14,
+  },
+  pwInput: { flex: 1, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15 },
+  eyeBtn: { paddingLeft: 8 },
+  eyeText: { fontSize: 13, fontWeight: '700' },
+
+  modalActions: { flexDirection: 'row', gap: 10, marginTop: 6 },
+  modalBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalBtnText: { fontSize: 15, fontWeight: '700' },
+
+  deleteWarning: {
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: 'center',
+    marginBottom: 18,
+    fontWeight: '500',
+  },
+});
