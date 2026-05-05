@@ -207,7 +207,7 @@ export function AuthorCard({ project, onBack }) {
   const github = authorData?.socialLinks?.github || "";
   const linkedin = authorData?.socialLinks?.linkedin || "";
   const portfolio = authorData?.socialLinks?.portfolio || "";
-  const avatar = project.avatar || null;
+  const avatar = authorData?.photoURL || project.avatar || null;
 
   return (
     <div style={{ padding: "clamp(16px, 4vw, 24px)", display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -337,6 +337,7 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
   const [user] = useAuthState(auth);
   const [userRole, setUserRole] = useState(null);
   const [authorName, setAuthorName] = useState(null);
+  const [authorPhoto, setAuthorPhoto] = useState(null);
   const [userRatings, setUserRatings] = useState(project.userRatings || {});
   const [editOpen, setEditOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
@@ -398,7 +399,10 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
     const uid = project.userId || project.authorId;
     if (uid) {
       getUser(uid).then((data) => {
-        if (data && data !== "no-data" && data !== "get-fail") setAuthorName(data.name || null);
+        if (data && data !== "no-data" && data !== "get-fail") {
+          setAuthorName(data.name || null);
+          setAuthorPhoto(data.photoURL || null);
+        }
       });
     }
   }, [project]);
@@ -450,7 +454,7 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
   const title = project.title;
   const tag = project.tag || (project.tags && project.tags[0]) || "";
   const image = project.image || project.imgUrl;
-  const avatar = project.avatar || null;
+  const avatar = authorPhoto || project.avatar || null;
   const author = authorName || project.author || "";
   const date = project.date || (project.createdAt?.toDate?.().toLocaleDateString()) || "";
   const description = project.description || project.desc;
@@ -714,6 +718,7 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
 // ===========================
 export function ProjectCard({ project, onOpen, bookmarked, onToggleBookmark, showStatus }) {
   const [authorName, setAuthorName] = useState("");
+  const [authorPhoto, setAuthorPhoto] = useState(null);
   const [user] = useAuthState(auth);
   const [editOpen, setEditOpen] = useState(false);
 
@@ -721,7 +726,10 @@ export function ProjectCard({ project, onOpen, bookmarked, onToggleBookmark, sho
     const uid = project.userId || project.authorId;
     if (uid) {
       getUser(uid).then((data) => {
-        if (data && data !== "no-data" && data !== "get-fail") setAuthorName(data.name || "");
+        if (data && data !== "no-data" && data !== "get-fail") {
+          setAuthorName(data.name || "");
+          setAuthorPhoto(data.photoURL || null);
+        }
       });
     }
   }, [project]);
@@ -746,6 +754,7 @@ export function ProjectCard({ project, onOpen, bookmarked, onToggleBookmark, sho
   const cardAvgRating = cardRatings.length > 0
     ? (cardRatings.reduce((a, b) => a + b, 0) / cardRatings.length).toFixed(1)
     : null;
+  const avatar = authorPhoto || project.avatar || null;
 
   return (
     <>
@@ -756,8 +765,8 @@ export function ProjectCard({ project, onOpen, bookmarked, onToggleBookmark, sho
             {showStatus && <StatusBadge status={project.status} />}
           </div>
           <div className="hg-card-author">
-            {project.avatar
-              ? <img src={project.avatar} alt={authorName} className="hg-author-avatar" />
+            {avatar
+              ? <img src={avatar} alt={authorName} className="hg-author-avatar" />
               : <div className="hg-user-avatar-placeholder" style={{ width: 30, height: 30 }}><FaUser style={{ fontSize: 13 }} /></div>
             }
             <div>
