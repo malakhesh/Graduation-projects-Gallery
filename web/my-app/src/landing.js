@@ -294,9 +294,11 @@ export default function App() {
             Graduation Projects Gallery Portal
           </div>
           <h1 className="hero-fade-in hero-delay-1" style={styles.heroTitle}>
-            Your work is your legacy —
+            Your work is your legacy 
             <br />
-            <span style={styles.heroTitleAccent}>let the world witness it.</span>
+            <span style={styles.heroTitleAccent}>
+              let the world witness it.
+              </span>
           </h1>
           <p className="hero-fade-in hero-delay-2" style={styles.heroDesc}>
             Whether you're a student seeking inspiration, uploading your finest work,

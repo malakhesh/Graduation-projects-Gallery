@@ -243,11 +243,11 @@ function ContactMessages({ onBack }) {
       <div style={{
         display: "flex", minHeight: "100vh",
         fontFamily: "'Poppins', sans-serif",
-        background: "linear-gradient(160deg, #f7f0e8 0%, #ede0cf 50%, #dfc9aa 100%)",
+        background: "linear-gradient(to top, #dfc9aa, #f7f0e8)",
       }}>
         <aside style={{
           position: "fixed", left: 0, top: 0, bottom: 0, width: "200px",
-          background: "linear-gradient(180deg, #f7f0e8 0%, #ede0cf 60%, #dfc9aa 100%)",
+          background: "linear-gradient(to top, #dfc9aa, #f7f0e8)",
           borderRight: "2px solid rgba(111,78,55,0.15)",
           display: "flex", flexDirection: "column", justifyContent: "space-between",
           padding: "24px 20px", zIndex: 100,
@@ -557,18 +557,12 @@ function Dashboard() {
       const totalAll = approvedArr.length + pendingArr.length + rejectedArr.length;
       setReportPct(totalAll > 0 ? Math.round((reportsArr.length / totalAll) * 100) : 0);
 
-      // ── Pie chart: approved projects ONLY ──────────────────────────────────
       const categoryMap = {};
       approvedArr.forEach((p) => {
-        // ✅ FIX: Projects without a category go into "Other" instead of being skipped.
-        // This ensures totalProjects always equals approvedArr.length.
         const cat = p.category?.trim() || "Other";
         categoryMap[cat] = (categoryMap[cat] || 0) + 1;
       });
 
-      // ✅ FIX: Use approvedArr.length as the true total, not the sum from categoryMap.
-      // Previously, projects missing a category were excluded, causing the count
-      // shown in the pie center to be lower than the actual number of approved projects.
       const total = approvedArr.length;
       setTotalProjects(total);
       setSlices(buildSlices(categoryMap, total, 70, 70, 60));
@@ -767,9 +761,16 @@ function Dashboard() {
           <div style={getBoxStyle(1, "#f2e8db")}
             onMouseEnter={() => setHoveredBox(1)} onMouseLeave={() => setHoveredBox(null)}
             onClick={() => setView("review")}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", overflow: "hidden" }}>
-              <span style={{ fontSize: isMobile ? "18px" : "22px", flexShrink: 0 }}>📋</span>
-              <span style={{ fontSize: isMobile ? "16px" : "22px", fontWeight: "700", letterSpacing: "0.5px", color: "#3B1F0F", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>PROJECTS TO REVIEW</span>
+            {/* ✅ FIX: removed overflow:hidden & whiteSpace:nowrap so title wraps */}
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+              <span style={{ fontSize: isMobile ? "18px" : "22px", flexShrink: 0, marginTop: "2px" }}>📋</span>
+              <span style={{
+                fontSize: isMobile ? "15px" : "18px",
+                fontWeight: "700", letterSpacing: "0.5px",
+                color: "#3B1F0F",
+                lineHeight: "1.3",
+                wordBreak: "break-word",
+              }}>PROJECTS TO REVIEW</span>
             </div>
             <div style={{ fontSize: isMobile ? "44px" : "56px", fontWeight: "800", color: "#3B2F2F", lineHeight: 1, textAlign: "center" }}>{pendingCount}</div>
             <div>
@@ -784,9 +785,16 @@ function Dashboard() {
           <div style={getBoxStyle(2, "#ece0ce")}
             onMouseEnter={() => setHoveredBox(2)} onMouseLeave={() => setHoveredBox(null)}
             onClick={() => setView("reports")}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", overflow: "hidden" }}>
-              <span style={{ fontSize: isMobile ? "18px" : "22px", flexShrink: 0 }}>📝</span>
-              <span style={{ fontSize: isMobile ? "16px" : "22px", fontWeight: "700", letterSpacing: "0.5px", color: "#3B1F0F", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>PROJECTS TO REPORT</span>
+            {/* ✅ FIX: removed overflow:hidden & whiteSpace:nowrap so title wraps */}
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+              <span style={{ fontSize: isMobile ? "18px" : "22px", flexShrink: 0, marginTop: "2px" }}>📝</span>
+              <span style={{
+                fontSize: isMobile ? "15px" : "18px",
+                fontWeight: "700", letterSpacing: "0.5px",
+                color: "#3B1F0F",
+                lineHeight: "1.3",
+                wordBreak: "break-word",
+              }}>PROJECTS TO REPORT</span>
             </div>
             <div style={{ fontSize: isMobile ? "44px" : "56px", fontWeight: "800", color: "#3B2F2F", lineHeight: 1, textAlign: "center" }}>{reportsCount}</div>
             <div>
@@ -820,7 +828,7 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* Box 4 — Distribution (approved only) */}
+          {/* Box 4 — Distribution */}
           <div style={getBoxStyle(4, "#e5d4be")}
             onMouseEnter={() => setHoveredBox(4)} onMouseLeave={() => setHoveredBox(null)}>
             <p style={{ margin: "0", fontSize: isMobile ? "16px" : "22px", fontWeight: "bold", color: "#3B1F0F" }}>
