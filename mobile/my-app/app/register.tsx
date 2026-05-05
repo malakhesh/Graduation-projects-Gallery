@@ -15,8 +15,13 @@ import {
 } from "react-native";
 
 import { regUser } from "../backend/auth";
+import { useTheme } from "../context/ThemeContext";
+import { Colors } from "../constants/theme";
 
 export default function RegisterScreen() {
+  const { theme } = useTheme();
+  const C = Colors[theme];
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -125,9 +130,190 @@ export default function RegisterScreen() {
     }
   };
 
+  const styles = StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: C.bg,
+    },
+
+    gradient: {
+      flex: 1,
+    },
+
+    container: {
+      flex: 1,
+    },
+
+    backButton: {
+      position: "absolute",
+      top: 48,
+      left: 28,
+      zIndex: 10,
+    },
+
+    backText: {
+      color: C.black,
+      fontSize: 15,
+      fontWeight: "800",
+    },
+
+    scrollContent: {
+      flexGrow: 1,
+      alignItems: "center",
+      paddingHorizontal: 28,
+      paddingTop: 108,
+      paddingBottom: 28,
+    },
+
+    title: {
+      fontSize: 30,
+      fontWeight: "900",
+      color: C.black,
+      marginBottom: 12,
+      textAlign: "center",
+    },
+
+    subtitle: {
+      fontSize: 14.5,
+      color: C.black,
+      textAlign: "center",
+      lineHeight: 23,
+      marginBottom: 28,
+      paddingHorizontal: 4,
+    },
+
+    card: {
+      width: "100%",
+      backgroundColor: C.white,
+      borderRadius: 28,
+      padding: 22,
+      shadowColor: C.black,
+      shadowOffset: { width: 0, height: 5 },
+      shadowOpacity: 0.16,
+      shadowRadius: 10,
+      elevation: 5,
+    },
+
+    label: {
+      fontSize: 14.5,
+      fontWeight: "900",
+      color: C.black,
+      marginBottom: 8,
+      marginTop: 10,
+    },
+
+    input: {
+      width: "100%",
+      height: 53,
+      backgroundColor: C.input,
+      borderRadius: 18,
+      paddingHorizontal: 18,
+      fontSize: 14.5,
+      color: C.black,
+      borderWidth: 1.5,
+      borderColor: "transparent",
+    },
+
+    passwordWrapper: {
+      width: "100%",
+      height: 53,
+      backgroundColor: C.input,
+      borderRadius: 18,
+      paddingHorizontal: 18,
+      flexDirection: "row",
+      alignItems: "center",
+      borderWidth: 1.5,
+      borderColor: "transparent",
+    },
+
+    passwordInput: {
+      flex: 1,
+      fontSize: 14.5,
+      color: C.black,
+    },
+
+    showText: {
+      color: C.button,
+      fontSize: 13.5,
+      fontWeight: "900",
+      marginLeft: 10,
+    },
+
+    button: {
+      height: 54,
+      backgroundColor: C.button,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: 20,
+    },
+
+    buttonDisabled: {
+      opacity: 0.8,
+    },
+
+    buttonText: {
+      color: C.white,
+      fontSize: 16,
+      fontWeight: "900",
+    },
+
+    bottomRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: 18,
+      marginBottom: 8,
+    },
+
+    bottomText: {
+      color: C.button,
+      fontSize: 14,
+      fontWeight: "500",
+    },
+
+    loginText: {
+      color: C.black,
+      fontSize: 14,
+      fontWeight: "900",
+    },
+
+    errorText: {
+      color: C.error,
+      fontSize: 12.5,
+      fontWeight: "700",
+      marginTop: 5,
+      marginLeft: 4,
+    },
+
+    errorBox: {
+      backgroundColor: "rgba(180, 40, 40, 0.12)",
+      borderWidth: 1,
+      borderColor: "rgba(180, 40, 40, 0.3)",
+      borderRadius: 14,
+      padding: 11,
+      marginBottom: 14,
+    },
+
+    errorBoxText: {
+      color: C.error,
+      fontSize: 13,
+      fontWeight: "700",
+      textAlign: "center",
+      lineHeight: 18,
+    },
+
+    inputErrorBorder: {
+      borderColor: C.error,
+    },
+  });
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <LinearGradient colors={["#F5ECE4", "#DFCDBF"]} style={styles.gradient}>
+      <LinearGradient
+        colors={theme === "light" ? ["#F5ECE4", "#DFCDBF"] : ["#2A2420", "#1E1A16"]}
+        style={styles.gradient}
+      >
         <KeyboardAvoidingView
           style={styles.container}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -162,7 +348,7 @@ export default function RegisterScreen() {
               <Text style={styles.label}>Full Name</Text>
               <TextInput
                 placeholder="Enter your full name"
-                placeholderTextColor="rgba(47, 28, 15, 0.55)"
+                placeholderTextColor={C.link}
                 value={fullName}
                 editable={!loading}
                 onChangeText={(text) => {
@@ -183,7 +369,7 @@ export default function RegisterScreen() {
               <Text style={styles.label}>Email</Text>
               <TextInput
                 placeholder="Enter your email"
-                placeholderTextColor="rgba(47, 28, 15, 0.55)"
+                placeholderTextColor={C.link}
                 value={email}
                 editable={!loading}
                 onChangeText={(text) => {
@@ -214,7 +400,7 @@ export default function RegisterScreen() {
               >
                 <TextInput
                   placeholder="Create your password"
-                  placeholderTextColor="rgba(47, 28, 15, 0.55)"
+                  placeholderTextColor={C.link}
                   value={password}
                   editable={!loading}
                   onChangeText={(text) => {
@@ -253,7 +439,7 @@ export default function RegisterScreen() {
               >
                 <TextInput
                   placeholder="Confirm your password"
-                  placeholderTextColor="rgba(47, 28, 15, 0.55)"
+                  placeholderTextColor={C.link}
                   value={confirmPassword}
                   editable={!loading}
                   onChangeText={(text) => {
@@ -288,7 +474,7 @@ export default function RegisterScreen() {
                 activeOpacity={0.85}
               >
                 {loading ? (
-                  <ActivityIndicator color="rgb(254, 251, 245)" />
+                  <ActivityIndicator color={C.white} />
                 ) : (
                   <Text style={styles.buttonText}>Create Account</Text>
                 )}
@@ -311,181 +497,3 @@ export default function RegisterScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#DFCDBF",
-  },
-
-  gradient: {
-    flex: 1,
-  },
-
-  container: {
-    flex: 1,
-  },
-
-  backButton: {
-    position: "absolute",
-    top: 48,
-    left: 28,
-    zIndex: 10,
-  },
-
-  backText: {
-    color: "rgb(47, 28, 15)",
-    fontSize: 15,
-    fontWeight: "800",
-  },
-
-  scrollContent: {
-    flexGrow: 1,
-    alignItems: "center",
-    paddingHorizontal: 28,
-    paddingTop: 108,
-    paddingBottom: 28,
-  },
-
-  title: {
-    fontSize: 30,
-    fontWeight: "900",
-    color: "rgb(47, 28, 15)",
-    marginBottom: 12,
-    textAlign: "center",
-  },
-
-  subtitle: {
-    fontSize: 14.5,
-    color: "rgb(47, 28, 15)",
-    textAlign: "center",
-    lineHeight: 23,
-    marginBottom: 28,
-    paddingHorizontal: 4,
-  },
-
-  card: {
-    width: "100%",
-    backgroundColor: "rgb(254, 251, 245)",
-    borderRadius: 28,
-    padding: 22,
-    shadowColor: "rgb(47, 28, 15)",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-
-  label: {
-    fontSize: 14.5,
-    fontWeight: "900",
-    color: "rgb(47, 28, 15)",
-    marginBottom: 8,
-    marginTop: 10,
-  },
-
-  input: {
-    width: "100%",
-    height: 53,
-    backgroundColor: "rgb(185, 174, 167)",
-    borderRadius: 18,
-    paddingHorizontal: 18,
-    fontSize: 14.5,
-    color: "rgb(47, 28, 15)",
-    borderWidth: 1.5,
-    borderColor: "transparent",
-  },
-
-  passwordWrapper: {
-    width: "100%",
-    height: 53,
-    backgroundColor: "rgb(185, 174, 167)",
-    borderRadius: 18,
-    paddingHorizontal: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1.5,
-    borderColor: "transparent",
-  },
-
-  passwordInput: {
-    flex: 1,
-    fontSize: 14.5,
-    color: "rgb(47, 28, 15)",
-  },
-
-  showText: {
-    color: "rgb(75, 48, 28)",
-    fontSize: 13.5,
-    fontWeight: "900",
-    marginLeft: 10,
-  },
-
-  button: {
-    height: 54,
-    backgroundColor: "rgb(104, 68, 42)",
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 20,
-  },
-
-  buttonDisabled: {
-    opacity: 0.8,
-  },
-
-  buttonText: {
-    color: "rgb(254, 251, 245)",
-    fontSize: 16,
-    fontWeight: "900",
-  },
-
-  bottomRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 18,
-    marginBottom: 8,
-  },
-
-  bottomText: {
-    color: "rgb(104, 68, 42)",
-    fontSize: 14,
-    fontWeight: "500",
-  },
-
-  loginText: {
-    color: "rgb(47, 28, 15)",
-    fontSize: 14,
-    fontWeight: "900",
-  },
-
-  errorText: {
-    color: "rgb(160, 40, 40)",
-    fontSize: 12.5,
-    fontWeight: "700",
-    marginTop: 5,
-    marginLeft: 4,
-  },
-
-  errorBox: {
-    backgroundColor: "rgba(180, 40, 40, 0.12)",
-    borderWidth: 1,
-    borderColor: "rgba(180, 40, 40, 0.3)",
-    borderRadius: 14,
-    padding: 11,
-    marginBottom: 14,
-  },
-
-  errorBoxText: {
-    color: "rgb(130, 25, 25)",
-    fontSize: 13,
-    fontWeight: "700",
-    textAlign: "center",
-    lineHeight: 18,
-  },
-
-  inputErrorBorder: {
-    borderColor: "rgb(160, 40, 40)",
-  },
-});
