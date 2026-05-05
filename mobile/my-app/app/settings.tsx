@@ -7,22 +7,90 @@ import {
   Switch,
   ScrollView,
   Alert,
+  TextInput,
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
 import { Colors } from '../constants/theme';
 import { auth } from '../backend/firebase';
+import { getUser, updateUser } from '../backend/auth';
 import Toast from 'react-native-toast-message';
 
 export default function SettingsScreen() {
   const { theme, themeMode, setThemeMode, isDark } = useTheme();
   const C = Colors[theme];
 
-  // States للإعدادات المستقبلية
+  // States
   const [notifications, setNotifications] = useState(true);
   const [language, setLanguage] = useState('English');
   const [fontSize, setFontSize] = useState('Medium');
+  
+  // Change Name States
+  const [changeNameModal, setChangeNameModal] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [currentName, setCurrentName] = useState('');
+  const [loadingName, setLoadingName] = useState(false);
+  const [updatingName, setUpdatingName] = useState(false);
+
+  // Load current user data
+  useEffect(() => {
+    const loadUserData = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const userData = await getUser(user.uid);
+        if (userData && typeof userData === 'object' && userData.name) {
+          setCurrentName(userData.name);
+          setNewName(userData.name);
+        }
+      }
+    };
+    loadUserData();
+  }, []);
+
+  const handleChangeName = async () => {
+    if (!newName.trim()) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Name cannot be empty',
+        position: 'top',
+      });
+      return;
+    }
+
+    setUpdatingName(true);
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error('No user logged in');
+
+      const result = await updateUser(user.uid, { name: newName.trim() });
+      
+      if (result === 'update-ok') {
+        setCurrentName(newName.trim());
+        setChangeNameModal(false);
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: 'Your name has been updated',
+          position: 'top',
+        });
+      } else {
+        throw new Error('Update failed');
+      }
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Could not update name. Please try again.',
+        position: 'top',
+      });
+    } finally {
+      setUpdatingName(false);
+    }
+  };
 
   const handleLogout = async () => {
     Alert.alert(
@@ -154,6 +222,64 @@ export default function SettingsScreen() {
     dangerText: {
       color: '#d32f2f',
     },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    modalContent: {
+      backgroundColor: C.white,
+      borderRadius: 20,
+      padding: 24,
+      width: '85%',
+      maxWidth: 320,
+    },
+    modalTitle: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: C.black,
+      marginBottom: 16,
+      textAlign: 'center',
+    },
+    modalInput: {
+      backgroundColor: C.input,
+      borderRadius: 12,
+      padding: 12,
+      fontSize: 16,
+      color: C.black,
+      marginBottom: 20,
+    },
+    modalButtons: {
+      flexDirection: 'row',
+      gap: 12,
+    },
+    modalButton: {
+      flex: 1,
+      paddingVertical: 12,
+      borderRadius: 25,
+      alignItems: 'center',
+    },
+    modalButtonCancel: {
+      backgroundColor: C.input,
+    },
+    modalButtonSave: {
+      backgroundColor: C.button,
+    },
+    modalButtonText: {
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    modalButtonCancelText: {
+      color: C.black,
+    },
+    modalButtonSaveText: {
+      color: C.white,
+    },
+    nameValue: {
+      color: C.button,
+      fontWeight: '600',
+    },
   });
 
   const ThemeSelector = () => (
@@ -211,6 +337,69 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* Account Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Account</Text>
+          <View style={styles.card}>
+            
+            {/* Change Name */}
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                setNewName(currentName);
+                setChangeNameModal(true);
+              }}
+            >
+              <View style={styles.menuLeft}>
+                <Text style={styles.menuIcon}>✏️</Text>
+                <View>
+                  <Text style={styles.menuText}>Change Name</Text>
+                  <Text style={styles.menuSubtext}>
+                    Current: <Text style={styles.nameValue}>{currentName || 'Not set'}</Text>
+                  </Text>
+                </View>
+              </View>
+              <Text style={[styles.menuText, { color: C.button }]}>›</Text>
+            </TouchableOpacity>
+
+            {/* Change Email (coming soon) */}
+            <TouchableOpacity style={styles.menuItem} disabled>
+              <View style={styles.menuLeft}>
+                <Text style={styles.menuIcon}>📧</Text>
+                <View>
+                  <Text style={styles.menuText}>Change Email</Text>
+                  <Text style={styles.menuSubtext}>Coming soon</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+
+            {/* Change Password (coming soon) */}
+            <TouchableOpacity style={styles.menuItem} disabled>
+              <View style={styles.menuLeft}>
+                <Text style={styles.menuIcon}>🔒</Text>
+                <View>
+                  <Text style={styles.menuText}>Change Password</Text>
+                  <Text style={styles.menuSubtext}>Coming soon</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+
+            {/* Delete Account (coming soon) */}
+            <TouchableOpacity 
+              style={[styles.menuItem, styles.lastMenuItem]}
+              disabled
+            >
+              <View style={styles.menuLeft}>
+                <Text style={styles.menuIcon}>🗑️</Text>
+                <View>
+                  <Text style={[styles.menuText, { color: C.error }]}>Delete Account</Text>
+                  <Text style={styles.menuSubtext}>Coming soon</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Preferences Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Preferences</Text>
@@ -250,9 +439,9 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        {/* Account Section */}
+        {/* Logout Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
+          <Text style={styles.sectionTitle}>Security</Text>
           <View style={styles.card}>
             <TouchableOpacity
               style={[styles.menuItem, styles.lastMenuItem, styles.dangerButton]}
@@ -280,6 +469,47 @@ export default function SettingsScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Change Name Modal */}
+      <Modal
+        visible={changeNameModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setChangeNameModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Change Name</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Enter new name"
+              placeholderTextColor={C.link}
+              value={newName}
+              onChangeText={setNewName}
+              autoFocus
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setChangeNameModal(false)}
+              >
+                <Text style={[styles.modalButtonText, styles.modalButtonCancelText]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSave]}
+                onPress={handleChangeName}
+                disabled={updatingName}
+              >
+                {updatingName ? (
+                  <ActivityIndicator size="small" color={C.white} />
+                ) : (
+                  <Text style={[styles.modalButtonText, styles.modalButtonSaveText]}>Save</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <Toast />
     </SafeAreaView>
