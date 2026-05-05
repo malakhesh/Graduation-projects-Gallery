@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
 
 import { auth } from "../backend/firebase";
 import { getUser, updateUser, checkStatus } from "../backend/auth";
@@ -46,12 +47,14 @@ export default function ProfileScreen() {
   const [github, setGithub] = useState("");
   const [linkedin, setLinkedin] = useState("");
   const [portfolio, setPortfolio] = useState("");
+  const [photoURL, setPhotoURL] = useState<string | null>(null);
 
   const [tempBio, setTempBio] = useState("");
   const [tempYear, setTempYear] = useState("");
   const [tempGithub, setTempGithub] = useState("");
   const [tempLinkedin, setTempLinkedin] = useState("");
   const [tempPortfolio, setTempPortfolio] = useState("");
+  const [tempPhotoURL, setTempPhotoURL] = useState<string | null>(null);
 
   const fetchProfile = async () => {
     const user = auth.currentUser;
@@ -75,6 +78,9 @@ export default function ProfileScreen() {
         setGithub(data.socialLinks?.github || "");
         setLinkedin(data.socialLinks?.linkedin || "");
         setPortfolio(data.socialLinks?.portfolio || "");
+        setPhotoURL(data.photoURL || user.photoURL || null);
+      } else {
+        setPhotoURL(user.photoURL || null);
       }
 
       const projects = await getUserProjs(user.uid);
@@ -111,6 +117,7 @@ export default function ProfileScreen() {
     setTempGithub(github);
     setTempLinkedin(linkedin);
     setTempPortfolio(portfolio);
+    setTempPhotoURL(photoURL);
     setSaveError(null);
     setEditing(true);
   };
@@ -118,6 +125,35 @@ export default function ProfileScreen() {
   const handleCancel = () => {
     setEditing(false);
     setSaveError(null);
+    setTempPhotoURL(photoURL);
+  };
+
+  const handlePickPhoto = async () => {
+    try {
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permissionResult.granted) {
+        Alert.alert(
+          "Permission required",
+          "Please allow access to your photos to change your profile picture."
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setTempPhotoURL(result.assets[0].uri);
+      }
+    } catch {
+      Alert.alert("Error", "Could not open gallery.");
+    }
   };
 
   const handleConfirm = async () => {
@@ -135,6 +171,7 @@ export default function ProfileScreen() {
       const result = await updateUser(user.uid, {
         bio: tempBio,
         year: tempYear,
+        photoURL: tempPhotoURL,
         socialLinks: {
           github: tempGithub,
           linkedin: tempLinkedin,
@@ -152,11 +189,13 @@ export default function ProfileScreen() {
       setGithub(tempGithub);
       setLinkedin(tempLinkedin);
       setPortfolio(tempPortfolio);
+      setPhotoURL(tempPhotoURL);
 
       setProfileData((prev: any) => ({
         ...prev,
         bio: tempBio,
         year: tempYear,
+        photoURL: tempPhotoURL,
         socialLinks: {
           github: tempGithub,
           linkedin: tempLinkedin,
@@ -197,7 +236,7 @@ export default function ProfileScreen() {
   const user = auth.currentUser;
   const displayName = user?.displayName || profileData?.name || "User";
   const email = user?.email || profileData?.email || "";
-  const avatarSrc = user?.photoURL || null;
+  const avatarSrc = editing ? tempPhotoURL : photoURL;
 
   if (loading) {
     return (
@@ -298,19 +337,15 @@ export default function ProfileScreen() {
               </View>
             )}
 
-            {editing && (
+            {editing ? (
               <TouchableOpacity
                 style={styles.avatarEditBtn}
-                onPress={() =>
-                  Alert.alert(
-                    "Change Photo",
-                    "Photo upload is not connected yet."
-                  )
-                }
+                onPress={handlePickPhoto}
+                activeOpacity={0.8}
               >
                 <Ionicons name="camera" size={17} color="#fff" />
               </TouchableOpacity>
-            )}
+            ) : null}
           </View>
 
           <Text style={styles.name}>{displayName}</Text>
@@ -352,7 +387,7 @@ export default function ProfileScreen() {
               </Text>
             </View>
 
-            {violations > 0 && (
+            {violations > 0 ? (
               <View style={styles.detailRow}>
                 <Ionicons
                   name="alert-circle-outline"
@@ -363,7 +398,7 @@ export default function ProfileScreen() {
                   {violations} violation{violations !== 1 ? "s" : ""} recorded
                 </Text>
               </View>
-            )}
+            ) : null}
           </View>
 
           {editing ? (
@@ -379,7 +414,12 @@ export default function ProfileScreen() {
             />
           ) : bio ? (
             <View style={styles.bioBox}>
-<Ionicons name="chatbubble-ellipses-outline" size={20} color={C.brown} />              <Text style={styles.bioText}>{bio}</Text>
+              <Ionicons
+                name="chatbubble-ellipses-outline"
+                size={20}
+                color={C.brown}
+              />
+              <Text style={styles.bioText}>{bio}</Text>
             </View>
           ) : (
             <Text style={styles.placeholderText}>No bio yet</Text>
