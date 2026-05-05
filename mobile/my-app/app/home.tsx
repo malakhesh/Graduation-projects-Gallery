@@ -11,16 +11,9 @@ import { auth } from "../backend/firebase";
 import { getUser, logOut } from "../backend/auth";
 import { useTheme } from "../context/ThemeContext";
 import { Colors } from "../constants/theme";
+import { useAIRecommendations, trackProjectView, trackTagSearch } from "./AIRecommendations";
 
 const CATEGORIES = ["All Projects", "AI / ML", "Web Dev", "Mobile", "Design"];
-
-const RECOMMENDED = [
-  { id: "1", title: "AI Robotics Research System", author: "Emily Johnson", year: "2024", tags: ["Technology", "Engineering", "AI / ML"], rating: 4.9, comments: 12, badge: "🔥 Top Rated", image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80" },
-  { id: "2", title: "Art Installation Project", author: "David Miller", year: "2024", tags: ["Art", "Design"], rating: 4.6, comments: 8, badge: "✨ New", image: "https://images.unsplash.com/photo-1549490349-8643362247b5?w=600&q=80" },
-  { id: "3", title: "Smart City Dashboard", author: "Ahmed Hassan", year: "2024", tags: ["Web Dev", "AI"], rating: 4.8, comments: 15, badge: "🔥 Top Rated", image: "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=600&q=80" },
-  { id: "4", title: "Mobile Health Tracker", author: "Sara Ahmed", year: "2024", tags: ["Mobile", "Healthcare"], rating: 4.7, comments: 6, badge: "✨ New", image: "https://images.unsplash.com/photo-1544117519-31a4b719223d?w=600&q=80" },
-  { id: "5", title: "E-Commerce Platform", author: "Nour Khalid", year: "2024", tags: ["Web Dev", "Business"], rating: 4.5, comments: 10, badge: "🔥 Top Rated", image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&q=80" },
-];
 
 const TAGS = [
   { label: "Business", icon: "briefcase-outline" },
@@ -41,6 +34,8 @@ export default function HomeScreen() {
   const [activeCategory, setActiveCategory] = useState("All Projects");
   const [menuVisible, setMenuVisible] = useState(false);
 
+  const { projects: aiProjects, loading: aiLoading } = useAIRecommendations();
+
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (!user) { router.replace("/login"); return; }
@@ -51,7 +46,7 @@ export default function HomeScreen() {
     return unsubscribe;
   }, []);
 
-  const filteredProjects = RECOMMENDED.filter((p) => {
+  const filteredProjects = aiProjects.filter((p) => {
     const q = search.toLowerCase().trim();
     const matchSearch = q === "" || p.title.toLowerCase().includes(q) || p.author.toLowerCase().includes(q) || p.tags.some((t) => t.toLowerCase().includes(q));
     const matchCategory = activeCategory === "All Projects" || p.tags.some((t) => t.toLowerCase().includes(activeCategory.toLowerCase()));
@@ -173,7 +168,12 @@ export default function HomeScreen() {
           )}
         </View>
 
-        {filteredProjects.length === 0 ? (
+        {aiLoading ? (
+          <View style={styles.emptyState}>
+            <ActivityIndicator size="large" color={C.button} />
+            <Text style={[styles.emptyText, { color: C.link }]}>Loading recommendations...</Text>
+          </View>
+        ) : filteredProjects.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="search-outline" size={48} color={C.input} />
             <Text style={[styles.emptyText, { color: C.link }]}>No projects found</Text>
@@ -188,7 +188,20 @@ export default function HomeScreen() {
                 key={project.id}
                 style={[styles.projectCard, { backgroundColor: C.white }]}
                 activeOpacity={0.92}
-                onPress={() => router.push({ pathname: "/project-details", params: { title: project.title, year: project.year, image: project.image, description: `${project.title} by ${project.author}`, tags: project.tags.join(",") } })}
+                onPress={() => {
+                  trackProjectView(project.id);
+                  router.push({
+                    pathname: "/project-details",
+                    params: {
+                      id: project.id,
+                      title: project.title,
+                      year: project.year,
+                      image: project.image,
+                      description: `${project.title} by ${project.author}`,
+                      tags: project.tags.join(","),
+                    }
+                  });
+                }}
               >
                 <View style={styles.projectImgWrapper}>
                   <Image source={{ uri: project.image }} style={styles.projectImg} />
@@ -243,7 +256,10 @@ export default function HomeScreen() {
         <Text style={[styles.sectionTitle, { marginTop: 20, color: C.black }]}>Explore by Tags</Text>
         <View style={styles.tagsGrid}>
           {TAGS.map((tag) => (
-            <TouchableOpacity key={tag.label} style={[styles.tagChip, { backgroundColor: C.white, borderColor: C.input }]} onPress={() => setSearch(tag.label)}>
+            <TouchableOpacity key={tag.label} style={[styles.tagChip, { backgroundColor: C.white, borderColor: C.input }]} onPress={() => {
+              trackTagSearch(tag.label);
+              setSearch(tag.label);
+            }}>
               <Ionicons name={tag.icon as any} size={18} color={C.button} />
               <Text style={[styles.tagChipText, { color: C.black }]}>{tag.label}</Text>
             </TouchableOpacity>
