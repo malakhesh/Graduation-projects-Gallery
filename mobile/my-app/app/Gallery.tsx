@@ -6,24 +6,17 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   Image,
   ScrollView,
   ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import Toast from "react-native-toast-message";
 import UploadProjectModal from "../components/modals/UploadProjectModal";
 import { getApproved } from "../backend/projects";
-
-const C = {
-  bg: "rgb(223, 205, 192)",
-  white: "rgb(254, 251, 245)",
-  black: "rgb(47, 28, 15)",
-  link: "rgb(164, 132, 109)",
-  button: "rgb(104, 68, 42)",
-  input: "rgb(185, 174, 167)",
-};
+import { useTheme } from "../context/ThemeContext";
+import { Colors } from "../constants/theme";
 
 const CATEGORIES = ["All", "Mobile", "Web", "AI", "Security", "Data Science"];
 
@@ -97,7 +90,7 @@ const FILTER_KEYWORDS: Record<string, string[]> = {
   ],
 };
 
-function ProjectCard({ item, onPress }: any) {
+function ProjectCard({ item, onPress, colors }: any) {
   const stack = Array.isArray(item.stack) ? item.stack : [];
   const ratings = Array.isArray(item.ratings) ? item.ratings : [];
 
@@ -112,40 +105,47 @@ function ProjectCard({ item, onPress }: any) {
       : "0.0";
 
   return (
-    <TouchableOpacity style={styles.card} activeOpacity={0.88} onPress={onPress}>
+    <TouchableOpacity
+      style={[
+        styles.card,
+        { backgroundColor: colors.white, shadowColor: colors.black },
+      ]}
+      activeOpacity={0.88}
+      onPress={onPress}
+    >
       <Image
         source={{
           uri:
             item.imgUrl ||
             "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80",
         }}
-        style={styles.cardImage}
+        style={[styles.cardImage, { backgroundColor: colors.input }]}
       />
 
       <View style={styles.cardBody}>
-        <Text style={styles.cardName} numberOfLines={1}>
+        <Text style={[styles.cardName, { color: colors.black }]} numberOfLines={1}>
           {item.title || "Untitled Project"}
         </Text>
 
-        <Text style={styles.cardDescription} numberOfLines={2}>
+        <Text style={[styles.cardDescription, { color: colors.link }]} numberOfLines={2}>
           {item.desc || "No description added"}
         </Text>
 
         <View style={styles.metaRow}>
-          <View style={styles.cardBadge}>
-            <Text style={styles.cardBadgeText}>
+          <View style={[styles.cardBadge, { backgroundColor: "rgba(185, 174, 167, 0.45)" }]}>
+            <Text style={[styles.cardBadgeText, { color: colors.black }]}>
               {item.category || "General"}
             </Text>
           </View>
 
-          <Text style={styles.ratingText}>⭐ {averageRating}</Text>
+          <Text style={[styles.ratingText, { color: colors.link }]}>⭐ {averageRating}</Text>
         </View>
 
         {stack.length > 0 ? (
           <View style={styles.stackRow}>
             {stack.slice(0, 2).map((tech: string, index: number) => (
-              <View key={index} style={styles.stackChip}>
-                <Text style={styles.stackText}>{tech}</Text>
+              <View key={index} style={[styles.stackChip, { backgroundColor: colors.bg }]}>
+                <Text style={[styles.stackText, { color: colors.black }]}>{tech}</Text>
               </View>
             ))}
           </View>
@@ -156,6 +156,9 @@ function ProjectCard({ item, onPress }: any) {
 }
 
 export default function GalleryScreen() {
+  const { theme } = useTheme();
+  const C = Colors[theme];
+
   const params = useLocalSearchParams();
 
   const [search, setSearch] = useState("");
@@ -299,8 +302,230 @@ export default function GalleryScreen() {
     await loadProjects();
   };
 
+  // جعل الـ styles ديناميكية حسب الثيم
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: C.bg,
+        },
+
+        headerRow: {
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          paddingTop: 18,
+          paddingHorizontal: 16,
+          paddingBottom: 12,
+        },
+
+        title: {
+          fontSize: 21,
+          fontWeight: "900",
+          color: C.black,
+        },
+
+        subtitle: {
+          fontSize: 12.5,
+          color: C.link,
+          fontWeight: "700",
+          marginTop: 3,
+        },
+
+        uploadButton: {
+          backgroundColor: C.button,
+          paddingHorizontal: 14,
+          paddingVertical: 9,
+          borderRadius: 18,
+        },
+
+        uploadButtonText: {
+          color: C.white,
+          fontWeight: "900",
+          fontSize: 13,
+        },
+
+        searchBox: {
+          marginHorizontal: 16,
+          backgroundColor: C.white,
+          borderRadius: 16,
+          paddingHorizontal: 14,
+          height: 48,
+          flexDirection: "row",
+          alignItems: "center",
+          borderWidth: 1,
+          borderColor: "rgba(104, 68, 42, 0.15)",
+        },
+
+        searchInput: {
+          flex: 1,
+          color: C.black,
+          fontSize: 14,
+        },
+
+        clearText: {
+          color: C.link,
+          fontSize: 26,
+          fontWeight: "700",
+          paddingHorizontal: 4,
+        },
+
+        categoriesWrapper: {
+          paddingVertical: 12,
+          paddingLeft: 12,
+        },
+
+        chip: {
+          paddingHorizontal: 14,
+          paddingVertical: 9,
+          marginHorizontal: 4,
+          backgroundColor: C.white,
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: "rgba(104, 68, 42, 0.12)",
+        },
+
+        chipActive: {
+          backgroundColor: C.button,
+        },
+
+        chipText: {
+          color: C.black,
+          fontSize: 13,
+          fontWeight: "700",
+        },
+
+        chipTextActive: {
+          color: C.white,
+        },
+
+        loadingBox: {
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+        },
+
+        loadingText: {
+          marginTop: 10,
+          color: C.black,
+          fontSize: 14,
+          fontWeight: "700",
+        },
+
+        listContent: {
+          paddingHorizontal: 8,
+          paddingBottom: 24,
+        },
+
+        emptyListContent: {
+          flexGrow: 1,
+          justifyContent: "center",
+        },
+
+        columnWrapper: {
+          justifyContent: "space-between",
+        },
+
+        card: {
+          width: "48%",
+          marginHorizontal: 4,
+          marginBottom: 12,
+          borderRadius: 16,
+          overflow: "hidden",
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 3,
+        },
+
+        cardImage: {
+          width: "100%",
+          height: 120,
+        },
+
+        cardBody: {
+          padding: 10,
+        },
+
+        cardName: {
+          fontWeight: "900",
+          fontSize: 14,
+          marginBottom: 5,
+        },
+
+        cardDescription: {
+          fontSize: 12,
+          lineHeight: 17,
+          marginBottom: 8,
+        },
+
+        metaRow: {
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 8,
+        },
+
+        cardBadge: {
+          paddingHorizontal: 8,
+          paddingVertical: 4,
+          borderRadius: 10,
+          maxWidth: "70%",
+        },
+
+        cardBadgeText: {
+          fontSize: 10.5,
+          fontWeight: "800",
+        },
+
+        ratingText: {
+          fontSize: 11,
+          fontWeight: "800",
+        },
+
+        stackRow: {
+          flexDirection: "row",
+          flexWrap: "wrap",
+        },
+
+        stackChip: {
+          paddingHorizontal: 7,
+          paddingVertical: 4,
+          borderRadius: 9,
+          marginRight: 5,
+          marginBottom: 4,
+        },
+
+        stackText: {
+          fontSize: 10,
+          fontWeight: "700",
+        },
+
+        emptyBox: {
+          alignItems: "center",
+          paddingHorizontal: 30,
+        },
+
+        emptyTitle: {
+          color: C.black,
+          fontSize: 18,
+          fontWeight: "900",
+          marginBottom: 8,
+        },
+
+        emptyText: {
+          color: C.link,
+          textAlign: "center",
+          fontSize: 14,
+          lineHeight: 21,
+        },
+      }),
+    [C]
+  );
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView key={theme} style={styles.container}>
       <View style={styles.headerRow}>
         <View>
           <Text style={styles.title}>Projects Gallery</Text>
@@ -375,6 +600,7 @@ export default function GalleryScreen() {
           renderItem={({ item }) => (
             <ProjectCard
               item={item}
+              colors={C}
               onPress={() =>
                 router.push({
                   pathname: "/project-details",
@@ -406,230 +632,3 @@ export default function GalleryScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: C.bg,
-  },
-
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingTop: 18,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-  },
-
-  title: {
-    fontSize: 21,
-    fontWeight: "900",
-    color: C.black,
-  },
-
-  subtitle: {
-    fontSize: 12.5,
-    color: C.link,
-    fontWeight: "700",
-    marginTop: 3,
-  },
-
-  uploadButton: {
-    backgroundColor: C.button,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 18,
-  },
-
-  uploadButtonText: {
-    color: C.white,
-    fontWeight: "900",
-    fontSize: 13,
-  },
-
-  searchBox: {
-    marginHorizontal: 16,
-    backgroundColor: C.white,
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    height: 48,
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "rgba(104, 68, 42, 0.15)",
-  },
-
-  searchInput: {
-    flex: 1,
-    color: C.black,
-    fontSize: 14,
-  },
-
-  clearText: {
-    color: C.link,
-    fontSize: 26,
-    fontWeight: "700",
-    paddingHorizontal: 4,
-  },
-
-  categoriesWrapper: {
-    paddingVertical: 12,
-    paddingLeft: 12,
-  },
-
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    marginHorizontal: 4,
-    backgroundColor: C.white,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "rgba(104, 68, 42, 0.12)",
-  },
-
-  chipActive: {
-    backgroundColor: C.button,
-  },
-
-  chipText: {
-    color: C.black,
-    fontSize: 13,
-    fontWeight: "700",
-  },
-
-  chipTextActive: {
-    color: C.white,
-  },
-
-  loadingBox: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  loadingText: {
-    marginTop: 10,
-    color: C.black,
-    fontSize: 14,
-    fontWeight: "700",
-  },
-
-  listContent: {
-    paddingHorizontal: 8,
-    paddingBottom: 24,
-  },
-
-  emptyListContent: {
-    flexGrow: 1,
-    justifyContent: "center",
-  },
-
-  columnWrapper: {
-    justifyContent: "space-between",
-  },
-
-  card: {
-    width: "48%",
-    marginHorizontal: 4,
-    marginBottom: 12,
-    backgroundColor: C.white,
-    borderRadius: 16,
-    overflow: "hidden",
-    shadowColor: C.black,
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
-  },
-
-  cardImage: {
-    width: "100%",
-    height: 120,
-    backgroundColor: C.input,
-  },
-
-  cardBody: {
-    padding: 10,
-  },
-
-  cardName: {
-    fontWeight: "900",
-    color: C.black,
-    fontSize: 14,
-    marginBottom: 5,
-  },
-
-  cardDescription: {
-    color: C.link,
-    fontSize: 12,
-    lineHeight: 17,
-    marginBottom: 8,
-  },
-
-  metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-
-  cardBadge: {
-    backgroundColor: "rgba(185, 174, 167, 0.45)",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
-    maxWidth: "70%",
-  },
-
-  cardBadgeText: {
-    fontSize: 10.5,
-    color: C.black,
-    fontWeight: "800",
-  },
-
-  ratingText: {
-    fontSize: 11,
-    color: C.link,
-    fontWeight: "800",
-  },
-
-  stackRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-
-  stackChip: {
-    backgroundColor: C.bg,
-    paddingHorizontal: 7,
-    paddingVertical: 4,
-    borderRadius: 9,
-    marginRight: 5,
-    marginBottom: 4,
-  },
-
-  stackText: {
-    fontSize: 10,
-    color: C.black,
-    fontWeight: "700",
-  },
-
-  emptyBox: {
-    alignItems: "center",
-    paddingHorizontal: 30,
-  },
-
-  emptyTitle: {
-    color: C.black,
-    fontSize: 18,
-    fontWeight: "900",
-    marginBottom: 8,
-  },
-
-  emptyText: {
-    color: C.link,
-    textAlign: "center",
-    fontSize: 14,
-    lineHeight: 21,
-  },
-});

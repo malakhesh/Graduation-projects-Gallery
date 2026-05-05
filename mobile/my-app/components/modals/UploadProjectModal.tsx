@@ -21,19 +21,8 @@ import Toast from 'react-native-toast-message';
 import { uploadToCloudinary } from '../../app/services/cloudinary';
 import { createProject, getCurrentUserYear } from '../../app/services/projectApi';
 import { auth } from '../../backend/firebase';
-
-const COLORS = {
-  bg: 'rgb(254, 251, 245)',
-  black: 'rgb(47, 28, 15)',
-  link: 'rgb(164, 132, 109)',
-  button: 'rgb(104, 68, 42)',
-  buttonDark: 'rgb(75, 46, 24)',
-  input: 'rgb(244, 238, 230)',
-  border: 'rgb(220, 208, 198)',
-  chip: 'rgb(237, 228, 218)',
-  error: '#b94040',
-  white: '#fff',
-};
+import { useTheme } from '../../context/ThemeContext';
+import { Colors } from '../../constants/theme';
 
 const TAGS = ["Business", "Education", "E-commerce", "Entertainment", "Blog"];
 const CATEGORIES = [
@@ -54,6 +43,9 @@ interface UploadProjectModalProps {
 }
 
 export default function UploadProjectModal({ visible, onClose, onSuccess }: UploadProjectModalProps) {
+  const { theme } = useTheme();
+  const COLORS = Colors[theme];
+
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
