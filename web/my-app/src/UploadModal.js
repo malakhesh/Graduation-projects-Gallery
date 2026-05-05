@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import "./uploadmodal.css";
 import { FaGithub, FaImage, FaChevronLeft, FaChevronRight, FaCheck } from "react-icons/fa";
-import { addProj, getDailyProjCount } from "./projects.js";
+import { addProj } from "./projects.js";
+import { checkUploadEligibility, getSettings } from "./DashSettings.js";
 import { getUser } from "./auth.js";
 import { getUploadOptions } from "./configs.js";
-import { getSettings } from "./DashSettings.js";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "./firebase.js";
 
@@ -33,28 +33,40 @@ function UploadModal({ onClose }) {
   const [autoApproved, setAutoApproved] = useState(false);
   const fileRef = useRef();
 
-  // Upload allowed check
+  // Upload gate state
   const [uploadAllowed, setUploadAllowed] = useState(true);
   const [dailyLimitReached, setDailyLimitReached] = useState(false);
   const [dailyLimit, setDailyLimit] = useState(3);
   const [checkingSettings, setCheckingSettings] = useState(true);
 
-  // Fetched from Firestore
+  // Options fetched from Firestore
   const [options, setOptions] = useState({ tags: [], categories: [], techStacks: [] });
   const [loadingOptions, setLoadingOptions] = useState(true);
 
-  // Check projectUploadOpen and daily limit on mount
+  // ─── Gate check on mount via checkUploadEligibility ────────────────────────
   useEffect(() => {
     if (!user) return;
-    Promise.all([getSettings(), getDailyProjCount(user.uid)]).then(([s, dailyCount]) => {
-      const limit = s?.maxProjectsPerUserPerDay ?? 3;
+
+    Promise.all([
+      checkUploadEligibility(user.uid),
+      getSettings(),
+    ]).then(([eligibility, settings]) => {
+      // Store the limit for display purposes
+      const limit = settings?.maxProjectsPerUserPerDay ?? 3;
       setDailyLimit(limit);
-      setUploadAllowed(s?.projectUploadOpen !== false);
-      if (dailyCount >= limit) setDailyLimitReached(true);
+
+      if (eligibility === "uploads-closed") {
+        setUploadAllowed(false);
+      } else if (eligibility === "daily-limit-reached") {
+        setDailyLimitReached(true);
+      }
+      // "ok" → nothing to block, proceed normally
+
       setCheckingSettings(false);
     });
   }, [user]);
 
+  // ─── Load upload options ─────────────────────────────────────────────────────
   useEffect(() => {
     getUploadOptions().then((data) => {
       if (data && data !== "get-options-fail") {
@@ -68,6 +80,7 @@ function UploadModal({ onClose }) {
     });
   }, []);
 
+  // ─── Helpers ─────────────────────────────────────────────────────────────────
   const toggleTech = (tech) => {
     setTechStack((prev) =>
       prev.includes(tech) ? prev.filter((t) => t !== tech) : [...prev, tech]
@@ -95,6 +108,7 @@ function UploadModal({ onClose }) {
     return data.secure_url;
   };
 
+  // ─── Validation ──────────────────────────────────────────────────────────────
   const validateStep = (s) => {
     const e = {};
     if (s === 0) {
@@ -127,6 +141,7 @@ function UploadModal({ onClose }) {
     setStep((s) => s - 1);
   };
 
+  // ─── Submit ───────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     const e = validateStep(2);
     if (Object.keys(e).length > 0) { setErrors(e); return; }
@@ -136,6 +151,7 @@ function UploadModal({ onClose }) {
       const userData = await getUser(user.uid);
       const year = userData?.year ?? null;
 
+      // addProj re-checks the limit server-side before writing
       const result = await addProj(
         name, description, user.uid, year, techStack, category, github, imgUrl, [tag]
       );
@@ -143,7 +159,7 @@ function UploadModal({ onClose }) {
       if (result === "daily-limit-reached") {
         setDailyLimitReached(true);
       } else if (result === "uploads-closed") {
-        setErrors({ submit: "Project submissions are currently disabled." });
+        setUploadAllowed(false);
       } else if (result === "add-fail") {
         setErrors({ submit: "Something went wrong. Please try again." });
       } else {
@@ -157,10 +173,11 @@ function UploadModal({ onClose }) {
     setSubmitting(false);
   };
 
-  // Derived: what to show in the body
-  const showDailyLimit = !checkingSettings && uploadAllowed && dailyLimitReached && !success;
-  const showUploadsClosed = !checkingSettings && !uploadAllowed;
+  // ─── Derived display flags ────────────────────────────────────────────────────
+  const showDailyLimit    = !checkingSettings && uploadAllowed && dailyLimitReached && !success;
+  const showUploadsClosed = !checkingSettings && !uploadAllowed && !success;
 
+  // ─── Render ───────────────────────────────────────────────────────────────────
   return createPortal(
     <div
       className="um-overlay"
@@ -197,21 +214,26 @@ function UploadModal({ onClose }) {
               <div className="um-spinner" />
               <span>Loading...</span>
             </div>
+
           ) : showUploadsClosed ? (
             <div className="um-success">
               <div className="um-success-icon" style={{ backgroundColor: "#c0392b" }}>✕</div>
               <p className="um-success-title">Uploads are closed</p>
-              <p className="um-success-sub">Project submissions are currently disabled. Please check back later.</p>
+              <p className="um-success-sub">
+                Project submissions are currently disabled. Please check back later.
+              </p>
             </div>
+
           ) : showDailyLimit ? (
             <div className="um-success">
               <div className="um-success-icon" style={{ backgroundColor: "#e67e22" }}>🚫</div>
               <p className="um-success-title">Daily limit reached</p>
               <p className="um-success-sub">
-                You've submitted {dailyLimit} project{dailyLimit !== 1 ? "s" : ""} today — that's your daily maximum.
-                Come back tomorrow to upload more!
+                You've submitted {dailyLimit} project{dailyLimit !== 1 ? "s" : ""} today —
+                that's your daily maximum. Come back tomorrow to upload more!
               </p>
             </div>
+
           ) : success ? (
             <div className="um-success">
               <div className="um-success-icon">✓</div>
@@ -222,6 +244,7 @@ function UploadModal({ onClose }) {
                   : "An admin will review it shortly."}
               </p>
             </div>
+
           ) : (
             <>
               {/* Step 0 — Basics */}
@@ -253,7 +276,9 @@ function UploadModal({ onClose }) {
                   </div>
 
                   <div className="um-field">
-                    <label className="um-label"><FaGithub className="um-icon" /> GitHub Link <span className="um-req">*</span></label>
+                    <label className="um-label">
+                      <FaGithub className="um-icon" /> GitHub Link <span className="um-req">*</span>
+                    </label>
                     <input
                       className={`um-input ${errors.github ? "um-input-error" : ""}`}
                       placeholder="https://github.com/username/repo"
@@ -304,7 +329,9 @@ function UploadModal({ onClose }) {
                       <div className="um-field">
                         <label className="um-label">
                           Tech Stack <span className="um-req">*</span>
-                          {techStack.length > 0 && <span className="um-count">{techStack.length} selected</span>}
+                          {techStack.length > 0 && (
+                            <span className="um-count">{techStack.length} selected</span>
+                          )}
                         </label>
                         <div className="um-chips">
                           {options.techStacks.map((tech) => (
@@ -325,7 +352,9 @@ function UploadModal({ onClose }) {
               {step === 2 && (
                 <div className="um-step-content">
                   <div className="um-field">
-                    <label className="um-label"><FaImage className="um-icon" /> Project Image <span className="um-req">*</span></label>
+                    <label className="um-label">
+                      <FaImage className="um-icon" /> Project Image <span className="um-req">*</span>
+                    </label>
                     <div
                       className={`um-dropzone ${errors.image ? "um-input-error" : ""}`}
                       onClick={() => fileRef.current.click()}
@@ -343,7 +372,13 @@ function UploadModal({ onClose }) {
                         </div>
                       )}
                     </div>
-                    <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleImage} />
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept="image/*"
+                      style={{ display: "none" }}
+                      onChange={handleImage}
+                    />
                     {errors.image && <span className="um-error">{errors.image}</span>}
                   </div>
 
@@ -363,7 +398,7 @@ function UploadModal({ onClose }) {
           )}
         </div>
 
-        {/* Footer — hidden when checking, blocked, daily limit hit, or success */}
+        {/* Footer — hidden when checking / blocked / limit hit / success */}
         {!checkingSettings && uploadAllowed && !dailyLimitReached && !success && (
           <div className="um-footer">
             {step > 0 ? (
@@ -374,7 +409,11 @@ function UploadModal({ onClose }) {
               <button className="um-btn-cancel" onClick={onClose}>Cancel</button>
             )}
             {step < 2 ? (
-              <button className="um-btn-next" onClick={handleNext} disabled={step === 1 && loadingOptions}>
+              <button
+                className="um-btn-next"
+                onClick={handleNext}
+                disabled={step === 1 && loadingOptions}
+              >
                 Next <FaChevronRight size={12} />
               </button>
             ) : (
@@ -385,7 +424,7 @@ function UploadModal({ onClose }) {
           </div>
         )}
 
-        {/* Close button shown on limit/blocked screens */}
+        {/* Close button on limit / blocked screens */}
         {!checkingSettings && (showDailyLimit || showUploadsClosed) && (
           <div className="um-footer">
             <button className="um-btn-cancel" onClick={onClose}>Close</button>

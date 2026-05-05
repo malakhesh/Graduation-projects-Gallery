@@ -6,12 +6,11 @@ import { getUploadOptions, addOption, removeOption } from "./configs.js"
 import { getSettings, updateSettings } from "./DashSettings.js"
 
 const DEFAULTS = {
-  siteName: "Graduation Gallery",
   maintenanceMode: false,
   registrationOpen: true,
   projectUploadOpen: true,
   autoApprove: false,
-  maxProjectsPerUser: 3,
+  maxProjectsPerUserPerDay: 3,   // per day
   contactOpen: true,
   suspensionDuration: 7,
   suspensionUnit: "days",
@@ -91,39 +90,6 @@ function Toggle({ checked, onChange, label, sublabel }) {
   )
 }
 
-function TextInput({ label, sublabel, value, onChange, placeholder }) {
-  return (
-    <div style={{ marginBottom: "18px" }}>
-      <label style={{
-        display: "block", fontSize: "13px",
-        fontWeight: "700", color: "#5a3825",
-        marginBottom: "4px", letterSpacing: "0.3px",
-      }}>{label}</label>
-      {sublabel && (
-        <div style={{ fontSize: "11px", color: "#9a7050", marginBottom: "6px" }}>{sublabel}</div>
-      )}
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        style={{
-          width: "100%", padding: "10px 14px",
-          borderRadius: "10px",
-          border: "1.5px solid rgba(180,130,80,0.35)",
-          backgroundColor: "rgba(255,255,255,0.6)",
-          fontSize: "14px", color: "#3B2F2F",
-          outline: "none", boxSizing: "border-box",
-          fontFamily: "'Poppins', sans-serif",
-          transition: "border-color 0.2s",
-        }}
-        onFocus={(e) => e.target.style.borderColor = "#6F4E37"}
-        onBlur={(e) => e.target.style.borderColor = "rgba(180,130,80,0.35)"}
-      />
-    </div>
-  )
-}
-
 // ─── Suspension Duration Picker ───────────────────────────────────────────────
 const UNIT_OPTIONS = [
   { value: "seconds", label: "Seconds" },
@@ -168,7 +134,6 @@ function SuspensionDurationPicker({ duration, unit, onDurationChange, onUnitChan
       </div>
 
       <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
-        {/* Number input */}
         <input
           type="number"
           min="1"
@@ -183,10 +148,7 @@ function SuspensionDurationPicker({ duration, unit, onDurationChange, onUnitChan
           onBlur={(e) => e.target.style.borderColor = "rgba(180,130,80,0.35)"}
         />
 
-        {/* Unit selector — styled pill buttons */}
-        <div style={{
-          display: "flex", gap: "6px", flexWrap: "wrap",
-        }}>
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
           {UNIT_OPTIONS.map((opt) => (
             <button
               key={opt.value}
@@ -217,7 +179,6 @@ function SuspensionDurationPicker({ duration, unit, onDurationChange, onUnitChan
         </div>
       </div>
 
-      {/* Live preview */}
       {preview && (
         <div style={{
           marginTop: "12px",
@@ -440,8 +401,6 @@ function DashboardSettings({ onBack }) {
 
   const handleSave = async () => {
     setSaving(true)
-    if (settings.siteName) document.title = settings.siteName
-    else document.title = "Graduation Gallery"
     const result = await updateSettings(settings)
     setSaving(false)
     if (result === "settings-ok") showToast("Settings saved successfully.")
@@ -680,16 +639,6 @@ function DashboardSettings({ onBack }) {
               animation: "fadeUp 0.45s ease",
             }}>
 
-              <SectionCard icon="🏫" title="General">
-                <TextInput
-                  label="Site Name"
-                  sublabel="Shown in the browser tab and header"
-                  value={settings.siteName}
-                  onChange={(v) => set("siteName", v)}
-                  placeholder="Graduation Gallery"
-                />
-              </SectionCard>
-
               <SectionCard icon="🔐" title="Access Control">
                 <Toggle
                   checked={settings.maintenanceMode}
@@ -716,18 +665,19 @@ function DashboardSettings({ onBack }) {
                   sublabel="Skip review — projects go live immediately"
                 />
 
+                {/* ── Max projects per user per day ── */}
                 <div style={{ marginTop: "16px" }}>
                   <label style={{
                     display: "block", fontSize: "13px",
                     fontWeight: "700", color: "#5a3825",
                     marginBottom: "4px", letterSpacing: "0.3px",
-                  }}>Max Projects Per User</label>
+                  }}>Max Projects Per User Per Day</label>
                   <div style={{ fontSize: "11px", color: "#9a7050", marginBottom: "10px" }}>
-                    Maximum number of projects each user can submit
+                    Maximum number of projects each user can submit in a single calendar day
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
                     <button
-                      onClick={() => set("maxProjectsPerUser", Math.max(1, settings.maxProjectsPerUser - 1))}
+                      onClick={() => set("maxProjectsPerUserPerDay", Math.max(1, settings.maxProjectsPerUserPerDay - 1))}
                       style={{
                         width: "38px", height: "38px", borderRadius: "50%",
                         border: "1.5px solid rgba(111,78,55,0.3)",
@@ -751,11 +701,11 @@ function DashboardSettings({ onBack }) {
                       fontSize: "16px", fontWeight: "700", color: "#3B2F2F",
                       flexShrink: 0,
                     }}>
-                      {settings.maxProjectsPerUser}
+                      {settings.maxProjectsPerUserPerDay}
                     </div>
 
                     <button
-                      onClick={() => set("maxProjectsPerUser", Math.min(20, settings.maxProjectsPerUser + 1))}
+                      onClick={() => set("maxProjectsPerUserPerDay", Math.min(20, settings.maxProjectsPerUserPerDay + 1))}
                       style={{
                         width: "38px", height: "38px", borderRadius: "50%",
                         border: "1.5px solid rgba(111,78,55,0.3)",
@@ -771,7 +721,7 @@ function DashboardSettings({ onBack }) {
                     >+</button>
 
                     <span style={{ fontSize: "12px", color: "#9a7050" }}>
-                      projects per user (max 20)
+                      projects per user per day (max 20)
                     </span>
                   </div>
                 </div>
