@@ -32,22 +32,13 @@ import {
   removeComment,
 } from "../backend/projects";
 import { addReport } from "../backend/reports";
-
-const C = {
-  bg: "rgb(223, 205, 192)",
-  white: "rgb(254, 251, 245)",
-  black: "rgb(47, 28, 15)",
-  link: "rgb(164, 132, 109)",
-  linkDark: "rgb(75, 48, 28)",
-  button: "rgb(104, 68, 42)",
-  buttonDark: "rgb(50, 30, 15)",
-  input: "rgb(185, 174, 167)",
-  border: "rgba(104, 68, 42, 0.15)",
-  gold: "rgb(216, 174, 48)",
-  danger: "rgb(150, 55, 45)",
-};
+import { useTheme } from "../context/ThemeContext";
+import { Colors } from "../constants/theme";
 
 export default function ProjectDetails() {
+  const { theme } = useTheme();
+  const C = Colors[theme];
+
   const params = useLocalSearchParams();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
@@ -477,6 +468,532 @@ export default function ProjectDetails() {
     }
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: C.bg,
+    },
+
+    center: {
+      flex: 1,
+      backgroundColor: C.bg,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: 24,
+    },
+
+    loadingText: {
+      marginTop: 12,
+      fontSize: 14,
+      color: C.black,
+      fontWeight: "700",
+    },
+
+    errorMessage: {
+      fontSize: 16,
+      fontWeight: "800",
+      color: C.black,
+      marginBottom: 16,
+      textAlign: "center",
+    },
+
+    errorBackButton: {
+      backgroundColor: C.button,
+      paddingVertical: 12,
+      paddingHorizontal: 24,
+      borderRadius: 14,
+    },
+
+    errorBackButtonText: {
+      color: C.white,
+      fontSize: 14,
+      fontWeight: "900",
+    },
+
+    coverWrapper: {
+      width: "100%",
+      height: 230,
+      position: "relative",
+      backgroundColor: C.bg,
+    },
+
+    coverImage: {
+      width: "100%",
+      height: "100%",
+    },
+
+    coverOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: "rgba(47, 28, 15, 0.18)",
+    },
+
+    topActionsRow: {
+      position: "absolute",
+      top: 14,
+      right: 12,
+      flexDirection: "row",
+      alignItems: "center",
+    },
+
+    copyLinkPill: {
+      height: 33,
+      backgroundColor: "rgba(47, 28, 15, 0.82)",
+      borderRadius: 18,
+      paddingHorizontal: 12,
+      marginRight: 8,
+      flexDirection: "row",
+      alignItems: "center",
+    },
+
+    copyLinkText: {
+      color: C.white,
+      fontSize: 12,
+      fontWeight: "800",
+      marginLeft: 6,
+      textTransform: "lowercase",
+    },
+
+    reportProjectPill: {
+      height: 33,
+      backgroundColor: C.error,
+      borderRadius: 18,
+      paddingHorizontal: 11,
+      marginRight: 8,
+      flexDirection: "row",
+      alignItems: "center",
+    },
+
+    reportProjectText: {
+      color: C.white,
+      fontSize: 12,
+      fontWeight: "800",
+      marginLeft: 5,
+    },
+
+    topIconButton: {
+      width: 33,
+      height: 33,
+      borderRadius: 16.5,
+      backgroundColor: "rgba(254, 251, 245, 0.95)",
+      alignItems: "center",
+      justifyContent: "center",
+      marginLeft: 7,
+    },
+
+    coverContent: {
+      position: "absolute",
+      left: 16,
+      right: 16,
+      bottom: 16,
+    },
+
+    coverTitle: {
+      color: C.white,
+      fontSize: 27,
+      fontWeight: "900",
+      marginBottom: 10,
+    },
+
+    coverBadgesRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+    },
+
+    coverBadge: {
+      backgroundColor: "rgba(254, 251, 245, 0.20)",
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 12,
+      marginRight: 8,
+      marginBottom: 6,
+    },
+
+    coverBadgeText: {
+      color: C.white,
+      fontSize: 11.5,
+      fontWeight: "800",
+    },
+
+    card: {
+      backgroundColor: C.white,
+      marginHorizontal: 18,
+      marginTop: -14,
+      marginBottom: 24,
+      borderRadius: 22,
+      padding: 16,
+      shadowColor: C.black,
+      shadowOpacity: 0.12,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 5 },
+      elevation: 5,
+    },
+
+    ownerBox: {
+      borderWidth: 1,
+      borderColor: C.border,
+      borderRadius: 18,
+      padding: 12,
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 18,
+    },
+
+    avatarCircle: {
+      width: 42,
+      height: 42,
+      borderRadius: 21,
+      backgroundColor: "rgba(223, 205, 192, 0.35)",
+      borderWidth: 1,
+      borderColor: C.border,
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: 12,
+    },
+
+    avatarText: {
+      color: C.button,
+      fontSize: 16,
+      fontWeight: "900",
+    },
+
+    ownerInfo: {
+      flex: 1,
+    },
+
+    ownerName: {
+      color: C.black,
+      fontSize: 15,
+      fontWeight: "900",
+      marginBottom: 2,
+    },
+
+    ownerYear: {
+      color: C.link,
+      fontSize: 12,
+      fontWeight: "700",
+    },
+
+    ownerEmail: {
+      color: C.link,
+      fontSize: 11.5,
+      marginTop: 2,
+      opacity: 0.7,
+    },
+
+    profileLink: {
+      color: C.link,
+      fontSize: 12.5,
+      fontWeight: "800",
+    },
+
+    description: {
+      color: C.black,
+      fontSize: 14.5,
+      lineHeight: 22,
+      marginBottom: 15,
+    },
+
+    stackRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      marginBottom: 16,
+    },
+
+    stackChip: {
+      backgroundColor: C.bg,
+      borderWidth: 1,
+      borderColor: C.border,
+      borderRadius: 16,
+      paddingHorizontal: 13,
+      paddingVertical: 8,
+      marginRight: 8,
+      marginBottom: 8,
+    },
+
+    stackChipText: {
+      color: C.black,
+      fontSize: 13,
+      fontWeight: "700",
+    },
+
+    emptyText: {
+      color: C.link,
+      fontSize: 13,
+      fontWeight: "700",
+    },
+
+    actionButtonsRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 20,
+    },
+
+    githubButton: {
+      height: 42,
+      backgroundColor: C.button,
+      borderRadius: 21,
+      paddingHorizontal: 18,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: 10,
+    },
+
+    githubButtonText: {
+      color: C.white,
+      fontSize: 13.5,
+      fontWeight: "900",
+      marginLeft: 7,
+    },
+
+    smallBookmarkButton: {
+      width: 44,
+      height: 42,
+      borderRadius: 21,
+      backgroundColor: C.black,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
+    smallBookmarkButtonActive: {
+      backgroundColor: C.button,
+    },
+
+    ratingSection: {
+      marginBottom: 16,
+    },
+
+    sectionTitle: {
+      color: C.black,
+      fontSize: 15,
+      fontWeight: "900",
+      marginBottom: 10,
+    },
+
+    rateRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 10,
+    },
+
+    starsRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginRight: 12,
+    },
+
+    submitRatingButton: {
+      backgroundColor: C.chip,
+      borderRadius: 14,
+      paddingHorizontal: 16,
+      paddingVertical: 9,
+      minWidth: 82,
+      alignItems: "center",
+    },
+
+    submitRatingText: {
+      color: C.button,
+      fontSize: 13,
+      fontWeight: "900",
+    },
+
+    ratingCountText: {
+      color: C.button,
+      fontSize: 13.5,
+      fontWeight: "900",
+    },
+
+    divider: {
+      height: 1,
+      backgroundColor: C.border,
+      marginBottom: 16,
+    },
+
+    commentsSection: {
+      marginBottom: 4,
+    },
+
+    commentInput: {
+      minHeight: 96,
+      borderWidth: 1,
+      borderColor: C.border,
+      borderRadius: 18,
+      backgroundColor: C.bg,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      fontSize: 14,
+      color: C.black,
+      textAlignVertical: "top",
+      marginBottom: 12,
+    },
+
+    commentButton: {
+      alignSelf: "flex-end",
+      backgroundColor: C.button,
+      borderRadius: 16,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      marginBottom: 16,
+    },
+
+    commentButtonText: {
+      color: C.white,
+      fontSize: 12.8,
+      fontWeight: "900",
+    },
+
+    commentCard: {
+      backgroundColor: C.chip,
+      borderRadius: 16,
+      padding: 14,
+      marginBottom: 10,
+    },
+
+    commentHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      marginBottom: 8,
+    },
+
+    commentUser: {
+      color: C.black,
+      fontSize: 14.2,
+      fontWeight: "900",
+      flex: 1,
+      marginRight: 8,
+    },
+
+    commentActions: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+
+    commentDate: {
+      color: C.link,
+      fontSize: 11,
+      marginRight: 6,
+    },
+
+    deleteCommentButton: {
+      width: 26,
+      height: 26,
+      borderRadius: 13,
+      backgroundColor: "rgba(150, 55, 45, 0.12)",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
+    reportCommentButton: {
+      width: 26,
+      height: 26,
+      borderRadius: 13,
+      backgroundColor: "rgba(254, 251, 245, 0.75)",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
+    commentBody: {
+      color: C.black,
+      fontSize: 13.8,
+      lineHeight: 20,
+    },
+
+    noCommentsCard: {
+      backgroundColor: C.chip,
+      borderRadius: 16,
+      padding: 14,
+    },
+
+    noCommentsText: {
+      color: C.link,
+      fontSize: 13,
+      fontWeight: "700",
+      textAlign: "center",
+    },
+
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(47, 28, 15, 0.35)",
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: 24,
+    },
+
+    reportModal: {
+      width: "100%",
+      backgroundColor: C.white,
+      borderRadius: 18,
+      padding: 18,
+    },
+
+    reportModalTitle: {
+      color: C.black,
+      fontSize: 18,
+      fontWeight: "900",
+      marginBottom: 8,
+    },
+
+    reportModalSubtitle: {
+      color: C.link,
+      fontSize: 13,
+      lineHeight: 19,
+      marginBottom: 14,
+    },
+
+    reportReasonInput: {
+      minHeight: 105,
+      borderWidth: 1,
+      borderColor: C.border,
+      borderRadius: 14,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 14,
+      color: C.black,
+      textAlignVertical: "top",
+      backgroundColor: C.bg,
+      marginBottom: 16,
+    },
+
+    reportModalActions: {
+      flexDirection: "row",
+      justifyContent: "flex-end",
+      alignItems: "center",
+    },
+
+    cancelReportButton: {
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      marginRight: 8,
+    },
+
+    cancelReportText: {
+      color: C.link,
+      fontSize: 13,
+      fontWeight: "800",
+    },
+
+    submitReportButton: {
+      backgroundColor: C.error,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 14,
+      minWidth: 120,
+      alignItems: "center",
+    },
+
+    submitReportText: {
+      color: C.white,
+      fontSize: 13,
+      fontWeight: "900",
+    },
+
+    disabledButton: {
+      opacity: 0.65,
+    },
+  });
+
   if (error) {
     return (
       <SafeAreaView style={styles.center}>
@@ -716,7 +1233,7 @@ export default function ProjectDetails() {
                 disabled={ratingLoading}
               >
                 {ratingLoading ? (
-                  <ActivityIndicator size="small" color={C.linkDark} />
+                  <ActivityIndicator size="small" color={C.link} />
                 ) : (
                   <Text style={styles.submitRatingText}>Submit</Text>
                 )}
@@ -734,7 +1251,7 @@ export default function ProjectDetails() {
             <TextInput
               style={styles.commentInput}
               placeholder="Share your thoughts on this project..."
-              placeholderTextColor="rgba(47, 28, 15, 0.35)"
+              placeholderTextColor={C.link}
               multiline
               value={commentText}
               onChangeText={setCommentText}
@@ -778,12 +1295,12 @@ export default function ProjectDetails() {
                             disabled={deleteCommentLoading === index}
                           >
                             {deleteCommentLoading === index ? (
-                              <ActivityIndicator size="small" color={C.danger} />
+                              <ActivityIndicator size="small" color={C.error} />
                             ) : (
                               <Ionicons
                                 name="trash-outline"
                                 size={14}
-                                color={C.danger}
+                                color={C.error}
                               />
                             )}
                           </TouchableOpacity>
@@ -796,7 +1313,7 @@ export default function ProjectDetails() {
                             <Ionicons
                               name="flag-outline"
                               size={14}
-                              color="rgba(47, 28, 15, 0.55)"
+                              color={C.link}
                             />
                           </TouchableOpacity>
                         )}
@@ -833,7 +1350,7 @@ export default function ProjectDetails() {
             <TextInput
               style={styles.reportReasonInput}
               placeholder="What's wrong with this?"
-              placeholderTextColor="rgba(47, 28, 15, 0.35)"
+              placeholderTextColor={C.link}
               multiline
               value={commentReportReason}
               onChangeText={setCommentReportReason}
@@ -889,7 +1406,7 @@ export default function ProjectDetails() {
             <TextInput
               style={styles.reportReasonInput}
               placeholder="What's wrong with this project?"
-              placeholderTextColor="rgba(47, 28, 15, 0.35)"
+              placeholderTextColor={C.link}
               multiline
               value={projectReportReason}
               onChangeText={setProjectReportReason}
@@ -925,528 +1442,3 @@ export default function ProjectDetails() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: C.bg,
-  },
-
-  center: {
-    flex: 1,
-    backgroundColor: C.bg,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 24,
-  },
-
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: C.black,
-    fontWeight: "700",
-  },
-
-  errorMessage: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: C.black,
-    marginBottom: 16,
-    textAlign: "center",
-  },
-
-  errorBackButton: {
-    backgroundColor: C.button,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 14,
-  },
-
-  errorBackButtonText: {
-    color: C.white,
-    fontSize: 14,
-    fontWeight: "900",
-  },
-
-  coverWrapper: {
-    width: "100%",
-    height: 230,
-    position: "relative",
-    backgroundColor: C.bg,
-  },
-
-  coverImage: {
-    width: "100%",
-    height: "100%",
-  },
-
-  coverOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(47, 28, 15, 0.18)",
-  },
-
-  topActionsRow: {
-    position: "absolute",
-    top: 14,
-    right: 12,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  copyLinkPill: {
-    height: 33,
-    backgroundColor: "rgba(47, 28, 15, 0.82)",
-    borderRadius: 18,
-    paddingHorizontal: 12,
-    marginRight: 8,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  copyLinkText: {
-    color: C.white,
-    fontSize: 12,
-    fontWeight: "800",
-    marginLeft: 6,
-    textTransform: "lowercase",
-  },
-
-  reportProjectPill: {
-    height: 33,
-    backgroundColor: "rgba(150, 55, 45, 0.9)",
-    borderRadius: 18,
-    paddingHorizontal: 11,
-    marginRight: 8,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  reportProjectText: {
-    color: C.white,
-    fontSize: 12,
-    fontWeight: "800",
-    marginLeft: 5,
-  },
-
-  topIconButton: {
-    width: 33,
-    height: 33,
-    borderRadius: 16.5,
-    backgroundColor: "rgba(254, 251, 245, 0.95)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginLeft: 7,
-  },
-
-  coverContent: {
-    position: "absolute",
-    left: 16,
-    right: 16,
-    bottom: 16,
-  },
-
-  coverTitle: {
-    color: C.white,
-    fontSize: 27,
-    fontWeight: "900",
-    marginBottom: 10,
-  },
-
-  coverBadgesRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-  },
-
-  coverBadge: {
-    backgroundColor: "rgba(254, 251, 245, 0.20)",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-    marginRight: 8,
-    marginBottom: 6,
-  },
-
-  coverBadgeText: {
-    color: C.white,
-    fontSize: 11.5,
-    fontWeight: "800",
-  },
-
-  card: {
-    backgroundColor: C.white,
-    marginHorizontal: 18,
-    marginTop: -14,
-    marginBottom: 24,
-    borderRadius: 22,
-    padding: 16,
-    shadowColor: C.black,
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 5,
-  },
-
-  ownerBox: {
-    borderWidth: 1,
-    borderColor: C.border,
-    borderRadius: 18,
-    padding: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 18,
-  },
-
-  avatarCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: "rgba(223, 205, 192, 0.35)",
-    borderWidth: 1,
-    borderColor: C.border,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-
-  avatarText: {
-    color: C.button,
-    fontSize: 16,
-    fontWeight: "900",
-  },
-
-  ownerInfo: {
-    flex: 1,
-  },
-
-  ownerName: {
-    color: C.black,
-    fontSize: 15,
-    fontWeight: "900",
-    marginBottom: 2,
-  },
-
-  ownerYear: {
-    color: "rgba(47, 28, 15, 0.58)",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-
-  ownerEmail: {
-    color: "rgba(47, 28, 15, 0.42)",
-    fontSize: 11.5,
-    marginTop: 2,
-  },
-
-  profileLink: {
-    color: C.link,
-    fontSize: 12.5,
-    fontWeight: "800",
-  },
-
-  description: {
-    color: C.black,
-    fontSize: 14.5,
-    lineHeight: 22,
-    marginBottom: 15,
-  },
-
-  stackRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginBottom: 16,
-  },
-
-  stackChip: {
-    backgroundColor: C.white,
-    borderWidth: 1,
-    borderColor: C.border,
-    borderRadius: 16,
-    paddingHorizontal: 13,
-    paddingVertical: 8,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-
-  stackChipText: {
-    color: C.black,
-    fontSize: 13,
-    fontWeight: "700",
-  },
-
-  emptyText: {
-    color: C.link,
-    fontSize: 13,
-    fontWeight: "700",
-  },
-
-  actionButtonsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-
-  githubButton: {
-    height: 42,
-    backgroundColor: "rgb(188, 155, 127)",
-    borderRadius: 21,
-    paddingHorizontal: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 10,
-  },
-
-  githubButtonText: {
-    color: C.white,
-    fontSize: 13.5,
-    fontWeight: "900",
-    marginLeft: 7,
-  },
-
-  smallBookmarkButton: {
-    width: 44,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: C.black,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  smallBookmarkButtonActive: {
-    backgroundColor: C.button,
-  },
-
-  ratingSection: {
-    marginBottom: 16,
-  },
-
-  sectionTitle: {
-    color: C.black,
-    fontSize: 15,
-    fontWeight: "900",
-    marginBottom: 10,
-  },
-
-  rateRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-
-  starsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: 12,
-  },
-
-  submitRatingButton: {
-    backgroundColor: "rgba(188, 155, 127, 0.22)",
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-    minWidth: 82,
-    alignItems: "center",
-  },
-
-  submitRatingText: {
-    color: C.linkDark,
-    fontSize: 13,
-    fontWeight: "900",
-  },
-
-  ratingCountText: {
-    color: C.gold,
-    fontSize: 13.5,
-    fontWeight: "900",
-  },
-
-  divider: {
-    height: 1,
-    backgroundColor: "rgba(104, 68, 42, 0.12)",
-    marginBottom: 16,
-  },
-
-  commentsSection: {
-    marginBottom: 4,
-  },
-
-  commentInput: {
-    minHeight: 96,
-    borderWidth: 1,
-    borderColor: C.border,
-    borderRadius: 18,
-    backgroundColor: C.white,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 14,
-    color: C.black,
-    textAlignVertical: "top",
-    marginBottom: 12,
-  },
-
-  commentButton: {
-    alignSelf: "flex-end",
-    backgroundColor: "rgb(188, 155, 127)",
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    marginBottom: 16,
-  },
-
-  commentButtonText: {
-    color: C.white,
-    fontSize: 12.8,
-    fontWeight: "900",
-  },
-
-  commentCard: {
-    backgroundColor: "rgba(185, 174, 167, 0.45)",
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 10,
-  },
-
-  commentHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 8,
-  },
-
-  commentUser: {
-    color: C.black,
-    fontSize: 14.2,
-    fontWeight: "900",
-    flex: 1,
-    marginRight: 8,
-  },
-
-  commentActions: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  commentDate: {
-    color: "rgba(47, 28, 15, 0.55)",
-    fontSize: 11,
-    marginRight: 6,
-  },
-
-  deleteCommentButton: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: "rgba(150, 55, 45, 0.12)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  reportCommentButton: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: "rgba(254, 251, 245, 0.75)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  commentBody: {
-    color: C.black,
-    fontSize: 13.8,
-    lineHeight: 20,
-  },
-
-  noCommentsCard: {
-    backgroundColor: "rgba(185, 174, 167, 0.35)",
-    borderRadius: 16,
-    padding: 14,
-  },
-
-  noCommentsText: {
-    color: C.linkDark,
-    fontSize: 13,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(47, 28, 15, 0.35)",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 24,
-  },
-
-  reportModal: {
-    width: "100%",
-    backgroundColor: C.white,
-    borderRadius: 18,
-    padding: 18,
-  },
-
-  reportModalTitle: {
-    color: C.black,
-    fontSize: 18,
-    fontWeight: "900",
-    marginBottom: 8,
-  },
-
-  reportModalSubtitle: {
-    color: C.linkDark,
-    fontSize: 13,
-    lineHeight: 19,
-    marginBottom: 14,
-  },
-
-  reportReasonInput: {
-    minHeight: 105,
-    borderWidth: 1,
-    borderColor: C.border,
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: C.black,
-    textAlignVertical: "top",
-    backgroundColor: C.white,
-    marginBottom: 16,
-  },
-
-  reportModalActions: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    alignItems: "center",
-  },
-
-  cancelReportButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    marginRight: 8,
-  },
-
-  cancelReportText: {
-    color: C.linkDark,
-    fontSize: 13,
-    fontWeight: "800",
-  },
-
-  submitReportButton: {
-    backgroundColor: C.danger,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 14,
-    minWidth: 120,
-    alignItems: "center",
-  },
-
-  submitReportText: {
-    color: C.white,
-    fontSize: 13,
-    fontWeight: "900",
-  },
-
-  disabledButton: {
-    opacity: 0.65,
-  },
-});
