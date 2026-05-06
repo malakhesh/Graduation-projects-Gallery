@@ -24,6 +24,19 @@ import { Colors } from "../constants/theme";
 
 const CATEGORIES = ["All", "Mobile", "Web", "AI", "Security", "Data Science"];
 
+const TECH_STACK_OPTIONS = [
+  "Tech Stack",
+  "React",
+  "React Native",
+  "Flutter",
+  "Firebase",
+  "Node.js",
+  "Python",
+  "MongoDB",
+  "Express",
+  "Laravel",
+];
+
 const FILTER_KEYWORDS: Record<string, string[]> = {
   All: [],
   Mobile: [
@@ -146,6 +159,41 @@ function normalizeUrl(url: string) {
   }
 
   return `https://${trimmed}`;
+}
+
+function getProjectRating(project: any) {
+  const ratings = Array.isArray(project?.ratings) ? project.ratings : [];
+
+  if (ratings.length > 0) {
+    return (
+      ratings.reduce((sum: number, rate: number) => sum + Number(rate || 0), 0) /
+      ratings.length
+    );
+  }
+
+  return Number(project?.rating || 0);
+}
+
+function getProjectDateValue(project: any) {
+  const rawDate =
+    project?.createdAt?.toDate?.() ||
+    project?.createdAt ||
+    project?.year ||
+    project?.gradYear ||
+    project?.date ||
+    "";
+
+  if (rawDate instanceof Date) {
+    return rawDate.getTime();
+  }
+
+  const parsed = new Date(String(rawDate)).getTime();
+
+  if (!Number.isNaN(parsed)) {
+    return parsed;
+  }
+
+  return Number(rawDate || 0);
 }
 
 function ProjectCard({
@@ -344,7 +392,14 @@ export default function GalleryScreen() {
   const params = useLocalSearchParams();
 
   const [search, setSearch] = useState("");
+  const [filtersVisible, setFiltersVisible] = useState(false);
+
   const [activeFilter, setActiveFilter] = useState("All");
+  const [activeTechStack, setActiveTechStack] = useState("Tech Stack");
+  const [sortOption, setSortOption] = useState("");
+  const [yearSort, setYearSort] = useState("");
+  const [minimumRating, setMinimumRating] = useState(0);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [projects, setProjects] = useState<any[]>([]);
@@ -357,6 +412,24 @@ export default function GalleryScreen() {
   const [openingGithubId, setOpeningGithubId] = useState<string | null>(null);
 
   const styles = useMemo(() => createStyles(C), [C]);
+
+  const hasActiveFilters =
+    search.trim().length > 0 ||
+    activeFilter !== "All" ||
+    activeTechStack !== "Tech Stack" ||
+    sortOption !== "" ||
+    yearSort !== "" ||
+    minimumRating > 0;
+
+  const resetFilters = () => {
+    setSearch("");
+    setActiveFilter("All");
+    setActiveTechStack("Tech Stack");
+    setSortOption("");
+    setYearSort("");
+    setMinimumRating(0);
+    setFiltersVisible(false);
+  };
 
   const syncBookmarks = useCallback(async () => {
     const currentUser = auth.currentUser;
@@ -435,38 +508,68 @@ export default function GalleryScreen() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
 
-    return projects.filter((p) => {
-      const stack = Array.isArray(p.stack) ? p.stack : [];
-      const tags = Array.isArray(p.tags) ? p.tags : [];
+    return [...projects]
+      .filter((p) => {
+        const stack = Array.isArray(p.stack) ? p.stack : [];
+        const tags = Array.isArray(p.tags) ? p.tags : [];
 
-      const searchableText = [
-        String(p.title || ""),
-        String(p.name || ""),
-        String(p.desc || ""),
-        String(p.author || ""),
-        String(p.authorName || ""),
-        String(p.userName || ""),
-        String(p.userId || ""),
-        String(p.category || ""),
-        String(p.year || ""),
-        ...stack,
-        ...tags,
-      ]
-        .join(" ")
-        .toLowerCase();
+        const searchableText = [
+          String(p.title || ""),
+          String(p.name || ""),
+          String(p.desc || ""),
+          String(p.author || ""),
+          String(p.authorName || ""),
+          String(p.userName || ""),
+          String(p.userId || ""),
+          String(p.category || ""),
+          String(p.year || ""),
+          ...stack,
+          ...tags,
+        ]
+          .join(" ")
+          .toLowerCase();
 
-      const matchSearch = !q || searchableText.includes(q);
+        const matchSearch = !q || searchableText.includes(q);
 
-      const keywords = FILTER_KEYWORDS[activeFilter] || [];
-      const matchFilter =
-        activeFilter === "All" ||
-        keywords.some((keyword) =>
-          searchableText.includes(keyword.toLowerCase())
-        );
+        const keywords = FILTER_KEYWORDS[activeFilter] || [];
+        const matchCategory =
+          activeFilter === "All" ||
+          keywords.some((keyword) =>
+            searchableText.includes(keyword.toLowerCase())
+          );
 
-      return matchSearch && matchFilter;
-    });
-  }, [search, activeFilter, projects]);
+        const matchTechStack =
+          activeTechStack === "Tech Stack" ||
+          searchableText.includes(activeTechStack.toLowerCase());
+
+        const matchRating = getProjectRating(p) >= minimumRating;
+
+        return matchSearch && matchCategory && matchTechStack && matchRating;
+      })
+      .sort((a, b) => {
+        if (sortOption === "Highest Rated") {
+          return getProjectRating(b) - getProjectRating(a);
+        }
+
+        if (yearSort === "Latest") {
+          return getProjectDateValue(b) - getProjectDateValue(a);
+        }
+
+        if (yearSort === "Oldest") {
+          return getProjectDateValue(a) - getProjectDateValue(b);
+        }
+
+        return 0;
+      });
+  }, [
+    search,
+    activeFilter,
+    activeTechStack,
+    sortOption,
+    yearSort,
+    minimumRating,
+    projects,
+  ]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -619,7 +722,9 @@ export default function GalleryScreen() {
       <View style={styles.headerRow}>
         <View>
           <Text style={styles.title}>All Projects</Text>
-          <Text style={styles.subtitle}>{projects.length} approved projects</Text>
+          <Text style={styles.subtitle}>
+            {filtered.length} of {projects.length} approved projects
+          </Text>
         </View>
 
         <TouchableOpacity
@@ -631,44 +736,234 @@ export default function GalleryScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.searchBox}>
-        <Ionicons name="search-outline" size={17} color={C.link} />
+      <View style={styles.searchAndFiltersWrapper}>
+        <View style={styles.searchBox}>
+          <Ionicons name="search-outline" size={17} color={C.link} />
 
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search by title, author, category..."
-          placeholderTextColor={C.link}
-          value={search}
-          onChangeText={setSearch}
-        />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search..."
+            placeholderTextColor={C.link}
+            value={search}
+            onChangeText={setSearch}
+          />
 
-        {search ? (
-          <TouchableOpacity onPress={() => setSearch("")}>
-            <Ionicons name="close-circle" size={17} color={C.link} />
+          {search ? (
+            <TouchableOpacity onPress={() => setSearch("")}>
+              <Ionicons name="close-circle" size={17} color={C.link} />
+            </TouchableOpacity>
+          ) : null}
+
+          <View style={[styles.searchDivider, { backgroundColor: C.border }]} />
+
+          <TouchableOpacity
+            style={[styles.filtersButton, { backgroundColor: C.chip }]}
+            activeOpacity={0.85}
+            onPress={() => setFiltersVisible(!filtersVisible)}
+          >
+            <Ionicons name="filter" size={14} color={C.button} />
+            <Text style={[styles.filtersButtonText, { color: C.button }]}>
+              Filters
+            </Text>
           </TouchableOpacity>
-        ) : null}
-      </View>
+        </View>
 
-      <View style={styles.categoriesWrapper}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {CATEGORIES.map((cat) => (
-            <TouchableOpacity
-              key={cat}
-              style={[styles.chip, activeFilter === cat && styles.chipActive]}
-              onPress={() => setActiveFilter(cat)}
-              activeOpacity={0.85}
-            >
-              <Text
+        {filtersVisible && (
+          <View
+            style={[
+              styles.filtersPanel,
+              { backgroundColor: C.white, borderColor: C.border },
+            ]}
+          >
+            <View style={styles.filterSection}>
+              <Text style={[styles.filterTitle, { color: C.black }]}>
+                CATEGORY
+              </Text>
+
+              <View style={styles.filterChipsWrap}>
+                {CATEGORIES.map((cat) => {
+                  const selected = activeFilter === cat;
+                  const label = cat === "All" ? "All Projects" : cat;
+
+                  return (
+                    <TouchableOpacity
+                      key={cat}
+                      style={[
+                        styles.filterChip,
+                        { backgroundColor: C.white, borderColor: C.border },
+                        selected && {
+                          backgroundColor: C.button,
+                          borderColor: C.button,
+                        },
+                      ]}
+                      activeOpacity={0.85}
+                      onPress={() => setActiveFilter(cat)}
+                    >
+                      <Text
+                        style={[
+                          styles.filterChipText,
+                          { color: C.black },
+                          selected && { color: C.white },
+                        ]}
+                      >
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            <View style={styles.filtersGrid}>
+              <View style={styles.smallFilterBlock}>
+                <Text style={[styles.filterTitle, { color: C.black }]}>
+                  TECH STACK
+                </Text>
+
+                <TouchableOpacity
+                  style={[
+                    styles.dropdownChip,
+                    { backgroundColor: C.white, borderColor: C.border },
+                  ]}
+                  activeOpacity={0.85}
+                  onPress={() => {
+                    const currentIndex =
+                      TECH_STACK_OPTIONS.indexOf(activeTechStack);
+                    const nextIndex =
+                      currentIndex === TECH_STACK_OPTIONS.length - 1
+                        ? 0
+                        : currentIndex + 1;
+
+                    setActiveTechStack(TECH_STACK_OPTIONS[nextIndex]);
+                  }}
+                >
+                  <Text style={[styles.filterChipText, { color: C.black }]}>
+                    {activeTechStack}
+                  </Text>
+                  <Ionicons name="chevron-down" size={12} color={C.button} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.smallFilterBlock}>
+                <Text style={[styles.filterTitle, { color: C.black }]}>
+                  YEAR
+                </Text>
+
+                <View style={styles.filterChipsWrap}>
+                  {["Latest", "Oldest"].map((item) => {
+                    const selected = yearSort === item;
+
+                    return (
+                      <TouchableOpacity
+                        key={item}
+                        style={[
+                          styles.filterChip,
+                          { backgroundColor: C.white, borderColor: C.border },
+                          selected && {
+                            backgroundColor: C.button,
+                            borderColor: C.button,
+                          },
+                        ]}
+                        activeOpacity={0.85}
+                        onPress={() => setYearSort(selected ? "" : item)}
+                      >
+                        <Text
+                          style={[
+                            styles.filterChipText,
+                            { color: C.black },
+                            selected && { color: C.white },
+                          ]}
+                        >
+                          {item}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              <View style={styles.smallFilterBlock}>
+                <Text style={[styles.filterTitle, { color: C.black }]}>
+                  SORT
+                </Text>
+
+                <TouchableOpacity
+                  style={[
+                    styles.filterChip,
+                    { backgroundColor: C.white, borderColor: C.border },
+                    sortOption === "Highest Rated" && {
+                      backgroundColor: C.button,
+                      borderColor: C.button,
+                    },
+                  ]}
+                  activeOpacity={0.85}
+                  onPress={() =>
+                    setSortOption(
+                      sortOption === "Highest Rated" ? "" : "Highest Rated"
+                    )
+                  }
+                >
+                  <Text
+                    style={[
+                      styles.filterChipText,
+                      { color: C.black },
+                      sortOption === "Highest Rated" && { color: C.white },
+                    ]}
+                  >
+                    Highest Rated
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.smallFilterBlock}>
+                <Text style={[styles.filterTitle, { color: C.black }]}>
+                  RATING
+                </Text>
+
+                <View style={styles.starsRow}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <TouchableOpacity
+                      key={star}
+                      activeOpacity={0.8}
+                      onPress={() =>
+                        setMinimumRating(minimumRating === star ? 0 : star)
+                      }
+                    >
+                      <Ionicons
+                        name={minimumRating >= star ? "star" : "star-outline"}
+                        size={18}
+                        color={minimumRating >= star ? "#f5b301" : C.link}
+                      />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </View>
+
+            {hasActiveFilters && (
+              <View
                 style={[
-                  styles.chipText,
-                  activeFilter === cat && styles.chipTextActive,
+                  styles.clearFiltersWrapper,
+                  { borderTopColor: C.border },
                 ]}
               >
-                {cat}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+                <TouchableOpacity
+                  style={[
+                    styles.clearFiltersButton,
+                    { backgroundColor: C.white, borderColor: C.border },
+                  ]}
+                  activeOpacity={0.85}
+                  onPress={resetFilters}
+                >
+                  <Ionicons name="close" size={14} color={C.button} />
+                  <Text style={[styles.clearFiltersText, { color: C.button }]}>
+                    Clear All Filters
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        )}
       </View>
 
       {loading ? (
@@ -718,8 +1013,16 @@ export default function GalleryScreen() {
               <Ionicons name="folder-open-outline" size={48} color={C.input} />
               <Text style={styles.emptyTitle}>No projects found</Text>
               <Text style={styles.emptyText}>
-                Try changing the search keyword or category.
+                Try changing the search keyword or filters.
               </Text>
+
+              {hasActiveFilters && (
+                <TouchableOpacity onPress={resetFilters} activeOpacity={0.85}>
+                  <Text style={[styles.emptyResetText, { color: C.button }]}>
+                    Clear all filters
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           }
         />
@@ -778,11 +1081,15 @@ function createStyles(C: any) {
       fontSize: 12,
     },
 
+    searchAndFiltersWrapper: {
+      paddingHorizontal: 16,
+      marginBottom: 10,
+    },
+
     searchBox: {
-      marginHorizontal: 16,
       backgroundColor: C.white,
-      borderRadius: 18,
-      paddingHorizontal: 13,
+      borderRadius: 22,
+      paddingHorizontal: 12,
       height: 44,
       flexDirection: "row",
       alignItems: "center",
@@ -798,34 +1105,111 @@ function createStyles(C: any) {
       paddingVertical: 0,
     },
 
-    categoriesWrapper: {
-      paddingVertical: 10,
-      paddingLeft: 12,
+    searchDivider: {
+      width: 1,
+      height: 22,
     },
 
-    chip: {
-      paddingHorizontal: 13,
+    filtersButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      paddingHorizontal: 10,
       paddingVertical: 7,
-      marginHorizontal: 4,
-      backgroundColor: C.white,
       borderRadius: 18,
+    },
+
+    filtersButtonText: {
+      fontSize: 11.5,
+      fontWeight: "900",
+    },
+
+    filtersPanel: {
+      marginTop: 8,
       borderWidth: 1,
-      borderColor: C.border,
+      borderRadius: 15,
+      paddingHorizontal: 10,
+      paddingTop: 9,
+      paddingBottom: 8,
     },
 
-    chipActive: {
-      backgroundColor: C.button,
-      borderColor: C.button,
+    filterSection: {
+      marginBottom: 10,
     },
 
-    chipText: {
-      color: C.black,
-      fontSize: 12,
-      fontWeight: "800",
+    filterTitle: {
+      fontSize: 9,
+      fontWeight: "900",
+      letterSpacing: 1.1,
+      marginBottom: 6,
     },
 
-    chipTextActive: {
-      color: C.white,
+    filterChipsWrap: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 6,
+    },
+
+    filterChip: {
+      paddingHorizontal: 9,
+      paddingVertical: 5,
+      borderRadius: 15,
+      borderWidth: 1,
+      alignSelf: "flex-start",
+    },
+
+    filterChipText: {
+      fontSize: 10.5,
+      fontWeight: "900",
+    },
+
+    dropdownChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      paddingHorizontal: 9,
+      paddingVertical: 5,
+      borderRadius: 15,
+      borderWidth: 1,
+      alignSelf: "flex-start",
+    },
+
+    filtersGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 10,
+      marginBottom: 8,
+    },
+
+    smallFilterBlock: {
+      gap: 5,
+    },
+
+    starsRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 3,
+    },
+
+    clearFiltersWrapper: {
+      borderTopWidth: 1,
+      paddingTop: 7,
+    },
+
+    clearFiltersButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      borderWidth: 1,
+      borderRadius: 15,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      alignSelf: "flex-start",
+    },
+
+    clearFiltersText: {
+      fontSize: 10.5,
+      fontWeight: "900",
     },
 
     loadingBox: {
@@ -1016,6 +1400,13 @@ function createStyles(C: any) {
       textAlign: "center",
       fontSize: 14,
       lineHeight: 21,
+    },
+
+    emptyResetText: {
+      marginTop: 10,
+      fontSize: 13,
+      fontWeight: "900",
+      textDecorationLine: "underline",
     },
   });
 }
