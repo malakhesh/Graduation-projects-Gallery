@@ -9,10 +9,12 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import Toast from "react-native-toast-message";
+import { Ionicons } from "@expo/vector-icons";
 import UploadProjectModal from "../components/modals/UploadProjectModal";
 import { getApproved } from "../backend/projects";
 import { useTheme } from "../context/ThemeContext";
@@ -98,7 +100,6 @@ type ProjectCardProps = {
 };
 
 function ProjectCard({ item, onPress, colors, styles }: ProjectCardProps) {
-  const stack = Array.isArray(item.stack) ? item.stack : [];
   const ratings = Array.isArray(item.ratings) ? item.ratings : [];
 
   const averageRating =
@@ -109,7 +110,75 @@ function ProjectCard({ item, onPress, colors, styles }: ProjectCardProps) {
             0
           ) / ratings.length
         ).toFixed(1)
+      : item.rating
+      ? Number(item.rating).toFixed(1)
       : "0.0";
+
+  const projectTitle = item.title || item.name || "Untitled Project";
+
+  const ownerName =
+    item.author ||
+    item.userName ||
+    item.ownerName ||
+    item.createdBy ||
+    item.user?.name ||
+    "Project Owner";
+
+  const projectDate =
+    item.year ||
+    item.gradYear ||
+    item.createdAt?.slice?.(0, 10) ||
+    item.date ||
+    "2025";
+
+  const imageUrl =
+    item.imgUrl ||
+    item.image ||
+    item.imageUrl ||
+    "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80";
+
+  const category =
+    item.category ||
+    (Array.isArray(item.tags) && item.tags.length > 0 ? item.tags[0] : "General");
+
+  const githubUrl =
+    item.githubUrl ||
+    item.github ||
+    item.githubLink ||
+    item.repoUrl ||
+    item.repositoryUrl ||
+    "";
+
+  const openGithub = async () => {
+    if (!githubUrl) {
+      Toast.show({
+        type: "info",
+        text1: "No GitHub link",
+        text2: "This project has no GitHub link yet.",
+      });
+      return;
+    }
+
+    const canOpen = await Linking.canOpenURL(githubUrl);
+
+    if (canOpen) {
+      Linking.openURL(githubUrl);
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Invalid GitHub link",
+        text2: "Could not open this link.",
+      });
+    }
+  };
+
+  const handleBookmark = () => {
+    Toast.show({
+      type: "success",
+      text1: "Saved",
+      text2: "Project added to bookmarks.",
+    });
+  };
 
   return (
     <TouchableOpacity
@@ -117,70 +186,85 @@ function ProjectCard({ item, onPress, colors, styles }: ProjectCardProps) {
         styles.card,
         { backgroundColor: colors.white, shadowColor: colors.black },
       ]}
-      activeOpacity={0.88}
+      activeOpacity={0.9}
       onPress={onPress}
     >
-      <Image
-        source={{
-          uri:
-            item.imgUrl ||
-            "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80",
-        }}
-        style={[styles.cardImage, { backgroundColor: colors.input }]}
-      />
-
-      <View style={styles.cardBody}>
+      <View style={styles.cardTop}>
         <Text
           style={[styles.cardName, { color: colors.black }]}
           numberOfLines={1}
         >
-          {item.title || "Untitled Project"}
+          {projectTitle}
         </Text>
 
-        <Text
-          style={[styles.cardDescription, { color: colors.link }]}
-          numberOfLines={2}
-        >
-          {item.desc || "No description added"}
-        </Text>
-
-        <View style={styles.metaRow}>
-          <View
-            style={[
-              styles.cardBadge,
-              { backgroundColor: "rgba(185, 174, 167, 0.45)" },
-            ]}
-          >
-            <Text
-              style={[styles.cardBadgeText, { color: colors.black }]}
-              numberOfLines={1}
-            >
-              {item.category || "General"}
-            </Text>
+        <View style={styles.ownerRow}>
+          <View style={[styles.ownerIcon, { borderColor: colors.border }]}>
+            <Ionicons name="person" size={12} color={colors.button} />
           </View>
 
-          <Text style={[styles.ratingText, { color: colors.link }]}>
-            ⭐ {averageRating}
+          <View style={styles.ownerInfo}>
+            <Text
+              style={[styles.ownerName, { color: colors.black }]}
+              numberOfLines={1}
+            >
+              {ownerName}
+            </Text>
+
+            <Text style={[styles.projectDate, { color: colors.link }]}>
+              {projectDate}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <Image
+        source={{ uri: imageUrl }}
+        style={[styles.cardImage, { backgroundColor: colors.input }]}
+      />
+
+      <View style={styles.cardFooter}>
+        <View
+          style={[
+            styles.categoryBadge,
+            { backgroundColor: colors.bg, borderColor: colors.border },
+          ]}
+        >
+          <Text
+            style={[styles.categoryText, { color: colors.black }]}
+            numberOfLines={1}
+          >
+            {category}
           </Text>
         </View>
 
-        {stack.length > 0 ? (
-          <View style={styles.stackRow}>
-            {stack.slice(0, 2).map((tech: string, index: number) => (
-              <View
-                key={`${tech}-${index}`}
-                style={[styles.stackChip, { backgroundColor: colors.bg }]}
-              >
-                <Text
-                  style={[styles.stackText, { color: colors.black }]}
-                  numberOfLines={1}
-                >
-                  {tech}
-                </Text>
-              </View>
-            ))}
-          </View>
-        ) : null}
+        <View
+          style={[
+            styles.ratingBadge,
+            { backgroundColor: colors.bg, borderColor: colors.border },
+          ]}
+        >
+          <Ionicons name="star" size={11} color="#f5b301" />
+          <Text style={[styles.ratingText, { color: colors.black }]}>
+            {averageRating}
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.githubButton, { backgroundColor: colors.black }]}
+          activeOpacity={0.85}
+          onPress={openGithub}
+        >
+          <Ionicons name="logo-github" size={12} color="#fff" />
+          <Text style={styles.githubText}>GitHub</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.bookmarkButton, { borderColor: colors.border }]}
+          activeOpacity={0.85}
+          onPress={handleBookmark}
+        >
+          <Ionicons name="bookmark-outline" size={14} color={colors.button} />
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
@@ -252,7 +336,10 @@ export default function GalleryScreen() {
 
       const searchableText = [
         String(p.title || ""),
+        String(p.name || ""),
         String(p.desc || ""),
+        String(p.author || ""),
+        String(p.userName || ""),
         String(p.userId || ""),
         String(p.category || ""),
         String(p.year || ""),
@@ -328,10 +415,8 @@ export default function GalleryScreen() {
     <SafeAreaView key={theme} style={styles.container}>
       <View style={styles.headerRow}>
         <View>
-          <Text style={styles.title}>Projects Gallery</Text>
-          <Text style={styles.subtitle}>
-            {projects.length} approved projects
-          </Text>
+          <Text style={styles.title}>All Projects</Text>
+          <Text style={styles.subtitle}>{projects.length} approved projects</Text>
         </View>
 
         <TouchableOpacity
@@ -344,6 +429,8 @@ export default function GalleryScreen() {
       </View>
 
       <View style={styles.searchBox}>
+        <Ionicons name="search-outline" size={18} color={C.link} />
+
         <TextInput
           style={styles.searchInput}
           placeholder="Search by title, category, stack..."
@@ -354,7 +441,7 @@ export default function GalleryScreen() {
 
         {search ? (
           <TouchableOpacity onPress={() => setSearch("")}>
-            <Text style={styles.clearText}>×</Text>
+            <Ionicons name="close-circle" size={18} color={C.link} />
           </TouchableOpacity>
         ) : null}
       </View>
@@ -416,6 +503,7 @@ export default function GalleryScreen() {
           )}
           ListEmptyComponent={
             <View style={styles.emptyBox}>
+              <Ionicons name="folder-open-outline" size={50} color={C.input} />
               <Text style={styles.emptyTitle}>No projects found</Text>
               <Text style={styles.emptyText}>
                 Try changing the search keyword or category.
@@ -447,45 +535,46 @@ function createStyles(C: any) {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      paddingTop: 18,
+      paddingTop: 16,
       paddingHorizontal: 16,
-      paddingBottom: 12,
+      paddingBottom: 10,
     },
 
     title: {
-      fontSize: 21,
+      fontSize: 22,
       fontWeight: "900",
       color: C.black,
     },
 
     subtitle: {
-      fontSize: 12.5,
+      fontSize: 12,
       color: C.link,
       fontWeight: "700",
-      marginTop: 3,
+      marginTop: 2,
     },
 
     uploadButton: {
       backgroundColor: C.button,
-      paddingHorizontal: 14,
-      paddingVertical: 9,
+      paddingHorizontal: 13,
+      paddingVertical: 8,
       borderRadius: 18,
     },
 
     uploadButtonText: {
       color: C.white,
       fontWeight: "900",
-      fontSize: 13,
+      fontSize: 12.5,
     },
 
     searchBox: {
       marginHorizontal: 16,
       backgroundColor: C.white,
-      borderRadius: 16,
-      paddingHorizontal: 14,
-      height: 48,
+      borderRadius: 18,
+      paddingHorizontal: 13,
+      height: 46,
       flexDirection: "row",
       alignItems: "center",
+      gap: 8,
       borderWidth: 1,
       borderColor: C.border,
     },
@@ -493,39 +582,34 @@ function createStyles(C: any) {
     searchInput: {
       flex: 1,
       color: C.black,
-      fontSize: 14,
-    },
-
-    clearText: {
-      color: C.link,
-      fontSize: 26,
-      fontWeight: "700",
-      paddingHorizontal: 4,
+      fontSize: 13,
+      paddingVertical: 0,
     },
 
     categoriesWrapper: {
-      paddingVertical: 12,
+      paddingVertical: 11,
       paddingLeft: 12,
     },
 
     chip: {
-      paddingHorizontal: 14,
-      paddingVertical: 9,
+      paddingHorizontal: 13,
+      paddingVertical: 8,
       marginHorizontal: 4,
       backgroundColor: C.white,
-      borderRadius: 20,
+      borderRadius: 18,
       borderWidth: 1,
       borderColor: C.border,
     },
 
     chipActive: {
       backgroundColor: C.button,
+      borderColor: C.button,
     },
 
     chipText: {
       color: C.black,
-      fontSize: 13,
-      fontWeight: "700",
+      fontSize: 12,
+      fontWeight: "800",
     },
 
     chipTextActive: {
@@ -546,7 +630,7 @@ function createStyles(C: any) {
     },
 
     listContent: {
-      paddingHorizontal: 8,
+      paddingHorizontal: 10,
       paddingBottom: 24,
     },
 
@@ -561,77 +645,124 @@ function createStyles(C: any) {
 
     card: {
       width: "48%",
-      marginHorizontal: 4,
-      marginBottom: 12,
-      borderRadius: 16,
-      overflow: "hidden",
-      shadowOpacity: 0.1,
-      shadowRadius: 8,
-      shadowOffset: { width: 0, height: 4 },
-      elevation: 3,
+      marginBottom: 13,
+      borderRadius: 15,
+      padding: 9,
+      borderWidth: 1,
+      borderColor: C.border,
+      shadowOpacity: 0.08,
+      shadowRadius: 7,
+      shadowOffset: { width: 0, height: 3 },
+      elevation: 2,
     },
 
-    cardImage: {
-      width: "100%",
-      height: 120,
-    },
-
-    cardBody: {
-      padding: 10,
+    cardTop: {
+      marginBottom: 8,
     },
 
     cardName: {
       fontWeight: "900",
-      fontSize: 14,
-      marginBottom: 5,
-    },
-
-    cardDescription: {
-      fontSize: 12,
-      lineHeight: 17,
+      fontSize: 13.5,
       marginBottom: 8,
     },
 
-    metaRow: {
+    ownerRow: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-between",
+      gap: 7,
+    },
+
+    ownerIcon: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      borderWidth: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: C.white,
+    },
+
+    ownerInfo: {
+      flex: 1,
+    },
+
+    ownerName: {
+      fontSize: 10.5,
+      fontWeight: "800",
+      lineHeight: 14,
+    },
+
+    projectDate: {
+      fontSize: 9.5,
+      fontWeight: "700",
+      marginTop: 1,
+    },
+
+    cardImage: {
+      width: "100%",
+      height: 105,
+      borderRadius: 10,
       marginBottom: 8,
     },
 
-    cardBadge: {
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      borderRadius: 10,
-      maxWidth: "70%",
+    cardFooter: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
     },
 
-    cardBadgeText: {
-      fontSize: 10.5,
+    categoryBadge: {
+      flex: 1,
+      minWidth: 0,
+      paddingHorizontal: 7,
+      paddingVertical: 5,
+      borderRadius: 10,
+      borderWidth: 1,
+    },
+
+    categoryText: {
+      fontSize: 9.5,
       fontWeight: "800",
+    },
+
+    ratingBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 2,
+      paddingHorizontal: 6,
+      paddingVertical: 5,
+      borderRadius: 10,
+      borderWidth: 1,
     },
 
     ratingText: {
-      fontSize: 11,
-      fontWeight: "800",
+      fontSize: 9.5,
+      fontWeight: "900",
     },
 
-    stackRow: {
+    githubButton: {
       flexDirection: "row",
-      flexWrap: "wrap",
-    },
-
-    stackChip: {
+      alignItems: "center",
+      gap: 3,
       paddingHorizontal: 7,
-      paddingVertical: 4,
-      borderRadius: 9,
-      marginRight: 5,
-      marginBottom: 4,
+      paddingVertical: 6,
+      borderRadius: 11,
     },
 
-    stackText: {
-      fontSize: 10,
-      fontWeight: "700",
+    githubText: {
+      color: "#fff",
+      fontSize: 8.5,
+      fontWeight: "900",
+    },
+
+    bookmarkButton: {
+      width: 26,
+      height: 26,
+      borderRadius: 8,
+      borderWidth: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: C.white,
     },
 
     emptyBox: {
@@ -643,6 +774,7 @@ function createStyles(C: any) {
       color: C.black,
       fontSize: 18,
       fontWeight: "900",
+      marginTop: 12,
       marginBottom: 8,
     },
 
