@@ -11,10 +11,12 @@ function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccess(false);
 
     if (fullName.trim().length < 3) {
       setError("Full name must be at least 3 characters long");
@@ -43,6 +45,7 @@ function Register() {
     if (user === "email-in-use") {
       setError("This email is already registered. Please use a different email.");
     } else if (user) {
+      setSuccess(true);
       console.log("Register successful");
     } else {
       setError("Registration failed. Please try again");
@@ -62,7 +65,7 @@ function Register() {
             type="text"
             placeholder="Full Name"
             value={fullName}
-            onChange={(e) => { setFullName(e.target.value); setError(""); }}
+            onChange={(e) => { setFullName(e.target.value); setError(""); setSuccess(false); }}
             required
           />
 
@@ -72,7 +75,7 @@ function Register() {
             type="email"
             placeholder="Gmail only"
             value={email}
-            onChange={(e) => { setEmail(e.target.value); setError(""); }}
+            onChange={(e) => { setEmail(e.target.value); setError(""); setSuccess(false); }}
             required
           />
 
@@ -83,7 +86,7 @@ function Register() {
               type={showPassword ? "text" : "password"}
               placeholder="Password"
               value={password}
-              onChange={(e) => { setPassword(e.target.value); setError(""); }}
+              onChange={(e) => { setPassword(e.target.value); setError(""); setSuccess(false); }}
               required
             />
             <span className="toggle-password" onClick={() => setShowPassword(!showPassword)}>
@@ -98,7 +101,7 @@ function Register() {
               type={showPassword ? "text" : "password"}
               placeholder="Confirm Password"
               value={confirmPassword}
-              onChange={(e) => { setConfirmPassword(e.target.value); setError(""); }}
+              onChange={(e) => { setConfirmPassword(e.target.value); setError(""); setSuccess(false); }}
               required
             />
             <span className="toggle-password" onClick={() => setShowPassword(!showPassword)}>
@@ -107,6 +110,11 @@ function Register() {
           </div>
 
           {error && <p className="signup-error">{error}</p>}
+          {success && (
+            <p className="signup-success">
+              Account created successfully! You can now log in.
+            </p>
+          )}
 
           <button type="submit" className="signup-btn">Register</button>
         </form>

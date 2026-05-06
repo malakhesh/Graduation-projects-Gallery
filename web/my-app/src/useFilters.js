@@ -107,14 +107,15 @@ export function useFilters(projects) {
 
   // Fuse.js smart search
   const fuse = useMemo(() => new Fuse(projects, {
-    keys: [
-      { name: "title", weight: 0.4 },
-      { name: "author", weight: 0.2 },
-      { name: "desc", weight: 0.15 },
-      { name: "description", weight: 0.15 },
-      { name: "tags", weight: 0.1 },
-      { name: "tag", weight: 0.1 },
-      { name: "stack", weight: 0.1 },
+      keys: [
+    { name: "title",       weight: 0.4  },
+    { name: "author",      weight: 0.2  },
+    { name: "desc",        weight: 0.15 },
+    { name: "description", weight: 0.15 },
+    { name: "tags",        weight: 0.1  },
+    { name: "tag",         weight: 0.1  },
+    { name: "stack",       weight: 0.1  },
+    { name: "category",    weight: 0.1  }, 
     ],
     threshold: 0.4,
     includeScore: true,

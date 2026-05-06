@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./settings.css";
-import { checkRole, logOut } from './auth.js';
+import { checkRole, logOut, getUser } from './auth.js';
 import { updateUserEmail, updateUserPassword, updateUserName, deleteAccount } from './setting.js';
 import { auth } from './firebase.js';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -22,11 +22,21 @@ function Navbar({ isAdmin }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifs, setNotifs] = useState([]);
+  const [profilePhoto, setProfilePhoto] = useState(null);
   const dropdownRef = useRef(null);
   const mobileNotifRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const [user] = useAuthState(auth);
+
+  useEffect(() => {
+    if (!user) return;
+    getUser(user.uid).then((data) => {
+      if (data && data !== "no-data" && data !== "get-fail") {
+        setProfilePhoto(data.photoURL || null);
+      }
+    });
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -65,6 +75,8 @@ function Navbar({ isAdmin }) {
 
   const handleLogout = async () => { await logOut(); navigate('/'); };
   const closeSidebar = () => setSidebarOpen(false);
+
+  const avatarUrl = profilePhoto || user?.photoURL || null;
 
   return (
     <>
@@ -130,8 +142,8 @@ function Navbar({ isAdmin }) {
           </div>
           <button className="st-upload-btn" onClick={() => setShowUpload(true)}>Upload Project</button>
           <div className="st-avatar-pill" ref={dropdownRef} onClick={() => setDropdownOpen(!dropdownOpen)}>
-            {user?.photoURL
-              ? <img src={user.photoURL} alt="avatar" className="st-nav-avatar" />
+            {avatarUrl
+              ? <img src={avatarUrl} alt="avatar" className="st-nav-avatar" />
               : <div className="st-nav-avatar-placeholder"><FaUser /></div>
             }
             <FaChevronDown className={`st-dropdown-arrow ${dropdownOpen ? 'st-arrow-up' : ''}`} />
@@ -444,7 +456,6 @@ function ThemeSection() {
                 width: "100%",
               }}
             >
-              {/* Mini color preview swatch — keeps hardcoded colors intentionally for preview accuracy */}
               <div style={{
                 width: 36,
                 height: 36,
