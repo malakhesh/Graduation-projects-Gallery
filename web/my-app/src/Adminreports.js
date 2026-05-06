@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { getReports, deleteReport, resolveReport, resolveCommentReport } from "./reports.js"
 import { getProj } from "./projects.js"
-import MagicBookEmpty from "./Magicbookempty.js" // ✅ fixed import position
+import MagicBookEmpty from "./Magicbookempty.js"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // helpers
@@ -22,7 +22,6 @@ function shortId(id = "") {
   return id.length > 14 ? id.slice(0, 7) + "…" + id.slice(-5) : id
 }
 
-// Extract real projectId and comment index from encoded comment report id
 function parseCommentReport(encodedId) {
   const marker = "_comment_"
   const markerIdx = encodedId.indexOf(marker)
@@ -34,6 +33,20 @@ function parseCommentReport(encodedId) {
 }
 
 const ADMIN_ROLE = "admin"
+
+// ─────────────────────────────────────────────────────────────────────────────
+// useIsMobile
+// ─────────────────────────────────────────────────────────────────────────────
+
+function useIsMobile(bp = 768) {
+  const [m, setM] = useState(window.innerWidth < bp)
+  useEffect(() => {
+    const h = () => setM(window.innerWidth < bp)
+    window.addEventListener("resize", h)
+    return () => window.removeEventListener("resize", h)
+  }, [bp])
+  return m
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // sub-components
@@ -78,7 +91,7 @@ function EmptyState() {
     <div style={{
       display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center",
-      gap: "14px", flex: 1, minHeight: "350px",paddingTop: "20px", 
+      gap: "14px", flex: 1, minHeight: "350px", paddingTop: "20px",
       overflow: "visible",
       animation: "fadeUp 0.5s ease",
     }}>
@@ -107,15 +120,12 @@ function TypePill({ isComment }) {
       backgroundColor: isComment ? "#ecdfd0" : "#f5ede3",
       color: isComment ? "#5a3010" : "#7a4015",
       border: `1.5px solid ${isComment ? "#c9a47a" : "#d9b58a"}`,
+      whiteSpace: "nowrap",
     }}>
       {isComment ? "💬" : "📁"} {isComment ? "Comment" : "Project"}
     </span>
   )
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Toast
-// ─────────────────────────────────────────────────────────────────────────────
 
 function Toast({ toast }) {
   if (!toast) return null
@@ -141,10 +151,6 @@ function Toast({ toast }) {
   )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Confirm Modal
-// ─────────────────────────────────────────────────────────────────────────────
-
 function ConfirmModal({ modal, onCancel, onConfirm }) {
   if (!modal) return null
   const isDismiss = modal.type === "dismiss"
@@ -156,7 +162,7 @@ function ConfirmModal({ modal, onCancel, onConfirm }) {
       backgroundColor: "rgba(40, 22, 8, 0.5)",
       backdropFilter: "blur(6px)",
       display: "flex", alignItems: "center", justifyContent: "center",
-      zIndex: 8000,
+      zIndex: 8000, padding: "16px",
     }}>
       <div style={{
         backgroundColor: "#fdf6ee",
@@ -214,11 +220,121 @@ function ConfirmModal({ modal, onCancel, onConfirm }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Mobile Card view for a single report
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ReportCard({ rep, idx, enriched, actionLoading, onDismiss, onRemove, onGoToContent }) {
+  const isComment = isCommentReport(rep.projectId)
+  const acting = !!actionLoading[rep.id]
+  const info = enriched[rep.id]
+
+  return (
+    <div style={{
+      backgroundColor: "rgba(253,246,238,0.9)",
+      borderRadius: "14px",
+      border: "1px solid rgba(200,168,130,0.35)",
+      boxShadow: "0 4px 16px rgba(111,78,55,0.10)",
+      padding: "16px",
+      display: "flex", flexDirection: "column", gap: "12px",
+      opacity: acting ? 0.5 : 1,
+      transition: "opacity 0.2s",
+      animation: `rowIn 0.35s ease ${idx * 0.04}s both`,
+    }}>
+      {/* Header row */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+        <span style={{ fontSize: "12px", color: "#b09070", fontWeight: "700" }}>#{idx + 1}</span>
+        <TypePill isComment={isComment} />
+        <span style={{ fontSize: "11px", color: "#9a7050", marginLeft: "auto" }}>{formatDate(rep.createdAt)}</span>
+      </div>
+
+      {/* Content */}
+      <div
+        onClick={() => onGoToContent(rep)}
+        style={{
+          cursor: info ? "pointer" : "default",
+          backgroundColor: "rgba(111,78,55,0.06)",
+          borderRadius: "10px",
+          padding: "10px 12px",
+        }}
+      >
+        {info ? (
+          isComment ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <span style={{ fontStyle: "italic", fontSize: "13px", color: "#3B2F2F" }}>
+                💬 {info.commentText || "Comment text unavailable"}
+              </span>
+              {info.title && (
+                <span style={{ fontSize: "11px", color: "#9a7050" }}>in: {info.title}</span>
+              )}
+            </div>
+          ) : (
+            <span style={{ fontSize: "13px", fontWeight: "600", color: "#3B2F2F" }}>
+              📁 {info.title || shortId(rep.projectId)}
+            </span>
+          )
+        ) : (
+          <span style={{ fontFamily: "monospace", fontSize: "12px", color: "#5a3825" }}>
+            {shortId(rep.projectId || "—")}
+          </span>
+        )}
+      </div>
+
+      {/* Reason */}
+      <div>
+        <span style={{ fontSize: "11px", color: "#9a7050", textTransform: "uppercase", letterSpacing: "0.8px", display: "block", marginBottom: "4px" }}>Reason</span>
+        <span style={{ fontSize: "13px", color: "#3B2F2F", lineHeight: 1.5 }}>
+          {rep.reason || <span style={{ color: "#b09070", fontStyle: "italic" }}>No reason given</span>}
+        </span>
+      </div>
+
+      {/* Reporter */}
+      <div>
+        <span style={{ fontSize: "11px", color: "#9a7050", textTransform: "uppercase", letterSpacing: "0.8px", display: "block", marginBottom: "4px" }}>Reporter</span>
+        <span style={{ fontFamily: "monospace", fontSize: "12px", color: "#7a5030" }}>{shortId(rep.reporterId || "—")}</span>
+      </div>
+
+      {/* Actions */}
+      {acting ? (
+        <span style={{ fontSize: "12px", color: "#9a7050", fontStyle: "italic", textAlign: "center" }}>
+          {actionLoading[rep.id] === "dismiss" ? "Dismissing…" : "Removing…"}
+        </span>
+      ) : (
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button
+            onClick={() => onDismiss(rep)}
+            style={{
+              flex: 1, padding: "9px 0", borderRadius: "10px",
+              border: "1.5px solid #b89868",
+              backgroundColor: "transparent", color: "#6F4E37",
+              fontWeight: "700", fontSize: "12px", cursor: "pointer",
+              transition: "all 0.2s", letterSpacing: "0.3px",
+            }}
+          >Dismiss</button>
+          <button
+            onClick={() => onRemove(rep)}
+            style={{
+              flex: 1, padding: "9px 0", borderRadius: "10px",
+              border: "none",
+              backgroundColor: isComment ? "#7a2d00" : "#6b1500",
+              color: "#fff", fontWeight: "700", fontSize: "12px",
+              cursor: "pointer", transition: "all 0.2s",
+              boxShadow: "0 4px 10px rgba(100,20,0,0.25)",
+            }}
+          >{isComment ? "Del Comment" : "Del Project"}</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Main page
 // ─────────────────────────────────────────────────────────────────────────────
 
 function AdminReports({ onBack }) {
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
+
   const [reports, setReports]             = useState([])
   const [loading, setLoading]             = useState(true)
   const [actionLoading, setActionLoading] = useState({})
@@ -226,11 +342,9 @@ function AdminReports({ onBack }) {
   const [confirmModal, setConfirmModal]   = useState(null)
   const [hoveredRow, setHoveredRow]       = useState(null)
   const [hoveredBtn, setHoveredBtn]       = useState(null)
+  const [sidebarOpen, setSidebarOpen]     = useState(false)
+  const [enriched, setEnriched]           = useState({})
 
-  // enriched data: projectTitle and commentText fetched from Firestore
-  const [enriched, setEnriched] = useState({}) // { [reportId]: { title?, commentText? } }
-
-  // ── fetch ─────────────────────────────────────────────────────────────────
   const fetchAll = useCallback(async () => {
     setLoading(true)
     const data = await getReports(ADMIN_ROLE)
@@ -238,7 +352,6 @@ function AdminReports({ onBack }) {
     setReports(arr)
     setLoading(false)
 
-    // Enrich each report with project title / comment text
     const enrichMap = {}
     await Promise.all(arr.map(async (rep) => {
       if (!rep.projectId) return
@@ -271,13 +384,11 @@ function AdminReports({ onBack }) {
 
   useEffect(() => { fetchAll() }, [fetchAll])
 
-  // ── toast ─────────────────────────────────────────────────────────────────
   const showToast = (msg, ok = true) => {
     setToast({ msg, ok })
     setTimeout(() => setToast(null), 3200)
   }
 
-  // ── confirm ───────────────────────────────────────────────────────────────
   const handleConfirm = async () => {
     if (!confirmModal) return
     const { reportId, type, projectId } = confirmModal
@@ -311,21 +422,17 @@ function AdminReports({ onBack }) {
     fetchAll()
   }
 
-  // ── navigate to project or comment ────────────────────────────────────────
   const handleGoToContent = (rep) => {
     const info = enriched[rep.id]
     if (!info?.projectId) return
     if (isCommentReport(rep.projectId)) {
-      // go to project page, comment will be visible inside the modal
       navigate(`/project/${info.projectId}?scrollToComments=true`)
     } else {
       navigate(`/project/${info.projectId}`)
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // styles
-  // ─────────────────────────────────────────────────────────────────────────
+  // ─── styles ───────────────────────────────────────────────────────────────
 
   const TH = {
     textAlign: "left",
@@ -376,9 +483,7 @@ function AdminReports({ onBack }) {
     whiteSpace: "nowrap",
   })
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // render
-  // ─────────────────────────────────────────────────────────────────────────
+  // ─── render ───────────────────────────────────────────────────────────────
 
   return (
     <>
@@ -401,7 +506,6 @@ function AdminReports({ onBack }) {
       <Toast toast={toast} />
       <ConfirmModal modal={confirmModal} onCancel={() => setConfirmModal(null)} onConfirm={handleConfirm} />
 
-      {/* ── Root ──────────────────────────────────────────────────────────── */}
       <div style={{
         display: "flex",
         minHeight: "100vh",
@@ -410,17 +514,61 @@ function AdminReports({ onBack }) {
         background: "linear-gradient(160deg, #f0e5d8 0%, #dcc4a8 50%, #c9a882 100%)",
       }}>
 
+        {/* ── Mobile hamburger ──────────────────────────────────────────────── */}
+        {isMobile && (
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            style={{
+              position: "fixed", top: "14px", left: "14px", zIndex: 200,
+              width: "42px", height: "42px",
+              background: "#fdf6ee",
+              border: "1px solid rgba(111,78,55,0.25)",
+              borderRadius: "8px", cursor: "pointer",
+              display: "flex", flexDirection: "column",
+              justifyContent: "center", alignItems: "center", gap: "5px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+            }}
+          >
+            {[0, 1, 2].map((i) => (
+              <span key={i} style={{
+                display: "block", width: "20px", height: "2px",
+                backgroundColor: "#6F4E37", borderRadius: "2px",
+                transition: "all 0.3s ease",
+                transform: sidebarOpen
+                  ? i === 0 ? "translateY(7px) rotate(45deg)"
+                  : i === 2 ? "translateY(-7px) rotate(-45deg)"
+                  : "scaleX(0)"
+                  : "none",
+                opacity: sidebarOpen && i === 1 ? 0 : 1,
+              }} />
+            ))}
+          </button>
+        )}
+
+        {/* ── Mobile overlay ────────────────────────────────────────────────── */}
+        {isMobile && sidebarOpen && (
+          <div
+            onClick={() => setSidebarOpen(false)}
+            style={{
+              position: "fixed", inset: 0, zIndex: 150,
+              backgroundColor: "rgba(0,0,0,0.3)",
+            }}
+          />
+        )}
+
         {/* ── Sidebar ─────────────────────────────────────────────────────── */}
         <aside style={{
-          position: "fixed", left: 0, top: 0, bottom: 0,
+          position: "fixed", left: isMobile ? (sidebarOpen ? 0 : "-220px") : 0,
+          top: 0, bottom: 0,
           width: "200px",
           backgroundColor: "#f0e5d8",
           borderRight: "2px solid rgba(111,78,55,0.2)",
           display: "flex", flexDirection: "column",
           justifyContent: "space-between",
           padding: "24px 20px",
-          zIndex: 100,
-          boxShadow: "4px 0 20px rgba(111,78,55,0.08)",
+          zIndex: 160,
+          boxShadow: isMobile && sidebarOpen ? "4px 0 20px rgba(111,78,55,0.15)" : "4px 0 20px rgba(111,78,55,0.08)",
+          transition: isMobile ? "left 0.3s ease" : "none",
         }}>
           <div>
             <h2 style={{
@@ -431,7 +579,7 @@ function AdminReports({ onBack }) {
             }}>Dashboard</h2>
 
             <button
-              onClick={onBack}
+              onClick={() => { onBack(); setSidebarOpen(false) }}
               onMouseEnter={() => setHoveredBtn("back")}
               onMouseLeave={() => setHoveredBtn(null)}
               style={{
@@ -487,11 +635,11 @@ function AdminReports({ onBack }) {
 
         {/* ── Main content ────────────────────────────────────────────────── */}
         <main style={{
-          marginLeft: "200px",
+          marginLeft: isMobile ? 0 : "200px",
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          padding: "40px 48px",
+          padding: isMobile ? "72px 16px 32px" : "40px 48px",
           minHeight: "100vh",
           overflowY: "auto",
         }}>
@@ -500,7 +648,7 @@ function AdminReports({ onBack }) {
             <div style={{ display: "flex", alignItems: "baseline", gap: "14px", flexWrap: "wrap" }}>
               <h1 style={{
                 fontFamily: "'Georgia', serif",
-                fontSize: "34px", fontWeight: "bold",
+                fontSize: isMobile ? "26px" : "34px", fontWeight: "bold",
                 color: "#3B1F0F", margin: 0,
                 letterSpacing: "0.5px",
               }}>
@@ -525,7 +673,7 @@ function AdminReports({ onBack }) {
             <div style={{
               marginTop: "20px", height: "3px",
               background: "linear-gradient(to right, #6F4E37, #c9a882, transparent)",
-              borderRadius: "4px", width: "280px",
+              borderRadius: "4px", width: isMobile ? "160px" : "280px",
             }} />
           </div>
 
@@ -534,7 +682,24 @@ function AdminReports({ onBack }) {
             <Spinner />
           ) : reports.length === 0 ? (
             <MagicBookEmpty />
+          ) : isMobile ? (
+            /* ── Mobile: card layout ──────────────────────────────────────── */
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px", animation: "fadeUp 0.45s ease" }}>
+              {reports.map((rep, idx) => (
+                <ReportCard
+                  key={rep.id}
+                  rep={rep}
+                  idx={idx}
+                  enriched={enriched}
+                  actionLoading={actionLoading}
+                  onDismiss={(r) => setConfirmModal({ reportId: r.id, type: "dismiss", projectId: r.projectId })}
+                  onRemove={(r) => setConfirmModal({ reportId: r.id, type: "remove", projectId: r.projectId })}
+                  onGoToContent={handleGoToContent}
+                />
+              ))}
+            </div>
           ) : (
+            /* ── Desktop: table layout ────────────────────────────────────── */
             <div style={{
               backgroundColor: "rgba(253,246,238,0.72)",
               backdropFilter: "blur(14px)",
@@ -576,17 +741,12 @@ function AdminReports({ onBack }) {
                             animation: `rowIn 0.35s ease ${idx * 0.04}s both`,
                           }}
                         >
-                          {/* # */}
                           <td style={{ ...TD, color: "#b09070", fontWeight: "700", fontSize: "12px", width: "44px" }}>
                             {idx + 1}
                           </td>
-
-                          {/* Type */}
                           <td style={{ ...TD, width: "120px" }}>
                             <TypePill isComment={isComment} />
                           </td>
-
-                          {/* Project / Comment — clickable */}
                           <td style={{ ...TD, maxWidth: "220px" }}>
                             {info ? (
                               <div
@@ -601,7 +761,6 @@ function AdminReports({ onBack }) {
                                 }}
                               >
                                 {isComment ? (
-                                  // Show comment text + project name below
                                   <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                                     <span style={{
                                       display: "-webkit-box",
@@ -624,7 +783,6 @@ function AdminReports({ onBack }) {
                                     )}
                                   </div>
                                 ) : (
-                                  // Show project title
                                   <span style={{
                                     backgroundColor: "rgba(111,78,55,0.08)",
                                     padding: "4px 10px",
@@ -636,7 +794,6 @@ function AdminReports({ onBack }) {
                                 )}
                               </div>
                             ) : (
-                              // fallback while loading enriched data
                               <span style={{
                                 fontFamily: "monospace", fontSize: "12px",
                                 backgroundColor: "rgba(111,78,55,0.08)",
@@ -647,8 +804,6 @@ function AdminReports({ onBack }) {
                               </span>
                             )}
                           </td>
-
-                          {/* Reason */}
                           <td style={{ ...TD, maxWidth: "200px" }}>
                             <span style={{
                               display: "-webkit-box",
@@ -662,8 +817,6 @@ function AdminReports({ onBack }) {
                               {rep.reason || <span style={{ color: "#b09070", fontStyle: "italic" }}>No reason given</span>}
                             </span>
                           </td>
-
-                          {/* Reporter */}
                           <td style={{ ...TD }}>
                             <span title={rep.reporterId} style={{
                               fontFamily: "monospace", fontSize: "12px",
@@ -672,13 +825,9 @@ function AdminReports({ onBack }) {
                               {shortId(rep.reporterId || "—")}
                             </span>
                           </td>
-
-                          {/* Date */}
                           <td style={{ ...TD, whiteSpace: "nowrap", color: "#9a7050", fontSize: "12px" }}>
                             {formatDate(rep.createdAt)}
                           </td>
-
-                          {/* Actions */}
                           <td style={{ ...TD, textAlign: "center", width: "210px" }}>
                             {acting ? (
                               <span style={{
@@ -694,25 +843,17 @@ function AdminReports({ onBack }) {
                                   onMouseEnter={() => setHoveredBtn(`d-${rep.id}`)}
                                   onMouseLeave={() => setHoveredBtn(null)}
                                   onClick={() => setConfirmModal({
-                                    reportId: rep.id,
-                                    type: "dismiss",
-                                    projectId: rep.projectId,
+                                    reportId: rep.id, type: "dismiss", projectId: rep.projectId,
                                   })}
-                                >
-                                  Dismiss
-                                </button>
+                                >Dismiss</button>
                                 <button
                                   style={btnRemove(rep.id, isComment)}
                                   onMouseEnter={() => setHoveredBtn(`r-${rep.id}`)}
                                   onMouseLeave={() => setHoveredBtn(null)}
                                   onClick={() => setConfirmModal({
-                                    reportId: rep.id,
-                                    type: "remove",
-                                    projectId: rep.projectId,
+                                    reportId: rep.id, type: "remove", projectId: rep.projectId,
                                   })}
-                                >
-                                  {isComment ? "Del Comment" : "Del Project"}
-                                </button>
+                                >{isComment ? "Del Comment" : "Del Project"}</button>
                               </div>
                             )}
                           </td>

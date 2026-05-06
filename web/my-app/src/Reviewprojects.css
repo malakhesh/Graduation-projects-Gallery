@@ -30,6 +30,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
+  white-space: nowrap;
 }
 
 .rp-back-btn:hover {
@@ -281,3 +282,97 @@
 
 .rp-btn-undo                  { background: rgb(185, 174, 167); color: rgb(47, 28, 15); }
 .rp-btn-undo:hover            { background: rgb(140, 120, 105); color: white; transform: scale(1.03); }
+
+/* ===========================
+   MOBILE RESPONSIVE
+=========================== */
+@media (max-width: 768px) {
+
+  .rp-page {
+    padding: 72px 14px 24px;
+  }
+
+  .rp-header {
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .rp-title {
+    font-size: 22px;
+    width: 100%;
+  }
+
+  .rp-stats {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .rp-stat {
+    font-size: 11px;
+    padding: 5px 10px;
+  }
+
+  .rp-filter-row {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .rp-filter-btn {
+    padding: 6px 14px;
+    font-size: 12px;
+  }
+
+  .rp-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .rp-img {
+    height: 180px;
+  }
+
+  .rp-project-title {
+    font-size: 16px;
+  }
+
+  .rp-description {
+    font-size: 12px;
+  }
+
+  .rp-actions {
+    padding: 10px 14px 14px;
+    gap: 8px;
+  }
+
+  .rp-btn-approve,
+  .rp-btn-reject,
+  .rp-btn-undo {
+    font-size: 12px;
+    padding: 9px 0;
+  }
+
+  .rp-loading {
+    padding: 60px 0;
+    font-size: 14px;
+  }
+
+  .rp-empty {
+    padding: 60px 0;
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 400px) {
+  .rp-page {
+    padding: 68px 10px 20px;
+  }
+
+  .rp-title {
+    font-size: 20px;
+  }
+
+  .rp-img {
+    height: 150px;
+  }
+}
