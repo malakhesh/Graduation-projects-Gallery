@@ -17,6 +17,9 @@ import { LinearGradient } from "expo-linear-gradient";
 
 import { auth } from "../backend/firebase";
 import { getUserProjs, delProj } from "../backend/projects";
+import UploadProjectModal from "../components/modals/UploadProjectModal";
+
+const EditableUploadProjectModal = UploadProjectModal as React.ComponentType<any>;
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80";
@@ -34,6 +37,9 @@ export default function MyProjectsScreen() {
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<any>(null);
 
   const fetchProjects = async () => {
     const currentUser = auth.currentUser;
@@ -145,10 +151,18 @@ export default function MyProjectsScreen() {
   };
 
   const handleEditProject = (project: any) => {
-    Alert.alert(
-      "Edit Project",
-      "Edit project screen is not created yet."
-    );
+    setSelectedProject(project);
+    setEditModalVisible(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setEditModalVisible(false);
+    setSelectedProject(null);
+  };
+
+  const handleEditSuccess = async () => {
+    handleCloseEditModal();
+    await fetchProjects();
   };
 
   const handleAddProject = () => {
@@ -289,7 +303,10 @@ export default function MyProjectsScreen() {
             </Text>
 
             {projects.length === 0 ? (
-              <TouchableOpacity style={styles.emptyAddBtn} onPress={handleAddProject}>
+              <TouchableOpacity
+                style={styles.emptyAddBtn}
+                onPress={handleAddProject}
+              >
                 <Ionicons name="add" size={18} color="#fff" />
                 <Text style={styles.emptyAddBtnText}>Upload Project</Text>
               </TouchableOpacity>
@@ -429,6 +446,14 @@ export default function MyProjectsScreen() {
           })
         )}
       </ScrollView>
+
+      <EditableUploadProjectModal
+        visible={editModalVisible}
+        onClose={handleCloseEditModal}
+        onSuccess={handleEditSuccess}
+        mode="edit"
+        projectToEdit={selectedProject}
+      />
     </SafeAreaView>
   );
 }
