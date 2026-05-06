@@ -97,9 +97,18 @@ type ProjectCardProps = {
   onPress: () => void;
   colors: any;
   styles: ReturnType<typeof createStyles>;
+  saved: boolean;
+  onToggleSave: () => void;
 };
 
-function ProjectCard({ item, onPress, colors, styles }: ProjectCardProps) {
+function ProjectCard({
+  item,
+  onPress,
+  colors,
+  styles,
+  saved,
+  onToggleSave,
+}: ProjectCardProps) {
   const ratings = Array.isArray(item.ratings) ? item.ratings : [];
 
   const averageRating =
@@ -114,27 +123,35 @@ function ProjectCard({ item, onPress, colors, styles }: ProjectCardProps) {
       ? Number(item.rating).toFixed(1)
       : "0.0";
 
-  const projectTitle = item.title || item.name || "Untitled Project";
+  const projectTitle = item.title || item.name || "Untitled";
 
   const ownerName =
     item.author ||
+    item.authorName ||
     item.userName ||
     item.ownerName ||
     item.createdBy ||
     item.user?.name ||
-    "Project Owner";
+    "Unknown";
 
-  const projectDate =
+  const rawDate =
+    item.createdAt?.toDate?.() ||
+    item.createdAt ||
     item.year ||
     item.gradYear ||
-    item.createdAt?.slice?.(0, 10) ||
     item.date ||
-    "2025";
+    "";
+
+  const projectDate =
+    rawDate instanceof Date
+      ? rawDate.toLocaleDateString()
+      : String(rawDate || "2025");
 
   const imageUrl =
     item.imgUrl ||
-    item.image ||
+    item.imageURL ||
     item.imageUrl ||
+    item.image ||
     "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80";
 
   const category =
@@ -147,6 +164,7 @@ function ProjectCard({ item, onPress, colors, styles }: ProjectCardProps) {
     item.githubLink ||
     item.repoUrl ||
     item.repositoryUrl ||
+    item.link ||
     "";
 
   const openGithub = async () => {
@@ -159,10 +177,15 @@ function ProjectCard({ item, onPress, colors, styles }: ProjectCardProps) {
       return;
     }
 
-    const canOpen = await Linking.canOpenURL(githubUrl);
+    const url =
+      githubUrl.startsWith("http://") || githubUrl.startsWith("https://")
+        ? githubUrl
+        : `https://${githubUrl}`;
+
+    const canOpen = await Linking.canOpenURL(url);
 
     if (canOpen) {
-      Linking.openURL(githubUrl);
+      await Linking.openURL(url);
     } else {
       Toast.show({
         type: "error",
@@ -170,14 +193,6 @@ function ProjectCard({ item, onPress, colors, styles }: ProjectCardProps) {
         text2: "Could not open this link.",
       });
     }
-  };
-
-  const handleBookmark = () => {
-    Toast.show({
-      type: "success",
-      text1: "Saved",
-      text2: "Project added to bookmarks.",
-    });
   };
 
   return (
@@ -189,31 +204,29 @@ function ProjectCard({ item, onPress, colors, styles }: ProjectCardProps) {
       activeOpacity={0.9}
       onPress={onPress}
     >
-      <View style={styles.cardTop}>
-        <Text
-          style={[styles.cardName, { color: colors.black }]}
-          numberOfLines={1}
-        >
-          {projectTitle}
-        </Text>
+      <Text
+        style={[styles.cardTitle, { color: colors.black }]}
+        numberOfLines={1}
+      >
+        {projectTitle}
+      </Text>
 
-        <View style={styles.ownerRow}>
-          <View style={[styles.ownerIcon, { borderColor: colors.border }]}>
-            <Ionicons name="person" size={12} color={colors.button} />
-          </View>
+      <View style={styles.authorRow}>
+        <View style={[styles.authorIcon, { borderColor: colors.border }]}>
+          <Ionicons name="person" size={10} color={colors.button} />
+        </View>
 
-          <View style={styles.ownerInfo}>
-            <Text
-              style={[styles.ownerName, { color: colors.black }]}
-              numberOfLines={1}
-            >
-              {ownerName}
-            </Text>
+        <View style={styles.authorInfo}>
+          <Text
+            style={[styles.authorName, { color: colors.black }]}
+            numberOfLines={1}
+          >
+            {ownerName}
+          </Text>
 
-            <Text style={[styles.projectDate, { color: colors.link }]}>
-              {projectDate}
-            </Text>
-          </View>
+          <Text style={[styles.authorDate, { color: colors.link }]}>
+            {projectDate}
+          </Text>
         </View>
       </View>
 
@@ -222,10 +235,19 @@ function ProjectCard({ item, onPress, colors, styles }: ProjectCardProps) {
         style={[styles.cardImage, { backgroundColor: colors.input }]}
       />
 
-      <View style={styles.cardFooter}>
+      {!!item.desc && (
+        <Text
+          style={[styles.description, { color: colors.link }]}
+          numberOfLines={1}
+        >
+          {item.desc}
+        </Text>
+      )}
+
+      <View style={styles.footerRow}>
         <View
           style={[
-            styles.categoryBadge,
+            styles.categoryPill,
             { backgroundColor: colors.bg, borderColor: colors.border },
           ]}
         >
@@ -239,31 +261,44 @@ function ProjectCard({ item, onPress, colors, styles }: ProjectCardProps) {
 
         <View
           style={[
-            styles.ratingBadge,
+            styles.ratingPill,
             { backgroundColor: colors.bg, borderColor: colors.border },
           ]}
         >
-          <Ionicons name="star" size={11} color="#f5b301" />
+          <Ionicons name="star" size={9} color="#f5b301" />
           <Text style={[styles.ratingText, { color: colors.black }]}>
             {averageRating}
           </Text>
         </View>
 
         <TouchableOpacity
-          style={[styles.githubButton, { backgroundColor: colors.black }]}
+          style={[
+            styles.githubButton,
+            { backgroundColor: githubUrl ? colors.black : colors.input },
+          ]}
           activeOpacity={0.85}
           onPress={openGithub}
         >
-          <Ionicons name="logo-github" size={12} color="#fff" />
+          <Ionicons name="logo-github" size={10} color="#fff" />
           <Text style={styles.githubText}>GitHub</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.bookmarkButton, { borderColor: colors.border }]}
+          style={[
+            styles.bookmarkButton,
+            {
+              borderColor: saved ? colors.button : colors.border,
+              backgroundColor: saved ? colors.button : colors.white,
+            },
+          ]}
           activeOpacity={0.85}
-          onPress={handleBookmark}
+          onPress={onToggleSave}
         >
-          <Ionicons name="bookmark-outline" size={14} color={colors.button} />
+          <Ionicons
+            name={saved ? "bookmark" : "bookmark-outline"}
+            size={12}
+            color={saved ? colors.white : colors.button}
+          />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -282,6 +317,9 @@ export default function GalleryScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [savedProjects, setSavedProjects] = useState<Record<string, boolean>>(
+    {}
+  );
 
   const styles = useMemo(() => createStyles(C), [C]);
 
@@ -339,6 +377,7 @@ export default function GalleryScreen() {
         String(p.name || ""),
         String(p.desc || ""),
         String(p.author || ""),
+        String(p.authorName || ""),
         String(p.userName || ""),
         String(p.userId || ""),
         String(p.category || ""),
@@ -373,6 +412,25 @@ export default function GalleryScreen() {
       text2: "Projects refreshed",
     });
   }, [loadProjects]);
+
+  const handleToggleSave = (projectId: string) => {
+    setSavedProjects((prev) => {
+      const nextValue = !prev[projectId];
+
+      Toast.show({
+        type: nextValue ? "success" : "info",
+        text1: nextValue ? "Saved" : "Removed",
+        text2: nextValue
+          ? "Project added to bookmarks."
+          : "Project removed from bookmarks.",
+      });
+
+      return {
+        ...prev,
+        [projectId]: nextValue,
+      };
+    });
+  };
 
   const handleUploadSuccess = async (result?: any) => {
     setModalVisible(false);
@@ -429,11 +487,11 @@ export default function GalleryScreen() {
       </View>
 
       <View style={styles.searchBox}>
-        <Ionicons name="search-outline" size={18} color={C.link} />
+        <Ionicons name="search-outline" size={17} color={C.link} />
 
         <TextInput
           style={styles.searchInput}
-          placeholder="Search by title, category, stack..."
+          placeholder="Search by title, author, category..."
           placeholderTextColor={C.link}
           value={search}
           onChangeText={setSearch}
@@ -441,7 +499,7 @@ export default function GalleryScreen() {
 
         {search ? (
           <TouchableOpacity onPress={() => setSearch("")}>
-            <Ionicons name="close-circle" size={18} color={C.link} />
+            <Ionicons name="close-circle" size={17} color={C.link} />
           </TouchableOpacity>
         ) : null}
       </View>
@@ -488,22 +546,28 @@ export default function GalleryScreen() {
             filtered.length > 0 ? styles.columnWrapper : undefined
           }
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <ProjectCard
-              item={item}
-              colors={C}
-              styles={styles}
-              onPress={() =>
-                router.push({
-                  pathname: "/project-details",
-                  params: { id: item.id },
-                })
-              }
-            />
-          )}
+          renderItem={({ item }) => {
+            const projectId = String(item.id || item._id || item.title);
+
+            return (
+              <ProjectCard
+                item={item}
+                colors={C}
+                styles={styles}
+                saved={!!savedProjects[projectId]}
+                onToggleSave={() => handleToggleSave(projectId)}
+                onPress={() =>
+                  router.push({
+                    pathname: "/project-details",
+                    params: { id: item.id },
+                  })
+                }
+              />
+            );
+          }}
           ListEmptyComponent={
             <View style={styles.emptyBox}>
-              <Ionicons name="folder-open-outline" size={50} color={C.input} />
+              <Ionicons name="folder-open-outline" size={48} color={C.input} />
               <Text style={styles.emptyTitle}>No projects found</Text>
               <Text style={styles.emptyText}>
                 Try changing the search keyword or category.
@@ -535,7 +599,7 @@ function createStyles(C: any) {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      paddingTop: 16,
+      paddingTop: 14,
       paddingHorizontal: 16,
       paddingBottom: 10,
     },
@@ -563,7 +627,7 @@ function createStyles(C: any) {
     uploadButtonText: {
       color: C.white,
       fontWeight: "900",
-      fontSize: 12.5,
+      fontSize: 12,
     },
 
     searchBox: {
@@ -571,7 +635,7 @@ function createStyles(C: any) {
       backgroundColor: C.white,
       borderRadius: 18,
       paddingHorizontal: 13,
-      height: 46,
+      height: 44,
       flexDirection: "row",
       alignItems: "center",
       gap: 8,
@@ -582,18 +646,18 @@ function createStyles(C: any) {
     searchInput: {
       flex: 1,
       color: C.black,
-      fontSize: 13,
+      fontSize: 12.5,
       paddingVertical: 0,
     },
 
     categoriesWrapper: {
-      paddingVertical: 11,
+      paddingVertical: 10,
       paddingLeft: 12,
     },
 
     chip: {
       paddingHorizontal: 13,
-      paddingVertical: 8,
+      paddingVertical: 7,
       marginHorizontal: 4,
       backgroundColor: C.white,
       borderRadius: 18,
@@ -630,7 +694,7 @@ function createStyles(C: any) {
     },
 
     listContent: {
-      paddingHorizontal: 10,
+      paddingHorizontal: 9,
       paddingBottom: 24,
     },
 
@@ -644,99 +708,106 @@ function createStyles(C: any) {
     },
 
     card: {
-      width: "48%",
+      width: "48.5%",
       marginBottom: 13,
       borderRadius: 15,
-      padding: 9,
+      padding: 8,
       borderWidth: 1,
       borderColor: C.border,
-      shadowOpacity: 0.08,
-      shadowRadius: 7,
+      shadowOpacity: 0.07,
+      shadowRadius: 6,
       shadowOffset: { width: 0, height: 3 },
       elevation: 2,
     },
 
-    cardTop: {
-      marginBottom: 8,
-    },
-
-    cardName: {
+    cardTitle: {
+      fontSize: 13,
       fontWeight: "900",
-      fontSize: 13.5,
-      marginBottom: 8,
+      marginBottom: 7,
+      lineHeight: 17,
     },
 
-    ownerRow: {
+    authorRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 7,
+      gap: 6,
+      marginBottom: 8,
     },
 
-    ownerIcon: {
-      width: 24,
-      height: 24,
-      borderRadius: 12,
+    authorIcon: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
       borderWidth: 1,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: C.white,
     },
 
-    ownerInfo: {
+    authorInfo: {
       flex: 1,
+      minWidth: 0,
     },
 
-    ownerName: {
-      fontSize: 10.5,
-      fontWeight: "800",
-      lineHeight: 14,
-    },
-
-    projectDate: {
+    authorName: {
       fontSize: 9.5,
+      fontWeight: "900",
+      lineHeight: 12,
+    },
+
+    authorDate: {
+      fontSize: 8.5,
       fontWeight: "700",
       marginTop: 1,
     },
 
     cardImage: {
       width: "100%",
-      height: 105,
+      height: 112,
       borderRadius: 10,
-      marginBottom: 8,
+      marginBottom: 7,
+      resizeMode: "cover",
     },
 
-    cardFooter: {
+    description: {
+      fontSize: 9.5,
+      lineHeight: 13,
+      fontWeight: "600",
+      marginBottom: 7,
+    },
+
+    footerRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 5,
+      gap: 4,
     },
 
-    categoryBadge: {
+    categoryPill: {
       flex: 1,
       minWidth: 0,
-      paddingHorizontal: 7,
-      paddingVertical: 5,
-      borderRadius: 10,
-      borderWidth: 1,
-    },
-
-    categoryText: {
-      fontSize: 9.5,
-      fontWeight: "800",
-    },
-
-    ratingBadge: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 2,
       paddingHorizontal: 6,
       paddingVertical: 5,
       borderRadius: 10,
       borderWidth: 1,
     },
 
+    categoryText: {
+      fontSize: 8.5,
+      fontWeight: "900",
+    },
+
+    ratingPill: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 2,
+      paddingHorizontal: 5,
+      paddingVertical: 5,
+      borderRadius: 10,
+      borderWidth: 1,
+    },
+
     ratingText: {
-      fontSize: 9.5,
+      fontSize: 8.5,
       fontWeight: "900",
     },
 
@@ -744,25 +815,24 @@ function createStyles(C: any) {
       flexDirection: "row",
       alignItems: "center",
       gap: 3,
-      paddingHorizontal: 7,
+      paddingHorizontal: 6,
       paddingVertical: 6,
       borderRadius: 11,
     },
 
     githubText: {
       color: "#fff",
-      fontSize: 8.5,
+      fontSize: 8,
       fontWeight: "900",
     },
 
     bookmarkButton: {
-      width: 26,
-      height: 26,
-      borderRadius: 8,
+      width: 25,
+      height: 25,
+      borderRadius: 9,
       borderWidth: 1,
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: C.white,
     },
 
     emptyBox: {
