@@ -13,7 +13,7 @@ export default function App() {
 
   const [contactForm, setContactForm] = useState({ name: "", email: "", message: "" });
   const [contactStatus, setContactStatus] = useState(null);
-
+  const [contactLimit, setContactLimit] = useState(null);
   useEffect(() => {
     document.body.style.margin = "0";
     document.body.style.padding = "0";
@@ -88,6 +88,10 @@ export default function App() {
     } else {
       setContactStatus(result.reason);
     }
+    if (result.reason === "limit") {
+    setContactLimit(result.limit);
+  }
+
   };
 
   const features = [
@@ -142,7 +146,7 @@ export default function App() {
         <div style={styles.alertSuccess}>✅ Your message was sent successfully! We'll get back to you soon.</div>
       )}
       {contactStatus === "limit" && (
-        <div style={styles.alertWarn}>⚠️ You've reached the daily limit of 3 messages. Please try again tomorrow.</div>
+        <div style={styles.alertWarn}>⚠️ You've reached the daily limit of {contactLimit} messages. Please try again tomorrow.</div>
       )}
       {contactStatus === "disabled" && (
         <div style={styles.alertWarn}>🔒 The contact form is currently disabled. Please try again later.</div>
@@ -290,9 +294,11 @@ export default function App() {
             Graduation Projects Gallery Portal
           </div>
           <h1 className="hero-fade-in hero-delay-1" style={styles.heroTitle}>
-            Your work is your legacy —
+            Your work is your legacy 
             <br />
-            <span style={styles.heroTitleAccent}>let the world witness it.</span>
+            <span style={styles.heroTitleAccent}>
+              let the world witness it.
+              </span>
           </h1>
           <p className="hero-fade-in hero-delay-2" style={styles.heroDesc}>
             Whether you're a student seeking inspiration, uploading your finest work,

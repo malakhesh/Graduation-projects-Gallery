@@ -138,12 +138,11 @@ function ContactMessages({ onBack }) {
   const [messages, setMessages]     = useState([]);
   const [loading, setLoading]       = useState(true);
   const [selected, setSelected]     = useState(null);
-  const [filter, setFilter]         = useState("all");   // "all" | "unread" | "read"
+  const [filter, setFilter]         = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [timeFilter, setTimeFilter] = useState("all");   // "today" | "yesterday" | "week" | "month" | "all"
+  const [timeFilter, setTimeFilter] = useState("all");
   const isMobile = useIsMobile();
 
-  // ── fetch ────────────────────────────────────────────────────────────────
   const fetchMessages = async () => {
     setLoading(true);
     try {
@@ -158,7 +157,6 @@ function ContactMessages({ onBack }) {
 
   useEffect(() => { fetchMessages(); }, []);
 
-  // ── mark read ────────────────────────────────────────────────────────────
   const markRead = async (id) => {
     try {
       await updateDoc(doc(db, "contactMessages", id), { status: "read" });
@@ -169,7 +167,6 @@ function ContactMessages({ onBack }) {
     } catch (err) { console.error(err); }
   };
 
-  // ── delete ───────────────────────────────────────────────────────────────
   const handleDelete = async (id) => {
     try {
       await deleteDoc(doc(db, "contactMessages", id));
@@ -178,57 +175,43 @@ function ContactMessages({ onBack }) {
     } catch (err) { console.error(err); }
   };
 
-  // ── open → auto mark read ────────────────────────────────────────────────
   const openMessage = (msg) => {
     setSelected(msg);
     if (msg.status !== "read") markRead(msg.id);
   };
 
-  // ── format date ──────────────────────────────────────────────────────────
   const formatDate = (ts) => {
     if (!ts) return "—";
     const d = ts.toDate ? ts.toDate() : new Date(ts);
     return d.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
   };
 
-  // ── time filter helper ───────────────────────────────────────────────────
   const passesTimeFilter = (msg) => {
     if (timeFilter === "all") return true;
     if (!msg.createdAt) return false;
     const d = msg.createdAt.toDate ? msg.createdAt.toDate() : new Date(msg.createdAt);
     const now = new Date();
-
-    if (timeFilter === "today") {
-      return d.toDateString() === now.toDateString();
-    }
+    if (timeFilter === "today") return d.toDateString() === now.toDateString();
     if (timeFilter === "yesterday") {
       const yest = new Date(now);
       yest.setDate(yest.getDate() - 1);
       return d.toDateString() === yest.toDateString();
     }
     if (timeFilter === "week") {
-      const weekAgo = new Date(now);
-      weekAgo.setDate(weekAgo.getDate() - 7);
+      const weekAgo = new Date(now); weekAgo.setDate(weekAgo.getDate() - 7);
       return d >= weekAgo;
     }
     if (timeFilter === "month") {
-      const monthAgo = new Date(now);
-      monthAgo.setMonth(monthAgo.getMonth() - 1);
+      const monthAgo = new Date(now); monthAgo.setMonth(monthAgo.getMonth() - 1);
       return d >= monthAgo;
     }
     return true;
   };
 
-  // ── combined filter ──────────────────────────────────────────────────────
   const filtered = messages.filter((m) => {
-    // status filter
     if (filter === "unread" && m.status === "read")   return false;
     if (filter === "read"   && m.status !== "read")   return false;
-
-    // time filter
     if (!passesTimeFilter(m)) return false;
-
-    // search
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       const inName    = (m.name    || "").toLowerCase().includes(q);
@@ -236,14 +219,12 @@ function ContactMessages({ onBack }) {
       const inMessage = (m.message || "").toLowerCase().includes(q);
       if (!inName && !inEmail && !inMessage) return false;
     }
-
     return true;
   });
 
   const unreadCount = messages.filter((m) => m.status !== "read").length;
   const readCount   = messages.filter((m) => m.status === "read").length;
 
-  // ── render ───────────────────────────────────────────────────────────────
   return (
     <>
       <style>{`
@@ -262,16 +243,13 @@ function ContactMessages({ onBack }) {
       <div style={{
         display: "flex", minHeight: "100vh",
         fontFamily: "'Poppins', sans-serif",
-        background: "linear-gradient(160deg, #f7f0e8 0%, #ede0cf 50%, #dfc9aa 100%)",
+        background: "linear-gradient(to top, #dfc9aa, #f7f0e8)",
       }}>
-        {/* ── Sidebar ── */}
         <aside style={{
-          position: "fixed", left: 0, top: 0, bottom: 0,
-          width: "200px",
-          background: "linear-gradient(180deg, #f7f0e8 0%, #ede0cf 60%, #dfc9aa 100%)",
+          position: "fixed", left: 0, top: 0, bottom: 0, width: "200px",
+          background: "linear-gradient(to top, #dfc9aa, #f7f0e8)",
           borderRight: "2px solid rgba(111,78,55,0.15)",
-          display: "flex", flexDirection: "column",
-          justifyContent: "space-between",
+          display: "flex", flexDirection: "column", justifyContent: "space-between",
           padding: "24px 20px", zIndex: 100,
           boxShadow: "4px 0 20px rgba(111,78,55,0.06)",
         }}>
@@ -281,7 +259,6 @@ function ContactMessages({ onBack }) {
               letterSpacing: "3px", color: "#3B2F2F",
               marginBottom: "32px", textTransform: "uppercase",
             }}>Dashboard</h2>
-
             <button
               onClick={onBack}
               style={{
@@ -302,8 +279,6 @@ function ContactMessages({ onBack }) {
                 e.currentTarget.style.transform = "translateX(0)";
               }}
             >← Back</button>
-
-            {/* active nav item */}
             <div style={{
               marginTop: "16px", padding: "10px 12px",
               borderRadius: "10px", backgroundColor: "#6F4E37",
@@ -315,47 +290,36 @@ function ContactMessages({ onBack }) {
               ✉️ Messages
               {unreadCount > 0 && (
                 <span style={{
-                  marginLeft: "auto",
-                  backgroundColor: "#e74c3c",
-                  color: "#fff",
-                  borderRadius: "12px",
-                  padding: "1px 8px",
-                  fontSize: "11px",
-                  fontWeight: "800",
+                  marginLeft: "auto", backgroundColor: "#e74c3c", color: "#fff",
+                  borderRadius: "12px", padding: "1px 8px",
+                  fontSize: "11px", fontWeight: "800",
                 }}>{unreadCount}</span>
               )}
             </div>
-
-            {/* counts summary */}
             <div style={{ marginTop: "20px", padding: "0 4px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#7a5c42", marginBottom: "6px" }}>
                 <span>Total</span><span style={{ fontWeight: "700", color: "#3B2F2F" }}>{messages.length}</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#7a5c42", marginBottom: "6px" }}>
-                <span>Unread</span>
-                <span style={{ fontWeight: "700", color: "#e74c3c" }}>{unreadCount}</span>
+                <span>Unread</span><span style={{ fontWeight: "700", color: "#e74c3c" }}>{unreadCount}</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#7a5c42" }}>
-                <span>Read</span>
-                <span style={{ fontWeight: "700", color: "#27ae60" }}>{readCount}</span>
+                <span>Read</span><span style={{ fontWeight: "700", color: "#27ae60" }}>{readCount}</span>
               </div>
             </div>
           </div>
         </aside>
 
-        {/* ── Main ── */}
         <main style={{
           marginLeft: "200px", flex: 1,
           padding: isMobile ? "32px 16px" : "40px 48px",
           overflowY: "auto", minHeight: "100vh",
         }}>
-          {/* Header */}
           <div style={{ marginBottom: "24px", animation: "fadeUp 0.4s ease" }}>
             <h1 style={{
               fontFamily: "'Georgia', serif",
               fontSize: "clamp(22px, 4vw, 30px)",
-              fontWeight: "bold", color: "#3B1F0F",
-              margin: "0 0 6px",
+              fontWeight: "bold", color: "#3B1F0F", margin: "0 0 6px",
             }}>User Messages</h1>
             <div style={{
               marginTop: "10px", height: "3px",
@@ -364,15 +328,10 @@ function ContactMessages({ onBack }) {
             }} />
           </div>
 
-          {/* ── Search bar ── */}
-          <div style={{
-            position: "relative", marginBottom: "14px",
-            animation: "fadeUp 0.4s ease",
-          }}>
+          <div style={{ position: "relative", marginBottom: "14px", animation: "fadeUp 0.4s ease" }}>
             <span style={{
               position: "absolute", left: "14px", top: "50%",
-              transform: "translateY(-50%)",
-              fontSize: "16px", pointerEvents: "none",
+              transform: "translateY(-50%)", fontSize: "16px", pointerEvents: "none",
             }}>🔍</span>
             <input
               className="search-input"
@@ -381,37 +340,24 @@ function ContactMessages({ onBack }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
-                width: "100%",
-                padding: "10px 14px 10px 40px",
-                borderRadius: "12px",
-                border: "1.5px solid rgba(111,78,55,0.25)",
-                backgroundColor: "rgba(255,255,255,0.6)",
-                color: "#3B2F2F",
-                fontSize: "13px",
-                fontFamily: "'Poppins', sans-serif",
+                width: "100%", padding: "10px 14px 10px 40px",
+                borderRadius: "12px", border: "1.5px solid rgba(111,78,55,0.25)",
+                backgroundColor: "rgba(255,255,255,0.6)", color: "#3B2F2F",
+                fontSize: "13px", fontFamily: "'Poppins', sans-serif",
                 transition: "border-color 0.2s, box-shadow 0.2s",
               }}
             />
             {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                style={{
-                  position: "absolute", right: "12px", top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "none", border: "none",
-                  cursor: "pointer", color: "#9a7050", fontSize: "16px",
-                  lineHeight: 1,
-                }}
-              >✕</button>
+              <button onClick={() => setSearchQuery("")} style={{
+                position: "absolute", right: "12px", top: "50%",
+                transform: "translateY(-50%)",
+                background: "none", border: "none",
+                cursor: "pointer", color: "#9a7050", fontSize: "16px", lineHeight: 1,
+              }}>✕</button>
             )}
           </div>
 
-          {/* ── Filter rows ── */}
-          <div style={{
-            display: "flex", flexWrap: "wrap", gap: "8px",
-            marginBottom: "10px", animation: "fadeUp 0.4s ease",
-          }}>
-            {/* Status filter */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "10px", animation: "fadeUp 0.4s ease" }}>
             {[
               { key: "all",    label: `All (${messages.length})` },
               { key: "unread", label: `Unread (${unreadCount})` },
@@ -429,11 +375,7 @@ function ContactMessages({ onBack }) {
             ))}
           </div>
 
-          {/* Time filter */}
-          <div style={{
-            display: "flex", flexWrap: "wrap", gap: "6px",
-            marginBottom: "20px", animation: "fadeUp 0.4s ease",
-          }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "20px", animation: "fadeUp 0.4s ease" }}>
             {[
               { key: "all",       label: "All time" },
               { key: "today",     label: "Today" },
@@ -444,109 +386,59 @@ function ContactMessages({ onBack }) {
               <button key={t.key} onClick={() => setTimeFilter(t.key)} style={{
                 padding: "5px 13px", borderRadius: "16px",
                 border: "1.5px solid rgba(111,78,55,0.2)",
-                backgroundColor: timeFilter === t.key
-                  ? "rgba(111,78,55,0.15)"
-                  : "rgba(255,255,255,0.4)",
+                backgroundColor: timeFilter === t.key ? "rgba(111,78,55,0.15)" : "rgba(255,255,255,0.4)",
                 color: timeFilter === t.key ? "#5a3825" : "#8a6a50",
                 fontWeight: timeFilter === t.key ? "700" : "500",
-                fontSize: "11px",
-                cursor: "pointer", transition: "all 0.2s",
+                fontSize: "11px", cursor: "pointer", transition: "all 0.2s",
                 fontFamily: "'Poppins', sans-serif",
               }}>{t.label}</button>
             ))}
           </div>
 
-          {/* ── Content ── */}
           {loading ? (
-            <div style={{
-              display: "flex", alignItems: "center",
-              justifyContent: "center", minHeight: "200px", gap: "14px",
-            }}>
-              <div style={{
-                width: "36px", height: "36px",
-                border: "4px solid #d2b49c", borderTopColor: "#6F4E37",
-                borderRadius: "50%", animation: "spin 0.8s linear infinite",
-              }} />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "200px", gap: "14px" }}>
+              <div style={{ width: "36px", height: "36px", border: "4px solid #d2b49c", borderTopColor: "#6F4E37", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
               <span style={{ color: "#8a6245", fontStyle: "italic" }}>Loading…</span>
             </div>
           ) : filtered.length === 0 ? (
-            <div style={{
-              textAlign: "center", padding: "60px 20px",
-              color: "#9a7050", fontSize: "15px", fontStyle: "italic",
-            }}>No messages found</div>
+            <div style={{ textAlign: "center", padding: "60px 20px", color: "#9a7050", fontSize: "15px", fontStyle: "italic" }}>No messages found</div>
           ) : (
             <div style={{
               display: "grid",
               gridTemplateColumns: selected ? (isMobile ? "1fr" : "1fr 1fr") : "1fr",
-              gap: "16px",
-              animation: "fadeUp 0.4s ease",
+              gap: "16px", animation: "fadeUp 0.4s ease",
             }}>
-              {/* ── List ── */}
               <div style={{
-                backgroundColor: "rgba(253,246,238,0.8)",
-                borderRadius: "16px",
-                border: "1px solid rgba(200,168,130,0.25)",
-                overflow: "hidden",
+                backgroundColor: "rgba(253,246,238,0.8)", borderRadius: "16px",
+                border: "1px solid rgba(200,168,130,0.25)", overflow: "hidden",
                 boxShadow: "0 4px 16px rgba(111,78,55,0.06)",
               }}>
                 {filtered.map((msg, idx) => (
-                  <div
-                    key={msg.id}
-                    className="msg-row"
-                    onClick={() => openMessage(msg)}
-                    style={{
-                      padding: "14px 18px",
-                      borderBottom: idx < filtered.length - 1
-                        ? "1px solid rgba(200,168,130,0.18)"
-                        : "none",
-                      cursor: "pointer",
-                      backgroundColor: selected?.id === msg.id
-                        ? "rgba(111,78,55,0.1)"
-                        : msg.status !== "read"
-                        ? "rgba(111,78,55,0.03)"
-                        : "transparent",
-                      transition: "background 0.2s",
-                      display: "flex", alignItems: "flex-start", gap: "12px",
-                    }}
-                  >
-                    {/* Unread dot */}
+                  <div key={msg.id} className="msg-row" onClick={() => openMessage(msg)} style={{
+                    padding: "14px 18px",
+                    borderBottom: idx < filtered.length - 1 ? "1px solid rgba(200,168,130,0.18)" : "none",
+                    cursor: "pointer",
+                    backgroundColor: selected?.id === msg.id ? "rgba(111,78,55,0.1)" : msg.status !== "read" ? "rgba(111,78,55,0.03)" : "transparent",
+                    transition: "background 0.2s",
+                    display: "flex", alignItems: "flex-start", gap: "12px",
+                  }}>
                     <div style={{
                       width: "8px", height: "8px", borderRadius: "50%",
                       backgroundColor: msg.status !== "read" ? "#e74c3c" : "transparent",
                       flexShrink: 0, marginTop: "6px",
                     }} />
-
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        display: "flex", justifyContent: "space-between",
-                        alignItems: "center", gap: "8px", flexWrap: "wrap",
-                      }}>
-                        <span style={{
-                          fontWeight: msg.status !== "read" ? "700" : "600",
-                          fontSize: "14px", color: "#3B2F2F",
-                        }}>{msg.name}</span>
-                        <span style={{ fontSize: "11px", color: "#9a7050" }}>
-                          {formatDate(msg.createdAt)}
-                        </span>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                        <span style={{ fontWeight: msg.status !== "read" ? "700" : "600", fontSize: "14px", color: "#3B2F2F" }}>{msg.name}</span>
+                        <span style={{ fontSize: "11px", color: "#9a7050" }}>{formatDate(msg.createdAt)}</span>
                       </div>
-                      <div style={{ fontSize: "12px", color: "#6b5040", marginTop: "2px" }}>
-                        {msg.email}
-                      </div>
-                      <div style={{
-                        fontSize: "12px", color: "#8a6a50", marginTop: "4px",
-                        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                      }}>{msg.message}</div>
+                      <div style={{ fontSize: "12px", color: "#6b5040", marginTop: "2px" }}>{msg.email}</div>
+                      <div style={{ fontSize: "12px", color: "#8a6a50", marginTop: "4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{msg.message}</div>
                     </div>
-
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDelete(msg.id); }}
-                      style={{
-                        background: "none", border: "none",
-                        color: "#c0392b", cursor: "pointer",
-                        fontSize: "16px", padding: "2px 6px",
-                        borderRadius: "6px", flexShrink: 0,
-                        transition: "background 0.2s",
-                      }}
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(msg.id); }} style={{
+                      background: "none", border: "none", color: "#c0392b", cursor: "pointer",
+                      fontSize: "16px", padding: "2px 6px", borderRadius: "6px", flexShrink: 0, transition: "background 0.2s",
+                    }}
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(192,57,43,0.1)"}
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
                       title="Delete"
@@ -555,141 +447,55 @@ function ContactMessages({ onBack }) {
                 ))}
               </div>
 
-              {/* ── Detail panel ── */}
               {selected && (
                 <div style={{
-                  backgroundColor: "rgba(253,246,238,0.92)",
-                  borderRadius: "16px",
-                  border: "1px solid rgba(200,168,130,0.25)",
-                  padding: "24px",
-                  boxShadow: "0 4px 16px rgba(111,78,55,0.06)",
-                  animation: "fadeUp 0.3s ease",
-                  alignSelf: "flex-start",
-                  position: "sticky",
-                  top: "20px",
+                  backgroundColor: "rgba(253,246,238,0.92)", borderRadius: "16px",
+                  border: "1px solid rgba(200,168,130,0.25)", padding: "24px",
+                  boxShadow: "0 4px 16px rgba(111,78,55,0.06)", animation: "fadeUp 0.3s ease",
+                  alignSelf: "flex-start", position: "sticky", top: "20px",
                 }}>
-                  <div style={{
-                    display: "flex", justifyContent: "space-between",
-                    alignItems: "center", marginBottom: "20px",
-                    paddingBottom: "14px",
-                    borderBottom: "2px solid rgba(180,130,80,0.18)",
-                  }}>
-                    <h3 style={{
-                      margin: 0, fontFamily: "'Georgia', serif",
-                      fontSize: "16px", color: "#3B1F0F",
-                    }}>Message Details</h3>
-                    <button
-                      onClick={() => setSelected(null)}
-                      style={{
-                        background: "none", border: "none",
-                        fontSize: "18px", cursor: "pointer", color: "#9a7050",
-                      }}
-                    >✕</button>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", paddingBottom: "14px", borderBottom: "2px solid rgba(180,130,80,0.18)" }}>
+                    <h3 style={{ margin: 0, fontFamily: "'Georgia', serif", fontSize: "16px", color: "#3B1F0F" }}>Message Details</h3>
+                    <button onClick={() => setSelected(null)} style={{ background: "none", border: "none", fontSize: "18px", cursor: "pointer", color: "#9a7050" }}>✕</button>
                   </div>
-
-                  {/* Name */}
                   <div style={{ marginBottom: "14px" }}>
-                    <label style={{
-                      fontSize: "11px", color: "#9a7050",
-                      textTransform: "uppercase", letterSpacing: "1px",
-                      display: "block", marginBottom: "4px",
-                    }}>Name</label>
-                    <div style={{ fontSize: "15px", fontWeight: "700", color: "#3B2F2F" }}>
-                      {selected.name}
-                    </div>
+                    <label style={{ fontSize: "11px", color: "#9a7050", textTransform: "uppercase", letterSpacing: "1px", display: "block", marginBottom: "4px" }}>Name</label>
+                    <div style={{ fontSize: "15px", fontWeight: "700", color: "#3B2F2F" }}>{selected.name}</div>
                   </div>
-
-                  {/* Email */}
                   <div style={{ marginBottom: "14px" }}>
-                    <label style={{
-                      fontSize: "11px", color: "#9a7050",
-                      textTransform: "uppercase", letterSpacing: "1px",
-                      display: "block", marginBottom: "4px",
-                    }}>Email</label>
-                    <a
-                      href={`mailto:${selected.email}`}
-                      style={{
-                        fontSize: "14px", color: "#6F4E37",
-                        fontWeight: "600", textDecoration: "none",
-                      }}
-                    >{selected.email}</a>
+                    <label style={{ fontSize: "11px", color: "#9a7050", textTransform: "uppercase", letterSpacing: "1px", display: "block", marginBottom: "4px" }}>Email</label>
+                    <a href={`mailto:${selected.email}`} style={{ fontSize: "14px", color: "#6F4E37", fontWeight: "600", textDecoration: "none" }}>{selected.email}</a>
                   </div>
-
-                  {/* Date */}
                   <div style={{ marginBottom: "14px" }}>
-                    <label style={{
-                      fontSize: "11px", color: "#9a7050",
-                      textTransform: "uppercase", letterSpacing: "1px",
-                      display: "block", marginBottom: "4px",
-                    }}>Date</label>
-                    <div style={{ fontSize: "13px", color: "#5a4030" }}>
-                      {formatDate(selected.createdAt)}
-                    </div>
+                    <label style={{ fontSize: "11px", color: "#9a7050", textTransform: "uppercase", letterSpacing: "1px", display: "block", marginBottom: "4px" }}>Date</label>
+                    <div style={{ fontSize: "13px", color: "#5a4030" }}>{formatDate(selected.createdAt)}</div>
                   </div>
-
-                  {/* Message body */}
                   <div>
-                    <label style={{
-                      fontSize: "11px", color: "#9a7050",
-                      textTransform: "uppercase", letterSpacing: "1px",
-                      display: "block", marginBottom: "8px",
-                    }}>Message</label>
-                    <div style={{
-                      fontSize: "14px", color: "#3B2F2F",
-                      lineHeight: "1.8",
-                      backgroundColor: "rgba(111,78,55,0.04)",
-                      borderRadius: "10px",
-                      padding: "14px 16px",
-                      border: "1px solid rgba(180,130,80,0.18)",
-                      whiteSpace: "pre-wrap",
-                      wordBreak: "break-word",
-                    }}>
+                    <label style={{ fontSize: "11px", color: "#9a7050", textTransform: "uppercase", letterSpacing: "1px", display: "block", marginBottom: "8px" }}>Message</label>
+                    <div style={{ fontSize: "14px", color: "#3B2F2F", lineHeight: "1.8", backgroundColor: "rgba(111,78,55,0.04)", borderRadius: "10px", padding: "14px 16px", border: "1px solid rgba(180,130,80,0.18)", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                       {selected.message}
                     </div>
                   </div>
-
-                  {/* Actions */}
                   <div style={{ marginTop: "20px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                    {/* Reply button — opens mail client with pre-filled fields */}
                     <a
                       href={`mailto:${selected.email}?subject=Re%3A%20Your%20Message&body=Hi%20${encodeURIComponent(selected.name)}%2C%0A%0A`}
                       style={{
-                        flex: 1, minWidth: "120px",
-                        padding: "10px 16px",
-                        borderRadius: "10px",
-                        backgroundColor: "#6F4E37",
-                        color: "#fff",
-                        fontWeight: "700", fontSize: "13px",
-                        textDecoration: "none",
-                        textAlign: "center",
+                        flex: 1, minWidth: "120px", padding: "10px 16px", borderRadius: "10px",
+                        backgroundColor: "#6F4E37", color: "#fff", fontWeight: "700", fontSize: "13px",
+                        textDecoration: "none", textAlign: "center",
                         boxShadow: "0 4px 12px rgba(111,78,55,0.28)",
-                        fontFamily: "'Poppins', sans-serif",
-                        display: "inline-block",
-                        transition: "background 0.2s, transform 0.2s",
+                        fontFamily: "'Poppins', sans-serif", display: "inline-block", transition: "background 0.2s, transform 0.2s",
                       }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#5a3825";
-                        e.currentTarget.style.transform = "translateY(-1px)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "#6F4E37";
-                        e.currentTarget.style.transform = "translateY(0)";
-                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#5a3825"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#6F4E37"; e.currentTarget.style.transform = "translateY(0)"; }}
                     >✉️ Reply</a>
-
-                    <button
-                      onClick={() => handleDelete(selected.id)}
-                      style={{
-                        padding: "10px 16px",
-                        borderRadius: "10px",
-                        border: "1.5px solid rgba(192,57,43,0.3)",
-                        backgroundColor: "rgba(192,57,43,0.07)",
-                        color: "#c0392b",
-                        fontWeight: "700", fontSize: "13px",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                        fontFamily: "'Poppins', sans-serif",
-                      }}
+                    <button onClick={() => handleDelete(selected.id)} style={{
+                      padding: "10px 16px", borderRadius: "10px",
+                      border: "1.5px solid rgba(192,57,43,0.3)",
+                      backgroundColor: "rgba(192,57,43,0.07)", color: "#c0392b",
+                      fontWeight: "700", fontSize: "13px", cursor: "pointer", transition: "all 0.2s",
+                      fontFamily: "'Poppins', sans-serif",
+                    }}
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(192,57,43,0.15)"}
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "rgba(192,57,43,0.07)"}
                     >🗑 Delete</button>
@@ -751,15 +557,13 @@ function Dashboard() {
       const totalAll = approvedArr.length + pendingArr.length + rejectedArr.length;
       setReportPct(totalAll > 0 ? Math.round((reportsArr.length / totalAll) * 100) : 0);
 
-      const all = [...approvedArr, ...pendingArr, ...rejectedArr];
       const categoryMap = {};
-      all.forEach((p) => {
-        const cat = p.category?.trim();
-        if (!cat) return;
+      approvedArr.forEach((p) => {
+        const cat = p.category?.trim() || "Other";
         categoryMap[cat] = (categoryMap[cat] || 0) + 1;
       });
 
-      const total = Object.values(categoryMap).reduce((s, n) => s + n, 0);
+      const total = approvedArr.length;
       setTotalProjects(total);
       setSlices(buildSlices(categoryMap, total, 70, 70, 60));
       setLoadingChart(false);
@@ -784,7 +588,6 @@ function Dashboard() {
   if (view === "settings") return <DashboardSettings onBack={() => setView("main")} />;
   if (view === "messages") return <ContactMessages onBack={() => setView("main")} />;
 
-  // ── lighter hover ──────────────────────────────────────────────────────────
   const lightenColor = (hex) => ({
     "#f2e8db": "#f8f0e5",
     "#ece0ce": "#f0e5d8",
@@ -795,28 +598,17 @@ function Dashboard() {
   const getBoxStyle = (id, baseColor) => ({
     flex: isMobile ? "none" : 1,
     width: isMobile ? "100%" : undefined,
-    minWidth: 0,
-    maxWidth: "none",
+    minWidth: 0, maxWidth: "none",
     backgroundColor: hoveredBox === id ? lightenColor(baseColor) + "ee" : baseColor + "cc",
-    backdropFilter: "blur(10px)",
-    WebkitBackdropFilter: "blur(10px)",
-    borderRadius: "10px",
-    border: "1px solid rgba(255,255,255,0.3)",
-    boxShadow: hoveredBox === id
-      ? "0 12px 28px rgba(0,0,0,0.28)"
-      : "0 4px 16px rgba(0,0,0,0.14)",
+    backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
+    borderRadius: "10px", border: "1px solid rgba(255,255,255,0.3)",
+    boxShadow: hoveredBox === id ? "0 12px 28px rgba(0,0,0,0.28)" : "0 4px 16px rgba(0,0,0,0.14)",
     height: isMobile ? "220px" : "270px",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    alignItems: "stretch",
-    padding: isMobile ? "14px 16px" : "18px 20px",
+    display: "flex", flexDirection: "column", justifyContent: "space-between",
+    alignItems: "stretch", padding: isMobile ? "14px 16px" : "18px 20px",
     transform: hoveredBox === id ? "translateY(-8px) scale(1.03)" : "translateY(0) scale(1)",
-    transition: "all 0.3s ease",
-    cursor: "pointer",
-    boxSizing: "border-box",
-    position: "relative",
-    zIndex: 1,
+    transition: "all 0.3s ease", cursor: "pointer",
+    boxSizing: "border-box", position: "relative", zIndex: 1,
   });
 
   const navItems = [
@@ -840,10 +632,8 @@ function Dashboard() {
               onMouseLeave={() => setHoveredNav(null)}
               onClick={() => handleNavClick(action)}
               style={{
-                padding: "8px 10px",
-                borderBottom: "1px solid rgba(111,78,55,0.15)",
-                cursor: "pointer", color: "#6F4E37",
-                borderRadius: "8px",
+                padding: "8px 10px", borderBottom: "1px solid rgba(111,78,55,0.15)",
+                cursor: "pointer", color: "#6F4E37", borderRadius: "8px",
                 backgroundColor: hoveredNav === label ? "rgba(111,78,55,0.1)" : "transparent",
                 transform: hoveredNav === label ? "translateX(6px) scale(1.02)" : "translateX(0) scale(1)",
                 boxShadow: hoveredNav === label ? "0 4px 12px rgba(0,0,0,0.1)" : "none",
@@ -890,7 +680,6 @@ function Dashboard() {
       position: "relative",
     }}>
 
-      {/* ── Mobile hamburger ── */}
       {isMobile && (
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -902,8 +691,7 @@ function Dashboard() {
             borderRadius: "8px", cursor: "pointer",
             display: "flex", flexDirection: "column",
             justifyContent: "center", alignItems: "center", gap: "5px",
-            padding: "0",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+            padding: "0", boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
           }}
           aria-label="Toggle menu"
         >
@@ -924,48 +712,35 @@ function Dashboard() {
       )}
 
       {isMobile && sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          style={{
-            position: "fixed", inset: 0, zIndex: 20,
-            backgroundColor: "rgba(0,0,0,0.28)",
-          }}
-        />
+        <div onClick={() => setSidebarOpen(false)} style={{
+          position: "fixed", inset: 0, zIndex: 20,
+          backgroundColor: "rgba(0,0,0,0.28)",
+        }} />
       )}
 
-      {/* ── Sidebar ── */}
       <aside style={{
         position: "fixed",
         left: isMobile ? (sidebarOpen ? 0 : "-220px") : 0,
         top: 0, bottom: 0, width: "200px",
-        /* lighter gradient — bottom stops at a soft warm tone, not dark */
         background: "linear-gradient(to bottom, #f7f0e8 0%, #ede0cf 60%, #dfc9aa 100%)",
-        padding: "20px",
-        borderRight: "2px solid rgba(111,78,55,0.18)",
+        padding: "20px", borderRight: "2px solid rgba(111,78,55,0.18)",
         display: "flex", flexDirection: "column", justifyContent: "space-between",
-        zIndex: 30,
-        transition: isMobile ? "left 0.3s ease" : "none",
+        zIndex: 30, transition: isMobile ? "left 0.3s ease" : "none",
         boxShadow: isMobile && sidebarOpen ? "4px 0 20px rgba(0,0,0,0.15)" : "none",
       }}>
         {isMobile && (
-          <button
-            onClick={() => setSidebarOpen(false)}
-            style={{
-              position: "absolute", top: "12px", right: "12px",
-              background: "transparent", border: "none",
-              fontSize: "20px", cursor: "pointer",
-              color: "#6F4E37", lineHeight: 1,
-            }}
-          >✕</button>
+          <button onClick={() => setSidebarOpen(false)} style={{
+            position: "absolute", top: "12px", right: "12px",
+            background: "transparent", border: "none",
+            fontSize: "20px", cursor: "pointer", color: "#6F4E37", lineHeight: 1,
+          }}>✕</button>
         )}
         <SidebarContent />
       </aside>
 
-      {/* ── Main ── */}
       <main style={{
         display: "flex", flexDirection: "column",
         marginLeft: isMobile ? 0 : "200px",
-        /* lighter gradient on main area */
         background: "linear-gradient(to top, #dfc9aa, #f7f0e8)",
         height: "100vh",
         width: isMobile ? "100vw" : "calc(100vw - 200px)",
@@ -976,25 +751,28 @@ function Dashboard() {
         <GoldenWreath isMobile={isMobile} />
 
         <div style={{
-          display: "flex",
-          flexDirection: isMobile ? "column" : "row",
+          display: "flex", flexDirection: isMobile ? "column" : "row",
           padding: isMobile ? "0 16px 24px" : "0 60px 30px",
           gap: isMobile ? "16px" : "30px",
-          flex: 1,
-          alignItems: isMobile ? "stretch" : "center",
+          flex: 1, alignItems: isMobile ? "stretch" : "center",
         }}>
 
-          {/* ── Box 1 — Review ── */}
+          {/* Box 1 — Review */}
           <div style={getBoxStyle(1, "#f2e8db")}
             onMouseEnter={() => setHoveredBox(1)} onMouseLeave={() => setHoveredBox(null)}
             onClick={() => setView("review")}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", overflow: "hidden" }}>
-              <span style={{ fontSize: isMobile ? "18px" : "22px", flexShrink: 0 }}>📋</span>
-              <span style={{ fontSize: isMobile ? "16px" : "22px", fontWeight: "700", letterSpacing: "0.5px", color: "#3B1F0F", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>PROJECTS TO REVIEW</span>
+            {/* ✅ FIX: removed overflow:hidden & whiteSpace:nowrap so title wraps */}
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+              <span style={{ fontSize: isMobile ? "18px" : "22px", flexShrink: 0, marginTop: "2px" }}>📋</span>
+              <span style={{
+                fontSize: isMobile ? "15px" : "18px",
+                fontWeight: "700", letterSpacing: "0.5px",
+                color: "#3B1F0F",
+                lineHeight: "1.3",
+                wordBreak: "break-word",
+              }}>PROJECTS TO REVIEW</span>
             </div>
-            <div style={{ fontSize: isMobile ? "44px" : "56px", fontWeight: "800", color: "#3B2F2F", lineHeight: 1, textAlign: "center" }}>
-              {pendingCount}
-            </div>
+            <div style={{ fontSize: isMobile ? "44px" : "56px", fontWeight: "800", color: "#3B2F2F", lineHeight: 1, textAlign: "center" }}>{pendingCount}</div>
             <div>
               <div style={{ width: "100%", backgroundColor: "#d4b896", borderRadius: "10px", height: "8px", overflow: "hidden" }}>
                 <div style={{ width: `${reviewPct}%`, backgroundColor: "#6F4E37", height: "100%", borderRadius: "10px", transition: "width 0.5s ease" }} />
@@ -1003,17 +781,22 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* ── Box 2 — Reports ── */}
+          {/* Box 2 — Reports */}
           <div style={getBoxStyle(2, "#ece0ce")}
             onMouseEnter={() => setHoveredBox(2)} onMouseLeave={() => setHoveredBox(null)}
             onClick={() => setView("reports")}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", overflow: "hidden" }}>
-              <span style={{ fontSize: isMobile ? "18px" : "22px", flexShrink: 0 }}>📝</span>
-              <span style={{ fontSize: isMobile ? "16px" : "22px", fontWeight: "700", letterSpacing: "0.5px", color: "#3B1F0F", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>PROJECTS TO REPORT</span>
+            {/* ✅ FIX: removed overflow:hidden & whiteSpace:nowrap so title wraps */}
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+              <span style={{ fontSize: isMobile ? "18px" : "22px", flexShrink: 0, marginTop: "2px" }}>📝</span>
+              <span style={{
+                fontSize: isMobile ? "15px" : "18px",
+                fontWeight: "700", letterSpacing: "0.5px",
+                color: "#3B1F0F",
+                lineHeight: "1.3",
+                wordBreak: "break-word",
+              }}>PROJECTS TO REPORT</span>
             </div>
-            <div style={{ fontSize: isMobile ? "44px" : "56px", fontWeight: "800", color: "#3B2F2F", lineHeight: 1, textAlign: "center" }}>
-              {reportsCount}
-            </div>
+            <div style={{ fontSize: isMobile ? "44px" : "56px", fontWeight: "800", color: "#3B2F2F", lineHeight: 1, textAlign: "center" }}>{reportsCount}</div>
             <div>
               <div style={{ width: "100%", backgroundColor: "#c8a882", borderRadius: "10px", height: "8px", overflow: "hidden" }}>
                 <div style={{ width: `${reportPct}%`, backgroundColor: "#5C4033", height: "100%", borderRadius: "10px", transition: "width 0.5s ease" }} />
@@ -1022,7 +805,7 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* ── Box 3 — Messages ── */}
+          {/* Box 3 — Messages */}
           <div style={getBoxStyle(3, "#eeddcc")}
             onMouseEnter={() => setHoveredBox(3)} onMouseLeave={() => setHoveredBox(null)}
             onClick={() => setView("messages")}>
@@ -1039,17 +822,13 @@ function Dashboard() {
                 }}>{unreadMsgCount} New</span>
               )}
             </div>
-            <div style={{ fontSize: isMobile ? "44px" : "56px", fontWeight: "800", color: "#3B2F2F", lineHeight: 1, textAlign: "center" }}>
-              {unreadMsgCount}
-            </div>
+            <div style={{ fontSize: isMobile ? "44px" : "56px", fontWeight: "800", color: "#3B2F2F", lineHeight: 1, textAlign: "center" }}>{unreadMsgCount}</div>
             <div style={{ fontSize: "13px", color: "#5C4033", textAlign: "center" }}>
-              {unreadMsgCount === 0
-                ? "No new messages"
-                : `${unreadMsgCount} unread message${unreadMsgCount > 1 ? "s" : ""}`}
+              {unreadMsgCount === 0 ? "No new messages" : `${unreadMsgCount} unread message${unreadMsgCount > 1 ? "s" : ""}`}
             </div>
           </div>
 
-          {/* ── Box 4 — Distribution ── */}
+          {/* Box 4 — Distribution */}
           <div style={getBoxStyle(4, "#e5d4be")}
             onMouseEnter={() => setHoveredBox(4)} onMouseLeave={() => setHoveredBox(null)}>
             <p style={{ margin: "0", fontSize: isMobile ? "16px" : "22px", fontWeight: "bold", color: "#3B1F0F" }}>
@@ -1058,16 +837,12 @@ function Dashboard() {
 
             {loadingChart ? (
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flex: 1 }}>
-                <div style={{
-                  width: "32px", height: "32px",
-                  border: "4px solid #d4b896", borderTopColor: "#6F4E37",
-                  borderRadius: "50%", animation: "spin 0.8s linear infinite",
-                }} />
+                <div style={{ width: "32px", height: "32px", border: "4px solid #d4b896", borderTopColor: "#6F4E37", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
                 <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
               </div>
             ) : slices.length === 0 ? (
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flex: 1, color: "#6F4E37", fontSize: "13px" }}>
-                No data yet
+                No approved projects yet
               </div>
             ) : (
               <>
@@ -1086,8 +861,7 @@ function Dashboard() {
                           onMouseLeave={() => setHoveredSlice(null)}
                           style={{ cursor: "pointer" }}>
                           <path
-                            d={slice.path}
-                            fill={slice.color}
+                            d={slice.path} fill={slice.color}
                             opacity={isHovered ? 1 : 0.85}
                             transform={`translate(${tx},${ty})`}
                             style={{ transition: "all 0.25s ease" }}
@@ -1105,7 +879,7 @@ function Dashboard() {
                     })}
                     <circle cx="70" cy="70" r="25" fill="#f4ede3" />
                     <text x="70" y="67" textAnchor="middle" fill="#3B1F0F" fontSize="11" fontWeight="bold">{totalProjects}</text>
-                    <text x="70" y="78" textAnchor="middle" fill="#6F4E37" fontSize="7">projects</text>
+                    <text x="70" y="78" textAnchor="middle" fill="#6F4E37" fontSize="7">approved</text>
                   </svg>
 
                   {hoveredSlice && (() => {
@@ -1133,10 +907,7 @@ function Dashboard() {
                       opacity: hoveredSlice === slice.id ? 1 : 0.7,
                       transition: "opacity 0.25s ease", cursor: "default",
                     }}>
-                      <span style={{
-                        width: "10px", height: "10px", borderRadius: "50%",
-                        backgroundColor: slice.color, display: "inline-block", flexShrink: 0,
-                      }} />
+                      <span style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: slice.color, display: "inline-block", flexShrink: 0 }} />
                       {slice.label}
                     </span>
                   ))}

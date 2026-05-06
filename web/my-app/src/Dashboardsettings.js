@@ -10,7 +10,8 @@ const DEFAULTS = {
   registrationOpen: true,
   projectUploadOpen: true,
   autoApprove: false,
-  maxProjectsPerUserPerDay: 3,   // per day
+  maxProjectsPerUserPerDay: 3,
+  maxMessagesPerDay: 3,        // ← جديد
   contactOpen: true,
   suspensionDuration: 7,
   suspensionUnit: "days",
@@ -85,6 +86,63 @@ function Toggle({ checked, onChange, label, sublabel }) {
           transition: "left 0.25s ease",
           boxShadow: "0 1px 4px rgba(0,0,0,0.2)",
         }} />
+      </div>
+    </div>
+  )
+}
+
+// ─── Stepper (reusable) ───────────────────────────────────────────────────────
+function Stepper({ label, sublabel, value, onChange, min = 1, max = 20, suffix = "" }) {
+  const btnStyle = {
+    width: "38px", height: "38px", borderRadius: "50%",
+    border: "1.5px solid rgba(111,78,55,0.3)",
+    backgroundColor: "rgba(255,255,255,0.6)",
+    fontSize: "20px", cursor: "pointer",
+    color: "#6F4E37", fontWeight: "bold",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    transition: "all 0.2s", flexShrink: 0,
+    touchAction: "manipulation",
+  }
+  return (
+    <div style={{ marginTop: "16px" }}>
+      <label style={{
+        display: "block", fontSize: "13px",
+        fontWeight: "700", color: "#5a3825",
+        marginBottom: "4px", letterSpacing: "0.3px",
+      }}>{label}</label>
+      {sublabel && (
+        <div style={{ fontSize: "11px", color: "#9a7050", marginBottom: "10px" }}>{sublabel}</div>
+      )}
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+        <button
+          onClick={() => onChange(Math.max(min, value - 1))}
+          style={btnStyle}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#e8d5bf"}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"}
+        >−</button>
+
+        <div style={{
+          width: "60px", height: "38px",
+          borderRadius: "10px",
+          border: "1.5px solid rgba(180,130,80,0.35)",
+          backgroundColor: "rgba(255,255,255,0.6)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "16px", fontWeight: "700", color: "#3B2F2F",
+          flexShrink: 0,
+        }}>
+          {value}
+        </div>
+
+        <button
+          onClick={() => onChange(Math.min(max, value + 1))}
+          style={btnStyle}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#e8d5bf"}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"}
+        >+</button>
+
+        {suffix && (
+          <span style={{ fontSize: "12px", color: "#9a7050" }}>{suffix}</span>
+        )}
       </div>
     </div>
   )
@@ -665,66 +723,15 @@ function DashboardSettings({ onBack }) {
                   sublabel="Skip review — projects go live immediately"
                 />
 
-                {/* ── Max projects per user per day ── */}
-                <div style={{ marginTop: "16px" }}>
-                  <label style={{
-                    display: "block", fontSize: "13px",
-                    fontWeight: "700", color: "#5a3825",
-                    marginBottom: "4px", letterSpacing: "0.3px",
-                  }}>Max Projects Per User Per Day</label>
-                  <div style={{ fontSize: "11px", color: "#9a7050", marginBottom: "10px" }}>
-                    Maximum number of projects each user can submit in a single calendar day
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-                    <button
-                      onClick={() => set("maxProjectsPerUserPerDay", Math.max(1, settings.maxProjectsPerUserPerDay - 1))}
-                      style={{
-                        width: "38px", height: "38px", borderRadius: "50%",
-                        border: "1.5px solid rgba(111,78,55,0.3)",
-                        backgroundColor: "rgba(255,255,255,0.6)",
-                        fontSize: "20px", cursor: "pointer",
-                        color: "#6F4E37", fontWeight: "bold",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        transition: "all 0.2s", flexShrink: 0,
-                        touchAction: "manipulation",
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#e8d5bf"}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"}
-                    >−</button>
-
-                    <div style={{
-                      width: "60px", height: "38px",
-                      borderRadius: "10px",
-                      border: "1.5px solid rgba(180,130,80,0.35)",
-                      backgroundColor: "rgba(255,255,255,0.6)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: "16px", fontWeight: "700", color: "#3B2F2F",
-                      flexShrink: 0,
-                    }}>
-                      {settings.maxProjectsPerUserPerDay}
-                    </div>
-
-                    <button
-                      onClick={() => set("maxProjectsPerUserPerDay", Math.min(20, settings.maxProjectsPerUserPerDay + 1))}
-                      style={{
-                        width: "38px", height: "38px", borderRadius: "50%",
-                        border: "1.5px solid rgba(111,78,55,0.3)",
-                        backgroundColor: "rgba(255,255,255,0.6)",
-                        fontSize: "20px", cursor: "pointer",
-                        color: "#6F4E37", fontWeight: "bold",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        transition: "all 0.2s", flexShrink: 0,
-                        touchAction: "manipulation",
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#e8d5bf"}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.6)"}
-                    >+</button>
-
-                    <span style={{ fontSize: "12px", color: "#9a7050" }}>
-                      projects per user per day (max 20)
-                    </span>
-                  </div>
-                </div>
+                <Stepper
+                  label="Max Projects Per User Per Day"
+                  sublabel="Maximum number of projects each user can submit in a single calendar day"
+                  value={settings.maxProjectsPerUserPerDay}
+                  onChange={(v) => set("maxProjectsPerUserPerDay", v)}
+                  min={1}
+                  max={20}
+                  suffix="projects per user per day (max 20)"
+                />
               </SectionCard>
 
               {/* ── Suspension Duration ── */}
@@ -737,6 +744,7 @@ function DashboardSettings({ onBack }) {
                 />
               </SectionCard>
 
+              {/* ── Contact & Messaging ── */}
               <SectionCard icon="✉️" title="Contact & Messaging">
                 <Toggle
                   checked={settings.contactOpen}
@@ -744,8 +752,21 @@ function DashboardSettings({ onBack }) {
                   label="Allow Contact Messages"
                   sublabel="When disabled, users cannot send messages through the contact form"
                 />
+
+                {/* ── Max messages per day stepper ── */}
+                <Stepper
+                  label="Max Messages Per User Per Day"
+                  sublabel="Maximum number of contact messages each email can send in a single day"
+                  value={settings.maxMessagesPerDay}
+                  onChange={(v) => set("maxMessagesPerDay", v)}
+                  min={1}
+                  max={20}
+                  suffix={`messages per email per day (max 20)`}
+                />
+
+                {/* ── Status card ── */}
                 <div style={{
-                  marginTop: "12px",
+                  marginTop: "16px",
                   padding: "10px 14px",
                   borderRadius: "10px",
                   backgroundColor: settings.contactOpen
@@ -764,7 +785,7 @@ function DashboardSettings({ onBack }) {
                     {settings.contactOpen ? "✅" : "🔒"}
                   </span>
                   {settings.contactOpen
-                    ? "Contact form is currently open — users can send up to 3 messages per day."
+                    ? `Contact form is currently open — users can send up to ${settings.maxMessagesPerDay} message${settings.maxMessagesPerDay !== 1 ? "s" : ""} per day.`
                     : "Contact form is currently closed — all messages will be blocked."}
                 </div>
               </SectionCard>

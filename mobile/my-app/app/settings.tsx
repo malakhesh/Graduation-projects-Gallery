@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Switch,
   ScrollView,
   Alert,
   TextInput,
@@ -13,7 +12,6 @@ import {
   Animated,
   KeyboardAvoidingView,
   Platform,
-  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -21,49 +19,100 @@ import { useTheme } from '../context/ThemeContext';
 import { Colors } from '../constants/theme';
 import { auth } from '../backend/firebase';
 import { getUser, updateUser } from '../backend/auth';
-import {
-  updateUserEmail,
-  updateUserPassword,
-  deleteAccount,
-} from '../backend/Dashsettings';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { 
+  EmailAuthProvider, 
+  reauthenticateWithCredential, 
+  updateEmail, 
+  updatePassword, 
+  deleteUser 
+} from 'firebase/auth';
+import { deleteDoc, doc } from 'firebase/firestore';
+import { db } from '../backend/firebase';
 import Toast from 'react-native-toast-message';
 
-// ─── Font Size Context ────────────────────────────────────────────────────────
-const FONT_SIZES = {
-  small: { scale: 0.85, label: 'Small' },
-  medium: { scale: 1, label: 'Medium' },
-  large: { scale: 1.15, label: 'Large' },
-};
+// ─── Modal Component for Edit ─────────────────────────
+function EditModal({ visible, onClose, title, value, onChangeText, onSave, loading, C }) {
+  return (
+    <Modal visible={visible} animationType="slide" transparent>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalContainer}>
+        <View style={[styles.modalContent, { backgroundColor: C.white }]}>
+          <Text style={[styles.modalTitle, { color: C.black }]}>{title}</Text>
+          <TextInput
+            style={[styles.modalInput, { borderColor: C.border, color: C.black }]}
+            value={value}
+            onChangeText={onChangeText}
+            placeholder={`Enter new ${title.toLowerCase()}`}
+            placeholderTextColor={C.link}
+            autoCapitalize="none"
+          />
+          <View style={styles.modalButtons}>
+            <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={onClose}>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.modalButton, styles.saveButton, { backgroundColor: C.button }]} onPress={onSave} disabled={loading}>
+              {loading ? <ActivityIndicator color="white" /> : <Text style={styles.saveButtonText}>Save</Text>}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
 
-const FONT_SIZE_KEY = '@font_size';
+// ─── Re-authentication Modal ─────────────────────────
+function ReauthModal({ visible, onClose, onConfirm, loading, C, title, action }) {
+  const [password, setPassword] = useState('');
 
-// ─── Animated Row ────────────────────────────────────────────────────────────
-function SettingRow({
-  icon,
-  label,
-  sublabel,
-  onPress,
-  right,
-  danger = false,
-  disabled = false,
-  isLast = false,
-  C,
-}: any) {
+  const handleConfirm = () => {
+    if (!password) {
+      Toast.show({ type: 'error', text1: 'Please enter your password' });
+      return;
+    }
+    onConfirm(password);
+    setPassword('');
+  };
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalContainer}>
+        <View style={[styles.modalContent, { backgroundColor: C.white }]}>
+          <Text style={[styles.modalTitle, { color: C.black }]}>{title}</Text>
+          <Text style={[styles.warningText, { color: C.black, marginBottom: 10 }]}>
+            For security, please confirm your password to {action}
+          </Text>
+          <TextInput
+            style={[styles.modalInput, { borderColor: C.border, color: C.black }]}
+            placeholder="Enter your password"
+            placeholderTextColor={C.link}
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+          <View style={styles.modalButtons}>
+            <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => {
+              setPassword('');
+              onClose();
+            }}>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.modalButton, styles.saveButton, { backgroundColor: C.button }]} onPress={handleConfirm} disabled={loading}>
+              {loading ? <ActivityIndicator color="white" /> : <Text style={styles.saveButtonText}>Confirm</Text>}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+// ─── Animated Row ─────────────────────────
+function SettingRow({ icon, label, sublabel, onPress, right, danger = false, isLast = false, C }) {
   const scale = useRef(new Animated.Value(1)).current;
-
-  const handlePressIn = () =>
-    Animated.spring(scale, { toValue: 0.97, useNativeDriver: true }).start();
-  const handlePressOut = () =>
-    Animated.spring(scale, { toValue: 1, useNativeDriver: true }).start();
 
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
       <TouchableOpacity
         onPress={onPress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        disabled={disabled}
         activeOpacity={0.85}
         style={[
           styles.row,
@@ -77,20 +126,16 @@ function SettingRow({
         </View>
         <View style={styles.rowMid}>
           <Text style={[styles.rowLabel, { color: danger ? C.error : C.black }]}>{label}</Text>
-          {sublabel ? (
-            <Text style={[styles.rowSub, { color: C.link }]} numberOfLines={1}>
-              {sublabel}
-            </Text>
-          ) : null}
+          {sublabel && <Text style={[styles.rowSub, { color: C.link }]}>{sublabel}</Text>}
         </View>
-        <View style={styles.rowRight}>{right}</View>
+        <View>{right}</View>
       </TouchableOpacity>
     </Animated.View>
   );
 }
 
-// ─── Section ─────────────────────────────────────────────────────────────────
-function Section({ title, children, C }: any) {
+// ─── Section ─────────────────────────
+function Section({ title, children, C }) {
   return (
     <View style={styles.section}>
       <Text style={[styles.sectionTitle, { color: C.button }]}>{title}</Text>
@@ -101,175 +146,174 @@ function Section({ title, children, C }: any) {
   );
 }
 
-// ─── Modal Shell with Keyboard Avoidance ──────────────────────────────────────
-function ModalShell({ visible, onClose, title, children, C }: any) {
-  return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.modalOverlay}
-      >
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
-          <TouchableOpacity
-            style={[styles.modalBox, { backgroundColor: C.white }]}
-            activeOpacity={1}
-            onPress={(e) => e.stopPropagation()}
-          >
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ paddingBottom: 20 }}
-            >
-              <View style={[styles.modalHandle, { backgroundColor: C.border }]} />
-              <Text style={[styles.modalTitle, { color: C.black }]}>{title}</Text>
-              {children}
-            </ScrollView>
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </KeyboardAvoidingView>
-    </Modal>
-  );
-}
-
-// ─── Main Screen ─────────────────────────────────────────────────────────────
+// ─── Main Screen ─────────────────────────
 export default function SettingsScreen() {
   const { theme, themeMode, setThemeMode } = useTheme();
-  const C = { ...Colors[theme], errorBg: theme === 'dark' ? '#3a1a1a' : '#fff0f0' };
+  const C = { ...Colors[theme], errorBg: '#fff0f0' };
 
-  const [notifications, setNotifications] = useState(true);
-  const [language, setLanguage] = useState('English');
-  const [fontSize, setFontSizeState] = useState('medium');
-  const [dataSaver, setDataSaver] = useState(false);
-
-  // user data
   const [currentName, setCurrentName] = useState('');
   const [currentEmail, setCurrentEmail] = useState('');
-
-  // modals
+  const [loading, setLoading] = useState(false);
+  
+  // Modal states
   const [nameModal, setNameModal] = useState(false);
   const [emailModal, setEmailModal] = useState(false);
   const [passwordModal, setPasswordModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
-
-  // fields
+  const [reauthModal, setReauthModal] = useState(false);
+  
+  // Input values
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
-  const [emailPassword, setEmailPassword] = useState('');
-  const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [deletePassword, setDeletePassword] = useState('');
+  
+  // Pending action
+  const [pendingAction, setPendingAction] = useState(null);
 
-  // loading
-  const [loadingName, setLoadingName] = useState(false);
-  const [loadingEmail, setLoadingEmail] = useState(false);
-  const [loadingPassword, setLoadingPassword] = useState(false);
-  const [loadingDelete, setLoadingDelete] = useState(false);
-
-  // show/hide password toggles
-  const [showOld, setShowOld] = useState(false);
-  const [showNew, setShowNew] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [showDeletePw, setShowDeletePw] = useState(false);
-
-  // Load font size from storage
   useEffect(() => {
-    const loadFontSize = async () => {
-      try {
-        const saved = await AsyncStorage.getItem(FONT_SIZE_KEY);
-        if (saved) setFontSizeState(saved);
-      } catch (error) {}
-    };
-    loadFontSize();
+    loadUserData();
   }, []);
 
-  // Save font size
-  const setFontSize = async (size: string) => {
-    setFontSizeState(size);
-    await AsyncStorage.setItem(FONT_SIZE_KEY, size);
-  };
-
-  // Scale function for fonts
-  const getFontScale = () => FONT_SIZES[fontSize as keyof typeof FONT_SIZES]?.scale || 1;
-
-  useEffect(() => {
+  const loadUserData = async () => {
     const user = auth.currentUser;
     if (user) {
       setCurrentEmail(user.email || '');
-      getUser(user.uid).then((data: any) => {
-        if (data?.name) { setCurrentName(data.name); setNewName(data.name); }
-      });
+      const userData = await getUser(user.uid);
+      if (userData?.name) setCurrentName(userData.name);
     }
-  }, []);
+  };
 
-  // ── handlers ──
-  const handleChangeName = async () => {
-    if (!newName.trim()) return toast('error', 'Name cannot be empty');
-    setLoadingName(true);
+  const toast = (type, msg) =>
+    Toast.show({ type, text1: msg });
+
+  // ─── Re-authenticate User ─────────────────────────
+  const reauthenticateUser = async (password) => {
+    const user = auth.currentUser;
+    if (!user) throw new Error('No user logged in');
+    
+    const credential = EmailAuthProvider.credential(user.email, password);
+    await reauthenticateWithCredential(user, credential);
+    return true;
+  };
+
+  // ─── Update Name ─────────────────────────
+  const handleUpdateName = async () => {
+    if (!newName.trim()) {
+      toast('error', 'Please enter a name');
+      return;
+    }
+    
+    setLoading(true);
     try {
       const user = auth.currentUser;
-      if (!user) throw new Error();
-      const res = await updateUser(user.uid, { name: newName.trim() });
-      if (res === 'update-ok') {
-        setCurrentName(newName.trim());
-        setNameModal(false);
-        toast('success', 'Name updated successfully');
-      } else throw new Error();
-    } catch { toast('error', 'Could not update name'); }
-    finally { setLoadingName(false); }
+      await updateUser(user.uid, { name: newName });
+      setCurrentName(newName);
+      setNameModal(false);
+      setNewName('');
+      toast('success', 'Name updated successfully!');
+    } catch (error) {
+      toast('error', error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleChangeEmail = async () => {
-    if (!newEmail.trim() || !emailPassword) return toast('error', 'Fill all fields');
-    setLoadingEmail(true);
+  // ─── Update Email (with reauthentication) ─────────────────────────
+  const handleUpdateEmail = async (password) => {
+    setLoading(true);
     try {
-      const res = await updateUserEmail(newEmail.trim(), emailPassword);
-      if (res === 'email-updated') {
-        setCurrentEmail(newEmail.trim());
-        setEmailModal(false);
-        setEmailPassword('');
-        toast('success', 'Email updated successfully');
-      } else throw new Error();
-    } catch { toast('error', 'Could not update email. Check your password.'); }
-    finally { setLoadingEmail(false); }
-  };
-
-  const handleChangePassword = async () => {
-    if (!oldPassword || !newPassword || !confirmPassword)
-      return toast('error', 'Fill all fields');
-    if (newPassword !== confirmPassword)
-      return toast('error', 'Passwords do not match');
-    if (newPassword.length < 6)
-      return toast('error', 'Password must be at least 6 characters');
-    setLoadingPassword(true);
-    try {
-      const res = await updateUserPassword(oldPassword, newPassword);
-      if (res === 'password-updated') {
-        setPasswordModal(false);
-        setOldPassword(''); setNewPassword(''); setConfirmPassword('');
-        toast('success', 'Password updated successfully');
-      } else throw new Error();
-    } catch { toast('error', 'Could not update password. Check your current password.'); }
-    finally { setLoadingPassword(false); }
-  };
-
-  const handleDeleteAccount = async () => {
-    if (!deletePassword) return toast('error', 'Enter your password to confirm');
-    setLoadingDelete(true);
-    try {
-      const res = await deleteAccount(deletePassword);
-      if (res === 'account-deleted') {
+      await reauthenticateUser(password);
+      const user = auth.currentUser;
+      await updateEmail(user, newEmail);
+      
+      // تحديث الاسم في Firestore
+      await updateUser(user.uid, { email: newEmail });
+      
+      setCurrentEmail(newEmail);
+      setEmailModal(false);
+      setReauthModal(false);
+      setNewEmail('');
+      toast('success', 'Email updated successfully! Please sign in again.');
+      
+      setTimeout(() => {
+        auth.signOut();
         router.replace('/login');
-      } else throw new Error();
-    } catch { toast('error', 'Could not delete account. Check your password.'); }
-    finally { setLoadingDelete(false); }
+      }, 2000);
+    } catch (error) {
+      toast('error', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ─── Update Password (with reauthentication) ─────────────────────────
+  const handleUpdatePassword = async (password) => {
+    if (!newPassword || newPassword.length < 6) {
+      toast('error', 'Password must be at least 6 characters');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast('error', 'Passwords do not match');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      await reauthenticateUser(password);
+      const user = auth.currentUser;
+      await updatePassword(user, newPassword);
+      
+      setPasswordModal(false);
+      setReauthModal(false);
+      setNewPassword('');
+      setConfirmPassword('');
+      toast('success', 'Password updated successfully! Please sign in again.');
+      
+      setTimeout(() => {
+        auth.signOut();
+        router.replace('/login');
+      }, 2000);
+    } catch (error) {
+      toast('error', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ─── Delete Account (with reauthentication) ─────────────────────────
+  const handleDeleteAccount = async (password) => {
+    setLoading(true);
+    try {
+      const user = auth.currentUser;
+      await reauthenticateUser(password);
+      
+      // حذف بيانات المستخدم من Firestore
+      await deleteDoc(doc(db, "users", user.uid));
+      
+      // حذف المستخدم من Firebase Auth
+      await deleteUser(user);
+      
+      setDeleteModal(false);
+      setReauthModal(false);
+      toast('success', 'Account deleted successfully');
+      
+      setTimeout(() => {
+        router.replace('/login');
+      }, 1500);
+    } catch (error) {
+      toast('error', error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogout = () => {
-    Alert.alert('Log Out', 'Are you sure you want to log out?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert('Log Out', 'Are you sure?', [
+      { text: 'Cancel' },
       {
-        text: 'Log Out', style: 'destructive', onPress: async () => {
+        text: 'Log Out',
+        onPress: async () => {
           await auth.signOut();
           router.replace('/login');
         },
@@ -277,503 +321,329 @@ export default function SettingsScreen() {
     ]);
   };
 
-  const handleClearCache = async () => {
-    Alert.alert(
-      'Clear Cache',
-      'Are you sure you want to clear app cache? You will remain logged in.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const keys = await AsyncStorage.getAllKeys();
-              const keysToRemove = keys.filter(
-                k => k !== '@theme_mode' && k !== FONT_SIZE_KEY && !k.includes('user')
-              );
-              await AsyncStorage.multiRemove(keysToRemove);
-              toast('success', 'Cache cleared successfully');
-            } catch (error) {
-              toast('error', 'Could not clear cache');
-            }
-          },
-        },
-      ]
-    );
+  const openReauthModal = (action, data) => {
+    setPendingAction({ action, data });
+    setReauthModal(true);
   };
 
-  const toast = (type: string, msg: string) =>
-    Toast.show({ type, text1: msg, position: 'top' });
+  const handleReauthConfirm = async (password) => {
+    if (pendingAction?.action === 'email') {
+      await handleUpdateEmail(password);
+    } else if (pendingAction?.action === 'password') {
+      await handleUpdatePassword(password);
+    } else if (pendingAction?.action === 'delete') {
+      await handleDeleteAccount(password);
+    }
+    setPendingAction(null);
+  };
 
-  // ── theme pill ──
-  const ThemePill = ({ mode, label }: { mode: string; label: string }) => (
-    <TouchableOpacity
-      onPress={() => setThemeMode(mode as any)}
-      style={[
-        styles.themePill,
-        { backgroundColor: themeMode === mode ? C.button : C.chip },
-      ]}
-    >
-      <Text style={[styles.themePillText, { color: themeMode === mode ? C.white : C.link }]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-
-  const ChevronRight = () => (
-    <Text style={[styles.chevron, { color: C.link }]}>›</Text>
-  );
+  const Chevron = () => <Text style={{ fontSize: 22, color: C.link }}>›</Text>;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: C.bg }]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-        {/* Header */}
-        <View style={[styles.header, { borderBottomColor: C.border }]}>
-          <Text style={[styles.headerTitle, { color: C.black }]}>Settings</Text>
-          <Text style={[styles.headerSub, { color: C.link }]}>Manage your account & preferences</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
+      <ScrollView>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Settings</Text>
         </View>
 
-        {/* ── Appearance ── */}
-        <Section title="🎨  Appearance" C={C}>
+        {/* Theme */}
+        <Section title="Appearance" C={C}>
           <SettingRow
             icon="🌗"
             label="Theme"
-            sublabel={themeMode === 'light' ? 'Light mode' : themeMode === 'dark' ? 'Dark mode' : 'System default'}
+            sublabel={themeMode}
             C={C}
             isLast
             right={
-              <View style={styles.themeRow}>
-                <ThemePill mode="light" label="☀️" />
-                <ThemePill mode="dark" label="🌙" />
-                <ThemePill mode="system" label="⚙️" />
-              </View>
-            }
-          />
-        </Section>
-
-        {/* ── Font Size ── */}
-        <Section title="🔤  Display" C={C}>
-          <SettingRow
-            icon="🔤"
-            label="Font Size"
-            sublabel={FONT_SIZES[fontSize as keyof typeof FONT_SIZES]?.label || 'Medium'}
-            C={C}
-            isLast
-            right={
-              <View style={styles.themeRow}>
-                <TouchableOpacity
-                  onPress={() => setFontSize('small')}
-                  style={[styles.themePill, { backgroundColor: fontSize === 'small' ? C.button : C.chip }]}
-                >
-                  <Text style={[styles.themePillText, { color: fontSize === 'small' ? C.white : C.link }]}>A⁻</Text>
+              <View style={{ flexDirection: 'row', gap: 6 }}>
+                <TouchableOpacity onPress={() => setThemeMode('light')}>
+                  <Text style={{ fontSize: 20 }}>☀️</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setFontSize('medium')}
-                  style={[styles.themePill, { backgroundColor: fontSize === 'medium' ? C.button : C.chip }]}
-                >
-                  <Text style={[styles.themePillText, { color: fontSize === 'medium' ? C.white : C.link }]}>A</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setFontSize('large')}
-                  style={[styles.themePill, { backgroundColor: fontSize === 'large' ? C.button : C.chip }]}
-                >
-                  <Text style={[styles.themePillText, { color: fontSize === 'large' ? C.white : C.link }]}>A⁺</Text>
+                <TouchableOpacity onPress={() => setThemeMode('dark')}>
+                  <Text style={{ fontSize: 20 }}>🌙</Text>
                 </TouchableOpacity>
               </View>
             }
           />
         </Section>
 
-        {/* ── Project Management ── */}
-        <Section title="📁  Project Management" C={C}>
+        {/* Project Management */}
+        <Section title="Projects" C={C}>
           <SettingRow
-            icon="📂"
-            label="My Projects"
-            sublabel="View, edit, or delete your projects"
-            onPress={() => router.push('/my-projects')}
-            C={C}
-            right={<ChevronRight />}
-          />
-          <SettingRow
-            icon="📊"
-            label="Project Stats"
-            sublabel="Views, ratings, and engagement"
-            onPress={() => toast('info', 'Coming soon')}
+            icon="📁"
+            label="Project Management"
+            sublabel="Hide / Show your projects"
+            onPress={() => router.push('/project-management')}
+            right={<Chevron />}
             C={C}
             isLast
-            right={<ChevronRight />}
           />
         </Section>
 
-        {/* ── Account ── */}
-        <Section title="👤  Account" C={C}>
+        {/* Account */}
+        <Section title="Account" C={C}>
           <SettingRow
-            icon="✏️" label="Change Name"
+            icon="👤"
+            label="Name"
             sublabel={currentName || 'Not set'}
-            onPress={() => { setNewName(currentName); setNameModal(true); }}
-            right={<ChevronRight />} C={C}
+            onPress={() => setNameModal(true)}
+            right={<Chevron />}
+            C={C}
           />
           <SettingRow
-            icon="📧" label="Change Email"
-            sublabel={currentEmail || 'Not set'}
-            onPress={() => { setNewEmail(currentEmail); setEmailModal(true); }}
-            right={<ChevronRight />} C={C}
+            icon="📧"
+            label="Email"
+            sublabel={currentEmail}
+            onPress={() => {
+              setEmailModal(true);
+            }}
+            right={<Chevron />}
+            C={C}
           />
           <SettingRow
-            icon="🔒" label="Change Password"
-            sublabel="Update your password"
+            icon="🔒"
+            label="Change Password"
             onPress={() => setPasswordModal(true)}
-            right={<ChevronRight />} C={C}
+            right={<Chevron />}
+            C={C}
           />
           <SettingRow
-            icon="🗑️" label="Delete Account"
-            sublabel="Permanently remove your account"
+            icon="🗑️"
+            label="Delete Account"
+            danger
             onPress={() => setDeleteModal(true)}
-            danger isLast C={C}
-            right={<ChevronRight />}
+            C={C}
+            isLast
           />
         </Section>
 
-        {/* ── Preferences ── */}
-        <Section title="⚙️  Preferences" C={C}>
+        {/* Logout */}
+        <Section title="Security" C={C}>
           <SettingRow
-            icon="🔔" label="Notifications"
-            sublabel={notifications ? 'Enabled' : 'Disabled'}
-            C={C}
-            right={
-              <Switch
-                value={notifications}
-                onValueChange={setNotifications}
-                trackColor={{ false: C.input, true: C.button }}
-                thumbColor={C.white}
-              />
-            }
-          />
-          <SettingRow
-            icon="📡" label="Data Saver"
-            sublabel={dataSaver ? 'Low quality images' : 'High quality images'}
-            C={C}
-            right={
-              <Switch
-                value={dataSaver}
-                onValueChange={setDataSaver}
-                trackColor={{ false: C.input, true: C.button }}
-                thumbColor={C.white}
-              />
-            }
-          />
-          <SettingRow
-            icon="🌐" label="Language"
-            sublabel="App display language"
-            C={C} isLast
-            right={
-              <TouchableOpacity
-                onPress={() => setLanguage(l => l === 'English' ? 'العربية' : 'English')}
-                style={[styles.badge, { backgroundColor: C.chip }]}
-              >
-                <Text style={[styles.badgeText, { color: C.button }]}>{language}</Text>
-              </TouchableOpacity>
-            }
-          />
-        </Section>
-
-        {/* ── Storage ── */}
-        <Section title="🗑️  Storage" C={C}>
-          <SettingRow
-            icon="🧹"
-            label="Clear Cache"
-            sublabel="Free up storage space"
-            onPress={handleClearCache}
-            C={C}
-            right={<ChevronRight />}
-          />
-        </Section>
-
-        {/* ── Security ── */}
-        <Section title="🔐  Security" C={C}>
-          <SettingRow
-            icon="🚪" label="Log Out"
-            sublabel="Sign out of your account"
+            icon="🚪"
+            label="Log Out"
             onPress={handleLogout}
-            danger isLast C={C}
-            right={<ChevronRight />}
-          />
-        </Section>
-
-        {/* ── About ── */}
-        <Section title="ℹ️  About" C={C}>
-          <SettingRow
-            icon="📜" label="Privacy Policy"
-            sublabel="Read our privacy policy"
-            onPress={() => Linking.openURL('https://your-privacy-policy-url.com')}
+            danger
+            isLast
             C={C}
-            right={<ChevronRight />}
-          />
-          <SettingRow
-            icon="⚖️" label="Terms of Service"
-            sublabel="Read our terms"
-            onPress={() => Linking.openURL('https://your-terms-url.com')}
-            C={C}
-            right={<ChevronRight />}
-          />
-          <SettingRow
-            icon="📱" label="App Version"
-            sublabel="GradHub Mobile"
-            C={C} isLast
-            right={<Text style={[styles.versionText, { color: C.link }]}>v1.0.0</Text>}
           />
         </Section>
       </ScrollView>
 
-      {/* ══ MODALS ══ */}
+      {/* Name Modal */}
+      <EditModal
+        visible={nameModal}
+        onClose={() => setNameModal(false)}
+        title="Name"
+        value={newName}
+        onChangeText={setNewName}
+        onSave={handleUpdateName}
+        loading={loading}
+        C={C}
+      />
 
-      {/* Change Name */}
-      <ModalShell visible={nameModal} onClose={() => setNameModal(false)} title="Change Name" C={C}>
-        <InputField label="Full Name" value={newName} onChangeText={setNewName} placeholder="Enter new name" C={C} />
-        <ModalActions
-          onCancel={() => setNameModal(false)}
-          onSave={handleChangeName}
-          loading={loadingName} C={C}
-        />
-      </ModalShell>
+      {/* Email Modal */}
+      <EditModal
+        visible={emailModal}
+        onClose={() => setEmailModal(false)}
+        title="Email"
+        value={newEmail}
+        onChangeText={setNewEmail}
+        onSave={() => openReauthModal('email')}
+        loading={loading}
+        C={C}
+      />
 
-      {/* Change Email */}
-      <ModalShell visible={emailModal} onClose={() => setEmailModal(false)} title="Change Email" C={C}>
-        <InputField label="New Email" value={newEmail} onChangeText={setNewEmail} placeholder="Enter new email" keyboardType="email-address" C={C} />
-        <InputField label="Current Password" value={emailPassword} onChangeText={setEmailPassword} placeholder="Confirm with password" secure C={C} />
-        <ModalActions
-          onCancel={() => { setEmailModal(false); setEmailPassword(''); }}
-          onSave={handleChangeEmail}
-          loading={loadingEmail} C={C}
-        />
-      </ModalShell>
+      {/* Password Modal */}
+      <Modal visible={passwordModal} animationType="slide" transparent>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalContainer}>
+          <View style={[styles.modalContent, { backgroundColor: C.white }]}>
+            <Text style={[styles.modalTitle, { color: C.black }]}>Change Password</Text>
+            
+            <TextInput
+              style={[styles.modalInput, { borderColor: C.border, color: C.black }]}
+              placeholder="New Password (min 6 chars)"
+              placeholderTextColor={C.link}
+              secureTextEntry
+              value={newPassword}
+              onChangeText={setNewPassword}
+            />
+            
+            <TextInput
+              style={[styles.modalInput, { borderColor: C.border, color: C.black }]}
+              placeholder="Confirm New Password"
+              placeholderTextColor={C.link}
+              secureTextEntry
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+            />
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => {
+                setPasswordModal(false);
+                setNewPassword('');
+                setConfirmPassword('');
+              }}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, styles.saveButton, { backgroundColor: C.button }]} onPress={() => openReauthModal('password')} disabled={loading}>
+                {loading ? <ActivityIndicator color="white" /> : <Text style={styles.saveButtonText}>Update</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
-      {/* Change Password */}
-      <ModalShell visible={passwordModal} onClose={() => setPasswordModal(false)} title="Change Password" C={C}>
-        <PasswordField label="Current Password" value={oldPassword} onChange={setOldPassword} show={showOld} toggleShow={() => setShowOld(v => !v)} C={C} />
-        <PasswordField label="New Password" value={newPassword} onChange={setNewPassword} show={showNew} toggleShow={() => setShowNew(v => !v)} C={C} />
-        <PasswordField label="Confirm New Password" value={confirmPassword} onChange={setConfirmPassword} show={showConfirm} toggleShow={() => setShowConfirm(v => !v)} C={C} />
-        <ModalActions
-          onCancel={() => { setPasswordModal(false); setOldPassword(''); setNewPassword(''); setConfirmPassword(''); }}
-          onSave={handleChangePassword}
-          loading={loadingPassword} C={C}
-        />
-      </ModalShell>
+      {/* Delete Account Modal */}
+      <Modal visible={deleteModal} animationType="slide" transparent>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalContainer}>
+          <View style={[styles.modalContent, { backgroundColor: C.white }]}>
+            <Text style={[styles.modalTitle, { color: 'red' }]}>⚠️ Delete Account</Text>
+            <Text style={[styles.warningText, { color: C.black }]}>
+              This action is irreversible! All your data will be permanently deleted.
+            </Text>
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => setDeleteModal(false)}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, { backgroundColor: 'red' }]} onPress={() => openReauthModal('delete')} disabled={loading}>
+                {loading ? <ActivityIndicator color="white" /> : <Text style={styles.saveButtonText}>Delete Forever</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
-      {/* Delete Account */}
-      <ModalShell visible={deleteModal} onClose={() => setDeleteModal(false)} title="Delete Account" C={C}>
-        <Text style={[styles.deleteWarning, { color: C.error }]}>
-          ⚠️ This action is permanent and cannot be undone. All your data will be deleted.
-        </Text>
-        <PasswordField label="Enter Password to Confirm" value={deletePassword} onChange={setDeletePassword} show={showDeletePw} toggleShow={() => setShowDeletePw(v => !v)} C={C} />
-        <ModalActions
-          onCancel={() => { setDeleteModal(false); setDeletePassword(''); }}
-          onSave={handleDeleteAccount}
-          loading={loadingDelete}
-          saveLabel="Delete"
-          danger C={C}
-        />
-      </ModalShell>
+      {/* Re-authentication Modal */}
+      <ReauthModal
+        visible={reauthModal}
+        onClose={() => {
+          setReauthModal(false);
+          setPendingAction(null);
+        }}
+        onConfirm={handleReauthConfirm}
+        loading={loading}
+        C={C}
+        title="Confirm Password"
+        action={
+          pendingAction?.action === 'email' ? 'change your email' :
+          pendingAction?.action === 'password' ? 'change your password' :
+          'delete your account'
+        }
+      />
 
       <Toast />
     </SafeAreaView>
   );
 }
 
-// ─── Small helpers ────────────────────────────────────────────────────────────
-function InputField({ label, value, onChangeText, placeholder, keyboardType, secure, C }: any) {
-  return (
-    <View style={styles.fieldGroup}>
-      <Text style={[styles.fieldLabel, { color: C.link }]}>{label}</Text>
-      <TextInput
-        style={[styles.fieldInput, { backgroundColor: C.input, color: C.black }]}
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={C.link}
-        keyboardType={keyboardType}
-        secureTextEntry={secure}
-        autoCapitalize="none"
-        autoCorrect={false}
-      />
-    </View>
-  );
-}
-
-function PasswordField({ label, value, onChange, show, toggleShow, C }: any) {
-  return (
-    <View style={styles.fieldGroup}>
-      <Text style={[styles.fieldLabel, { color: C.link }]}>{label}</Text>
-      <View style={[styles.pwRow, { backgroundColor: C.input }]}>
-        <TextInput
-          style={[styles.pwInput, { color: C.black }]}
-          value={value}
-          onChangeText={onChange}
-          placeholder="••••••••"
-          placeholderTextColor={C.link}
-          secureTextEntry={!show}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        <TouchableOpacity onPress={toggleShow} style={styles.eyeBtn}>
-          <Text style={[styles.eyeText, { color: C.button }]}>{show ? 'Hide' : 'Show'}</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-}
-
-function ModalActions({ onCancel, onSave, loading, saveLabel = 'Save', danger = false, C }: any) {
-  return (
-    <View style={styles.modalActions}>
-      <TouchableOpacity
-        style={[styles.modalBtn, { backgroundColor: C.chip }]}
-        onPress={onCancel}
-      >
-        <Text style={[styles.modalBtnText, { color: C.black }]}>Cancel</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.modalBtn, { backgroundColor: danger ? C.error : C.button }]}
-        onPress={onSave}
-        disabled={loading}
-      >
-        {loading
-          ? <ActivityIndicator size="small" color={C.white} />
-          : <Text style={[styles.modalBtnText, { color: C.white }]}>{saveLabel}</Text>
-        }
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  safe: { flex: 1 },
   header: {
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
+    padding: 20,
   },
-  headerTitle: { fontSize: 30, fontWeight: '800', letterSpacing: -0.5 },
-  headerSub: { fontSize: 14, marginTop: 2 },
-
-  section: { marginTop: 24, paddingHorizontal: 16 },
+  headerTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+  },
+  section: {
+    marginTop: 20,
+    paddingHorizontal: 16,
+  },
   sectionTitle: {
     fontSize: 12,
+    marginBottom: 6,
     fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginBottom: 8,
-    marginLeft: 4,
   },
   card: {
-    borderRadius: 18,
+    borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
   },
-
   row: {
     flexDirection: 'row',
+    padding: 14,
     alignItems: 'center',
-    paddingVertical: 13,
-    paddingHorizontal: 14,
     borderBottomWidth: 1,
-    gap: 12,
   },
   iconBox: {
-    width: 38,
-    height: 38,
+    width: 36,
+    height: 36,
     borderRadius: 10,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
   },
-  iconText: { fontSize: 18 },
-  rowMid: { flex: 1 },
-  rowLabel: { fontSize: 15, fontWeight: '600' },
-  rowSub: { fontSize: 13, marginTop: 1 },
-  rowRight: { alignItems: 'flex-end' },
-  chevron: { fontSize: 22, fontWeight: '300' },
-
-  themeRow: { flexDirection: 'row', gap: 6 },
-  themePill: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
+  iconText: {
+    fontSize: 16,
   },
-  themePillText: { fontSize: 14 },
-
-  badge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20 },
-  badgeText: { fontSize: 13, fontWeight: '600' },
-  versionText: { fontSize: 14, fontWeight: '600' },
-
-  // modal
-  modalOverlay: {
+  rowMid: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'flex-end',
   },
-  modalBox: {
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    padding: 24,
-    paddingBottom: 36,
-    maxHeight: '85%',
+  rowLabel: {
+    fontSize: 15,
+    fontWeight: '600',
   },
-  modalHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginBottom: 18,
+  rowSub: {
+    fontSize: 12,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    margin: 20,
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   modalTitle: {
     fontSize: 22,
-    fontWeight: '800',
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 15,
+    fontSize: 16,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 10,
+    marginHorizontal: 5,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#e0e0e0',
+  },
+  cancelButtonText: {
+    color: '#333',
+    fontWeight: '600',
+  },
+  saveButton: {
+    backgroundColor: '#007AFF',
+  },
+  saveButtonText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  warningText: {
     textAlign: 'center',
     marginBottom: 20,
-    letterSpacing: -0.3,
-  },
-
-  fieldGroup: { marginBottom: 14 },
-  fieldLabel: { fontSize: 13, fontWeight: '600', marginBottom: 6 },
-  fieldInput: {
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    fontSize: 15,
-  },
-  pwRow: {
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingRight: 14,
-  },
-  pwInput: { flex: 1, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15 },
-  eyeBtn: { paddingLeft: 8 },
-  eyeText: { fontSize: 13, fontWeight: '700' },
-
-  modalActions: { flexDirection: 'row', gap: 10, marginTop: 6 },
-  modalBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalBtnText: { fontSize: 15, fontWeight: '700' },
-
-  deleteWarning: {
     fontSize: 14,
-    lineHeight: 21,
-    textAlign: 'center',
-    marginBottom: 18,
-    fontWeight: '500',
   },
 });
