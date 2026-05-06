@@ -17,7 +17,7 @@ import {
 const CLOUDINARY_CLOUD = "df4nquqin";
 const CLOUDINARY_PRESET = "snqtqhha";
 
-function Navbar({ isAdmin }) {
+function Navbar({ isAdmin, photoURL }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -71,6 +71,8 @@ function Navbar({ isAdmin }) {
 
   const handleLogout = async () => { await logOut(); navigate('/'); };
   const closeSidebar = () => setSidebarOpen(false);
+
+  const avatarUrl = photoURL || user?.photoURL || null;
 
   return (
     <>
@@ -131,8 +133,8 @@ function Navbar({ isAdmin }) {
           </div>
           <button className="pf-upload-btn" onClick={() => setShowUpload(true)}>Upload Project</button>
           <div className="pf-avatar-pill" ref={dropdownRef} onClick={() => setDropdownOpen(!dropdownOpen)}>
-            {user?.photoURL
-              ? <img src={user.photoURL} alt="avatar" className="pf-nav-avatar" />
+            {avatarUrl
+              ? <img src={avatarUrl} alt="avatar" className="pf-nav-avatar" />
               : <div className="pf-nav-avatar-placeholder"><FaUser /></div>
             }
             <FaChevronDown className={`pf-dropdown-arrow ${dropdownOpen ? 'pf-arrow-up' : ''}`} />
@@ -298,7 +300,7 @@ function Profile() {
 
   return (
     <div className="pf-page">
-      <Navbar isAdmin={isAdmin} />
+      <Navbar isAdmin={isAdmin} photoURL={avatarSrc} />
       <main className="pf-main-content">
         {loading ? (
           <div className="pf-spinner-wrapper"><div className="pf-spinner" /></div>

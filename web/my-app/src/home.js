@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import UploadModal from './UploadModal';
 import WelcomeModal from './Welcomenotify.js';
 import "./home.css";
-import { logOut, checkRole, addBookmark, removeBookmark, getBookmarks } from './auth.js';
+import { logOut, checkRole, addBookmark, removeBookmark, getBookmarks, getUser } from './auth.js';
 import { auth } from './firebase.js';
 import { addReport } from './reports.js'; 
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -16,16 +16,11 @@ import { getUploadOptions } from './configs.js';
 import {
   FaGraduationCap, FaUser, FaBell, FaSearch, FaFilter, FaChevronDown,
   FaBookOpen, FaBookmark, FaFolderOpen, FaBriefcase, FaShoppingCart, FaFilm, FaNewspaper,
-  FaBars, FaTimes, FaChevronLeft, FaChevronRight
+  FaBars, FaTimes, FaChevronLeft, FaChevronRight, FaExclamationTriangle
 } from "react-icons/fa";
 
-// ✅ Fixed: correct port (your backend runs on 5000)
 const API_BASE = "http://localhost:5000";
 
-// ── REMOVED hardcoded exploreTags array ──
-// Tags are now fetched dynamically from Firestore via uploadOptions
-
-// ── API helpers ──────────────────────────────────────────────
 async function trackView(uid, projectId) {
   try {
     await fetch(`${API_BASE}/api/recommendations/view/${uid}/${projectId}`, { method: "POST" });
@@ -48,7 +43,6 @@ async function fetchRecommendations(uid) {
     return null;
   }
 }
-// ────────────────────────────────────────────────────────────
 
 function NotifItem({ notif, uid, onProjectOpen, onWelcomeOpen }) {
   const isUnread = !notif.read;
@@ -119,6 +113,17 @@ export function Navbar({ isAdmin }) {
   const notifRef = useRef(null);
   const mobileNotifRef = useRef(null);
   const [user] = useAuthState(auth);
+
+  const [profilePhoto, setProfilePhoto] = useState(null);
+
+  useEffect(() => {
+    if (!user) return;
+    getUser(user.uid).then((data) => {
+      if (data && data !== "no-data" && data !== "get-fail") {
+        setProfilePhoto(data.photoURL || null);
+      }
+    });
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -255,8 +260,8 @@ export function Navbar({ isAdmin }) {
           </div>
           <button className="hg-upload-btn" onClick={() => setShowUpload(true)}>Upload Project</button>
           <div className="hg-avatar-wrapper" ref={dropdownRef} onClick={() => setDropdownOpen(!dropdownOpen)}>
-            {user?.photoURL
-              ? <img src={user.photoURL} alt="User avatar" className="hg-user-avatar" />
+            {(profilePhoto || user?.photoURL)
+              ? <img src={profilePhoto || user?.photoURL} alt="User avatar" className="hg-user-avatar" />
               : <div className="hg-user-avatar-placeholder"><FaUser className="hg-user-avatar-icon" /></div>
             }
             <FaChevronDown className={`hg-dropdown-arrow ${dropdownOpen ? "hg-arrow-up" : ""}`} />
@@ -360,7 +365,6 @@ function SearchBar({ search, setSearch, filtersOpen, setFiltersOpen, hasActiveFi
   );
 }
 
-// ✅ Helper: map backend type to a user-facing section label
 function getRecommendationLabel(type) {
   switch (type) {
     case "qwen_ai":       return "Recommended For You";
@@ -371,10 +375,34 @@ function getRecommendationLabel(type) {
   }
 }
 
+// ── Fallback notice banner ────────────────────────────────────
+function ServerFallbackBanner() {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 9,
+        padding: "8px 14px",
+        marginBottom: 16,
+        background: "#fef9ec",
+        border: "1px solid #f0c060",
+        borderRadius: 8,
+      }}
+    >
+      <FaExclamationTriangle style={{ fontSize: 13, color: "#92600a", flexShrink: 0 }} />
+      <span style={{ fontSize: 12, color: "#92600a", lineHeight: 1.5 }}>
+        AI recommendation server is currently unavailable — showing top-rated projects instead.
+      </span>
+    </div>
+  );
+}
+
 function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProject, allProjects }) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [label, setLabel] = useState("Recommended Projects");
+  const [isFallback, setIsFallback] = useState(false);
   const [index, setIndex] = useState(0);
   const [visible, setVisible] = useState(3);
   const sectionRef = useRef(null);
@@ -416,9 +444,11 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
       if (data && data.projects && data.projects.length > 0) {
         setProjects(data.projects);
         setLabel(getRecommendationLabel(data.type));
+        setIsFallback(false);
       } else {
         setProjects(getClientTopRated());
         setLabel("Top Rated Projects");
+        setIsFallback(true);
       }
       setLoading(false);
     });
@@ -492,6 +522,8 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
         )}
       </div>
 
+      {isFallback && !loading && <ServerFallbackBanner />}
+
       {loading ? (
         <div className="hg-spinner-wrapper"><div className="hg-spinner" /></div>
       ) : projects.length === 0 ? (
@@ -558,7 +590,6 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
   );
 }
 
-// ── Icon mapping for known tag names (fallback to FaBookOpen) ──────────────
 const TAG_ICON_MAP = {
   business:      <FaBriefcase />,
   education:     <FaBookOpen />,
@@ -571,7 +602,6 @@ function getTagIcon(label) {
   return TAG_ICON_MAP[label.toLowerCase()] || <FaBookOpen />;
 }
 
-// ── ExploreTags now receives tags as a prop from Home ─────────────────────
 function ExploreTags({ tags, selectedTag, onSelectTag }) {
   if (!tags || tags.length === 0) return null;
 
@@ -657,7 +687,6 @@ function Home() {
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [selectedProject, setSelectedProject] = useState(null);
 
-  // ── Upload options from Firestore (tags, categories, techStacks) ──
   const [uploadOptions, setUploadOptions] = useState({ tags: [], categories: [], techStacks: [] });
   const [optionsLoaded, setOptionsLoaded] = useState(false);
 
@@ -682,7 +711,6 @@ function Home() {
     });
   }, []);
 
-  // ── Fetch tags, categories, techStacks from Firestore ──
   useEffect(() => {
     getUploadOptions().then((data) => {
       if (data && data !== "get-options-fail") {
@@ -696,8 +724,6 @@ function Home() {
     });
   }, []);
 
-  // ── Derive exploreTags dynamically from Firestore tags ──
-  // Falls back to a known icon if the tag name matches, otherwise uses FaBookOpen
   const exploreTags = uploadOptions.tags;
 
   const toggleBookmark = async (id) => {
@@ -779,7 +805,6 @@ function Home() {
               onOpenProject={handleOpenProject}
               allProjects={allProjects}
             />
-            {/* Only render ExploreTags once Firestore options have loaded */}
             {optionsLoaded && (
               <ExploreTags
                 tags={exploreTags}

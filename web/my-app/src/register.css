@@ -162,3 +162,13 @@
   color: var(--accent-darker);
   text-decoration: underline;
 }
+
+.signup-success {
+  color: var(--success-text);
+  background-color: var(--success-bg);
+  border: 1px solid var(--success-text);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 14px;
+  margin-top: 8px;
+}
