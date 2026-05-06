@@ -45,7 +45,12 @@ export default function UserProfileScreen() {
 
       const data = await getUser(userId);
 
-      if (data && data !== "no-data" && data !== "get-fail" && typeof data !== "string") {
+      if (
+        data &&
+        data !== "no-data" &&
+        data !== "get-fail" &&
+        typeof data !== "string"
+      ) {
         setUserData(data);
       } else {
         setUserData(null);
@@ -160,6 +165,13 @@ export default function UserProfileScreen() {
       borderWidth: 2,
       borderColor: C.button,
       marginBottom: 12,
+      overflow: "hidden",
+    },
+
+    avatarImage: {
+      width: 110,
+      height: 110,
+      borderRadius: 55,
     },
 
     avatarText: {
@@ -276,6 +288,7 @@ export default function UserProfileScreen() {
       padding: 10,
       marginBottom: 10,
       backgroundColor: C.white,
+      alignItems: "center",
     },
 
     projectImage: {
@@ -327,7 +340,11 @@ export default function UserProfileScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingBox}>
           <Text style={styles.placeholderText}>User profile not found.</Text>
-          <TouchableOpacity style={[styles.backBtn, { marginTop: 14 }]} onPress={() => router.back()}>
+
+          <TouchableOpacity
+            style={[styles.backBtn, { marginTop: 14 }]}
+            onPress={() => router.back()}
+          >
             <Ionicons name="arrow-back" size={22} color={C.black} />
           </TouchableOpacity>
         </View>
@@ -343,6 +360,17 @@ export default function UserProfileScreen() {
   const linkedin = userData?.socialLinks?.linkedin || "";
   const portfolio = userData?.socialLinks?.portfolio || "";
 
+  const avatarUrl =
+    userData?.photoURL ||
+    userData?.profileImage ||
+    userData?.avatar ||
+    userData?.image ||
+    null;
+
+  const approvedProjectsCount = projects.filter(
+    (p) => String(p.status || "").toLowerCase() === "approved"
+  ).length;
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -355,10 +383,19 @@ export default function UserProfileScreen() {
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+      >
         <View style={styles.profileCard}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{name.charAt(0).toUpperCase()}</Text>
+            {avatarUrl ? (
+              <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
+            ) : (
+              <Text style={styles.avatarText}>
+                {name.charAt(0).toUpperCase()}
+              </Text>
+            )}
           </View>
 
           <Text style={styles.name}>{name}</Text>
@@ -373,9 +410,7 @@ export default function UserProfileScreen() {
             </View>
 
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>
-                {projects.filter((p) => String(p.status || "").toLowerCase() === "approved").length}
-              </Text>
+              <Text style={styles.statNumber}>{approvedProjectsCount}</Text>
               <Text style={styles.statLabel}>Approved</Text>
             </View>
           </View>
@@ -383,6 +418,7 @@ export default function UserProfileScreen() {
 
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Bio</Text>
+
           {bio ? (
             <Text style={styles.bioText}>{bio}</Text>
           ) : (
@@ -396,21 +432,30 @@ export default function UserProfileScreen() {
           {github || linkedin || portfolio ? (
             <View style={styles.socialLinks}>
               {github ? (
-                <TouchableOpacity style={styles.socialBtn} onPress={() => openLink(github)}>
+                <TouchableOpacity
+                  style={styles.socialBtn}
+                  onPress={() => openLink(github)}
+                >
                   <Ionicons name="logo-github" size={17} color={C.button} />
                   <Text style={styles.socialBtnText}>GitHub</Text>
                 </TouchableOpacity>
               ) : null}
 
               {linkedin ? (
-                <TouchableOpacity style={styles.socialBtn} onPress={() => openLink(linkedin)}>
+                <TouchableOpacity
+                  style={styles.socialBtn}
+                  onPress={() => openLink(linkedin)}
+                >
                   <Ionicons name="logo-linkedin" size={17} color={C.button} />
                   <Text style={styles.socialBtnText}>LinkedIn</Text>
                 </TouchableOpacity>
               ) : null}
 
               {portfolio ? (
-                <TouchableOpacity style={styles.socialBtn} onPress={() => openLink(portfolio)}>
+                <TouchableOpacity
+                  style={styles.socialBtn}
+                  onPress={() => openLink(portfolio)}
+                >
                   <Ionicons name="globe-outline" size={17} color={C.button} />
                   <Text style={styles.socialBtnText}>Portfolio</Text>
                 </TouchableOpacity>

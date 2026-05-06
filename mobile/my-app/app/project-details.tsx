@@ -17,23 +17,85 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Clipboard from "expo-clipboard";
 import { Feather, Ionicons } from "@expo/vector-icons";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+} from "firebase/firestore";
 
-import { auth } from "../backend/firebase";
+import { auth, db } from "../backend/firebase";
 import {
   getUser,
   addBookmark,
   removeBookmark,
   getBookmarks,
 } from "../backend/auth";
-import {
-  getProj,
-  addComment,
-  addRate,
-  removeComment,
-} from "../backend/projects";
+import { getProj } from "../backend/projects";
 import { addReport } from "../backend/reports";
 import { useTheme } from "../context/ThemeContext";
 import { Colors } from "../constants/theme";
+
+async function addComment(projectId: string, comment: any) {
+  try {
+    const projectRef = doc(db, "projects", projectId);
+
+    await updateDoc(projectRef, {
+      comments: arrayUnion(comment),
+    });
+
+    return "comment-ok";
+  } catch (error) {
+    console.log("addComment error:", error);
+    return "comment-fail";
+  }
+}
+
+async function removeComment(projectId: string, comment: any) {
+  try {
+    const projectRef = doc(db, "projects", projectId);
+
+    await updateDoc(projectRef, {
+      comments: arrayRemove(comment),
+    });
+
+    return "comment-removed";
+  } catch (error) {
+    console.log("removeComment error:", error);
+    return "comment-remove-fail";
+  }
+}
+
+async function addRate(projectId: string, rating: number, userId: string) {
+  try {
+    const projectRef = doc(db, "projects", projectId);
+    const projectSnap = await getDoc(projectRef);
+
+    if (!projectSnap.exists()) {
+      return "no-proj";
+    }
+
+    const data: any = projectSnap.data();
+    const userRatings = data.userRatings || {};
+
+    userRatings[userId] = rating;
+
+    const ratings = Object.values(userRatings).map((value: any) =>
+      Number(value || 0)
+    );
+
+    await updateDoc(projectRef, {
+      userRatings,
+      ratings,
+    });
+
+    return "rate-ok";
+  } catch (error) {
+    console.log("addRate error:", error);
+    return "rate-fail";
+  }
+}
 
 export default function ProjectDetails() {
   const { theme } = useTheme();
@@ -54,9 +116,9 @@ export default function ProjectDetails() {
   const [ratingLoading, setRatingLoading] = useState(false);
   const [commentLoading, setCommentLoading] = useState(false);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
-  const [deleteCommentLoading, setDeleteCommentLoading] = useState<number | null>(
-    null
-  );
+  const [deleteCommentLoading, setDeleteCommentLoading] = useState<
+    number | null
+  >(null);
 
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -649,6 +711,13 @@ export default function ProjectDetails() {
       alignItems: "center",
       justifyContent: "center",
       marginRight: 12,
+      overflow: "hidden",
+    },
+
+    avatarImage: {
+      width: 42,
+      height: 42,
+      borderRadius: 21,
     },
 
     avatarText: {
@@ -1022,6 +1091,13 @@ export default function ProjectDetails() {
   const ownerEmail = owner?.email || "";
   const ownerYear = owner?.year || project.year || "";
 
+  const ownerPhotoURL =
+    owner?.photoURL ||
+    owner?.profileImage ||
+    owner?.avatar ||
+    owner?.image ||
+    null;
+
   const stack = Array.isArray(project.stack) ? project.stack : [];
   const comments = Array.isArray(project.comments) ? project.comments : [];
   const ratings = Array.isArray(project.ratings) ? project.ratings : [];
@@ -1116,9 +1192,17 @@ export default function ProjectDetails() {
         <View style={styles.card}>
           <View style={styles.ownerBox}>
             <View style={styles.avatarCircle}>
-              <Text style={styles.avatarText}>
-                {ownerName.charAt(0).toUpperCase()}
-              </Text>
+              {ownerPhotoURL ? (
+                <Image
+                  source={{ uri: ownerPhotoURL }}
+                  style={styles.avatarImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <Text style={styles.avatarText}>
+                  {ownerName.charAt(0).toUpperCase()}
+                </Text>
+              )}
             </View>
 
             <View style={styles.ownerInfo}>

@@ -14,7 +14,7 @@ import {
   View,
 } from "react-native";
 
-import { logUser, checkStatus, logOut } from "../backend/auth";
+import { logUser, checkStatus } from "../backend/auth";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -58,18 +58,6 @@ export default function LoginScreen() {
     return isValid;
   };
 
-  const formatSuspensionDate = (value: any) => {
-    try {
-      if (!value) return "";
-
-      const date = value.toDate ? value.toDate() : new Date(value);
-
-      return date.toLocaleString();
-    } catch {
-      return "";
-    }
-  };
-
   const handleLogin = async () => {
     if (!validateForm()) return;
 
@@ -78,6 +66,8 @@ export default function LoginScreen() {
       setGeneralError("");
 
       const result: any = await logUser(email.trim().toLowerCase(), password);
+
+      console.log("LOGIN RESULT:", result);
 
       if (result === "no-user") {
         setEmailError("This email is not registered.");
@@ -101,40 +91,33 @@ export default function LoginScreen() {
 
       const statusData: any = await checkStatus(result.uid);
 
+      console.log("LOGIN USER UID:", result.uid);
+      console.log("ACCOUNT STATUS DATA:", statusData);
+
       if (statusData === "status-fail") {
-        await logOut();
         setGeneralError("Could not check your account status. Please try again.");
         return;
       }
 
       if (statusData === "no-user") {
-        await logOut();
         setGeneralError("User account data was not found.");
         return;
       }
 
-      if (statusData?.status === "suspended") {
-        await logOut();
-
-        const until = formatSuspensionDate(statusData.suspendedUntil);
-
-        const reasons =
-          Array.isArray(statusData.suspendReasons) &&
-          statusData.suspendReasons.length > 0
-            ? statusData.suspendReasons.join("\n")
-            : "Repeated violations.";
-
-        setGeneralError(
-          until
-            ? `Your account is suspended until ${until}.\nReason: ${reasons}`
-            : `Your account is suspended.\nReason: ${reasons}`
-        );
-
+      if (
+        statusData &&
+        typeof statusData === "object" &&
+        statusData.status === "suspended"
+      ) {
+        console.log("USER IS SUSPENDED, GOING TO SUSPENDED PAGE");
+        router.replace("/suspended");
         return;
       }
 
+      console.log("USER IS ACTIVE, GOING TO HOME");
       router.replace("/home");
     } catch (error) {
+      console.log("LOGIN ERROR:", error);
       setGeneralError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);

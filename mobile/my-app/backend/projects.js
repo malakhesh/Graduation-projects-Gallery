@@ -3,6 +3,7 @@ import {
 } from "firebase/firestore"
 import { db } from "./firebase.js"
 
+// 🔥 ADD PROJECT
 async function addProj(title, desc, userId, year, stack, category, gitLink, imgUrl, tags) {
   try {
     const r = await addDoc(collection(db, "projects"), {
@@ -18,7 +19,8 @@ async function addProj(title, desc, userId, year, stack, category, gitLink, imgU
       createdAt: serverTimestamp(),
       comments: [],
       ratings: [],
-      status: "pending"
+      status: "pending",
+      hidden: false
     })
     return r.id
   } catch {
@@ -26,6 +28,28 @@ async function addProj(title, desc, userId, year, stack, category, gitLink, imgU
   }
 }
 
+// 🔥 TOGGLE HIDE (محدثة)
+async function toggleHideProject(id, value) {
+  try {
+    const projectRef = doc(db, "projects", id)
+    await updateDoc(projectRef, {
+      hidden: value,
+      updatedAt: serverTimestamp()
+    })
+    
+    // إرجاع المشروع المحدث
+    const updatedDoc = await getDoc(projectRef)
+    if (updatedDoc.exists()) {
+      return { id: updatedDoc.id, ...updatedDoc.data() }
+    }
+    return "hide-ok"
+  } catch (error) {
+    console.error("Error in toggleHideProject:", error)
+    return "hide-fail"
+  }
+}
+
+// 🔥 GET SINGLE PROJECT
 async function getProj(id) {
   try {
     const d = await getDoc(doc(db, "projects", id))
@@ -36,43 +60,7 @@ async function getProj(id) {
   }
 }
 
-async function getApproved() {
-  try {
-    const q = query(collection(db, "projects"), where("status", "==", "approved"))
-    const s = await getDocs(q)
-    let arr = []
-    s.forEach((d) => arr.push({ id: d.id, ...d.data() }))
-    return arr
-  } catch {
-    return "approved-fail"
-  }
-}
-
-async function getPending() {
-  try {
-    const q = query(collection(db, "projects"), where("status", "==", "pending"))
-    const s = await getDocs(q)
-    let arr = []
-    s.forEach((d) => arr.push({ id: d.id, ...d.data() }))
-    return arr
-  } catch {
-    return "pending-fail"
-  }
-}
-
-async function setStatus(id, status, role) {
-  try {
-    if (role !== "admin") return "unauth"
-    await updateDoc(doc(db, "projects", id), {
-      status,
-      statusAt: serverTimestamp()
-    })
-    return "status-ok"
-  } catch {
-    return "status-fail"
-  }
-}
-
+// 🔥 GET USER PROJECTS
 async function getUserProjs(uid) {
   try {
     const q = query(collection(db, "projects"), where("userId", "==", uid))
@@ -85,113 +73,7 @@ async function getUserProjs(uid) {
   }
 }
 
-async function getByTag(tag) {
-  try {
-    const q = query(collection(db, "projects"), where("tags", "array-contains", tag))
-    const s = await getDocs(q)
-    let arr = []
-    s.forEach((d) => arr.push({ id: d.id, ...d.data() }))
-    return arr
-  } catch {
-    return "tag-fail"
-  }
-}
-
-async function getByCategory(category) {
-  try {
-    const q = query(
-      collection(db, "projects"),
-      where("status", "==", "approved"),
-      where("category", "==", category)
-    )
-    const s = await getDocs(q)
-    let arr = []
-    s.forEach((d) => arr.push({ id: d.id, ...d.data() }))
-    return arr
-  } catch {
-    return "category-fail"
-  }
-}
-
-async function getByStack(tech) {
-  try {
-    const q = query(
-      collection(db, "projects"),
-      where("status", "==", "approved"),
-      where("stack", "array-contains", tech)
-    )
-    const s = await getDocs(q)
-    let arr = []
-    s.forEach((d) => arr.push({ id: d.id, ...d.data() }))
-    return arr
-  } catch {
-    return "stack-fail"
-  }
-}
-
-async function addComment(id, c) {
-  try {
-    await updateDoc(doc(db, "projects", id), { comments: arrayUnion(c) })
-    return "comment-ok"
-  } catch {
-    return "comment-fail"
-  }
-}
-
-async function addRate(id, r, uid) {
-  try {
-    const projectRef = doc(db, "projects", id);
-    const projectSnap = await getDoc(projectRef);
-    if (!projectSnap.exists()) return "rate-fail";
-
-    const data = projectSnap.data();
-    const userRatings = data.userRatings || {};
-    const oldRating = userRatings[uid] || null;
-    let ratings = Array.isArray(data.ratings) ? [...data.ratings] : [];
-
-    if (oldRating !== null) {
-      const idx = ratings.indexOf(oldRating);
-      if (idx > -1) ratings.splice(idx, 1);
-    }
-    ratings.push(r);
-
-    await updateDoc(projectRef, {
-      ratings,
-      [`userRatings.${uid}`]: r,
-    });
-    return "rate-ok";
-  } catch {
-    return "rate-fail";
-  }
-}
-
-async function removeRate(id, uid, oldRating) {
-  try {
-    const projectRef = doc(db, "projects", id);
-    const projectSnap = await getDoc(projectRef);
-    if (!projectSnap.exists()) return "rate-fail";
-    const data = projectSnap.data();
-    let ratings = Array.isArray(data.ratings) ? [...data.ratings] : [];
-    const idx = ratings.indexOf(oldRating);
-    if (idx > -1) ratings.splice(idx, 1);
-    const userRatings = { ...(data.userRatings || {}) };
-    delete userRatings[uid];
-    await updateDoc(projectRef, { ratings, userRatings });
-    return "rate-removed";
-  } catch {
-    return "rate-fail";
-  }
-}
-
-async function removeComment(id, comment) {
-  try {
-    await updateDoc(doc(db, "projects", id), { comments: arrayRemove(comment) })
-    return "comment-removed"
-  } catch {
-    return "comment-remove-fail"
-  }
-}
-
+// 🔥 DELETE PROJECT
 async function delProj(id) {
   try {
     await deleteDoc(doc(db, "projects", id))
@@ -201,6 +83,7 @@ async function delProj(id) {
   }
 }
 
+// 🔥 UPDATE PROJECT
 async function updProj(id, data) {
   try {
     await updateDoc(doc(db, "projects", id), data)
@@ -210,64 +93,11 @@ async function updProj(id, data) {
   }
 }
 
-async function getRejected() {
-  try {
-    const q = query(collection(db, "projects"), where("status", "==", "rejected"))
-    const s = await getDocs(q)
-    let arr = []
-    s.forEach((d) => arr.push({ id: d.id, ...d.data() }))
-    return arr
-  } catch {
-    return "rejected-fail"
-  }
-}
-
-async function notifyBookmark(projectId, bookmarkerUid) {
-  try {
-    const project = await getProj(projectId)
-    if (!project || project === "no-proj" || project === "get-fail") return
-    const ownerUid = project.userId
-    if (!ownerUid || ownerUid === bookmarkerUid) return
-    const bookmarkerData = await getUser(bookmarkerUid)
-    const bookmarkerName = bookmarkerData?.name || "Someone"
-    const title = project.title || "your project"
-    await sendNotif(ownerUid, {
-      type: "bookmark",
-      message: `${bookmarkerName} bookmarked "${title}"`,
-      projectId: null,
-      clickable: false,
-    })
-  } catch {}
-}
-
-async function searchProjects(keyword) {
-  try {
-    if (!keyword) return "no-keyword"
-
-    const projectsRef = collection(db, "projects")
-    const snapshot = await getDocs(projectsRef)
-
-    let arr = []
-    snapshot.forEach((d) => {
-      const data = d.data()
-      const inTitle = data.title?.toLowerCase().includes(keyword.toLowerCase())
-      const inDesc = data.desc?.toLowerCase().includes(keyword.toLowerCase())
-      const inTags = Array.isArray(data.tags) && data.tags.some(t => t.toLowerCase().includes(keyword.toLowerCase()))
-
-      if (inTitle || inDesc || inTags) {
-        arr.push({ id: d.id, ...data })
-      }
-    })
-
-    return arr
-  } catch {
-    return "search-fail"
-  }
-}
-
 export { 
-  addProj, getProj, getApproved, getPending, setStatus, 
-  getUserProjs, getByTag, getByCategory, getByStack,
-  addComment, addRate, removeRate, delProj, updProj, removeComment,
-  getRejected, notifyBookmark, searchProjects
+  addProj,
+  getProj,
+  getUserProjs,
+  delProj,
+  updProj,
+  toggleHideProject
 }

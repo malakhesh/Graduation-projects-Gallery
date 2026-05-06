@@ -15,7 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { auth } from "../backend/firebase";
-import { getUser, logOut } from "../backend/auth";
+import { getUser, logOut, checkStatus } from "../backend/auth";
 import { useTheme } from "../context/ThemeContext";
 import { Colors } from "../constants/theme";
 import {
@@ -82,10 +82,28 @@ export default function HomeScreen() {
       }
 
       try {
+        const accountStatus: any = await checkStatus(user.uid);
+
+        if (
+          accountStatus &&
+          typeof accountStatus === "object" &&
+          accountStatus.status === "suspended"
+        ) {
+          setLoading(false);
+          router.replace("/suspended");
+          return;
+        }
+
         const data = await getUser(user.uid);
-        setUserData(data);
+
+        if (data !== "no-data" && data !== "get-fail") {
+          setUserData(data);
+        } else {
+          setUserData(null);
+        }
       } catch (error) {
         console.log("Get user error:", error);
+        setUserData(null);
       } finally {
         setLoading(false);
       }
@@ -93,6 +111,17 @@ export default function HomeScreen() {
 
     return unsubscribe;
   }, []);
+
+  const avatarUrl =
+    userData?.photoURL ||
+    userData?.profileImage ||
+    userData?.avatar ||
+    auth.currentUser?.photoURL ||
+    null;
+
+  const avatarSource = avatarUrl
+    ? { uri: avatarUrl }
+    : require("../assets/avatar.jpg");
 
   const normalize = (value: any) =>
     String(value ?? "")
@@ -243,14 +272,11 @@ export default function HomeScreen() {
         >
           <View style={[styles.menuCard, { backgroundColor: C.white }]}>
             <View style={styles.menuHeader}>
-              <Image
-                source={require("../assets/avatar.jpg")}
-                style={styles.menuAvatar}
-              />
+              <Image source={avatarSource} style={styles.menuAvatar} />
 
               <View style={{ flex: 1 }}>
                 <Text style={[styles.menuName, { color: C.black }]}>
-                  {userData?.name || "User"}
+                  {userData?.name || auth.currentUser?.displayName || "User"}
                 </Text>
 
                 <Text
@@ -264,7 +290,10 @@ export default function HomeScreen() {
 
             <View style={[styles.menuDivider, { backgroundColor: C.border }]} />
 
-            <TouchableOpacity style={styles.menuItem} onPress={handleGoToProfile}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={handleGoToProfile}
+            >
               <Ionicons name="person-outline" size={20} color={C.button} />
               <Text style={[styles.menuItemText, { color: C.black }]}>
                 My Profile
@@ -309,7 +338,7 @@ export default function HomeScreen() {
 
         <TouchableOpacity onPress={() => setMenuVisible(true)}>
           <Image
-            source={require("../assets/avatar.jpg")}
+            source={avatarSource}
             style={[styles.avatarSmall, { borderColor: C.button }]}
           />
         </TouchableOpacity>
@@ -795,7 +824,10 @@ export default function HomeScreen() {
                       </View>
 
                       <View
-                        style={[styles.statDivider, { backgroundColor: C.input }]}
+                        style={[
+                          styles.statDivider,
+                          { backgroundColor: C.input },
+                        ]}
                       />
 
                       <View style={styles.statItem}>
@@ -864,8 +896,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-
-    // هنا التعديل عشان ننزل الجزء اللي فوق لتحت
     paddingTop: 34,
     paddingBottom: 12,
   },
@@ -897,6 +927,7 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     borderWidth: 2,
+    backgroundColor: "rgb(254, 251, 245)",
   },
 
   quickLinks: {
@@ -1317,6 +1348,7 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
+    backgroundColor: "rgb(254, 251, 245)",
   },
 
   menuName: {
