@@ -227,7 +227,6 @@ function ContactMessages({ onBack }) {
   const unreadCount = messages.filter((m) => m.status !== "read").length;
   const readCount   = messages.filter((m) => m.status === "read").length;
 
-  // Mobile detail panel (full-screen overlay)
   const MobileDetailPanel = () => {
     if (!selected) return null;
     return (
@@ -239,7 +238,6 @@ function ContactMessages({ onBack }) {
         overflowY: "auto",
       }}>
         <style>{`@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>
-        {/* Top bar */}
         <div style={{
           display: "flex", alignItems: "center", gap: "12px",
           padding: "16px 20px",
@@ -269,8 +267,6 @@ function ContactMessages({ onBack }) {
             }}
           >🗑 Delete</button>
         </div>
-
-        {/* Content */}
         <div style={{ padding: "24px 20px", display: "flex", flexDirection: "column", gap: "20px" }}>
           <div>
             <label style={{ fontSize: "11px", color: "#9a7050", textTransform: "uppercase", letterSpacing: "1px", display: "block", marginBottom: "4px" }}>Name</label>
@@ -295,7 +291,6 @@ function ContactMessages({ onBack }) {
               {selected.message}
             </div>
           </div>
-
           <a
             href={`mailto:${selected.email}?subject=Re%3A%20Your%20Message&body=Hi%20${encodeURIComponent(selected.name)}%2C%0A%0A`}
             style={{
@@ -325,7 +320,6 @@ function ContactMessages({ onBack }) {
         .search-input:focus { outline: none; border-color: #6F4E37 !important; box-shadow: 0 0 0 3px rgba(111,78,55,0.12); }
       `}</style>
 
-      {/* Mobile detail overlay */}
       {isMobile && <MobileDetailPanel />}
 
       <div style={{
@@ -334,7 +328,6 @@ function ContactMessages({ onBack }) {
         background: "linear-gradient(to top, #dfc9aa, #f7f0e8)",
       }}>
 
-        {/* Mobile hamburger */}
         {isMobile && (
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -365,7 +358,6 @@ function ContactMessages({ onBack }) {
           </button>
         )}
 
-        {/* Mobile overlay */}
         {isMobile && sidebarOpen && (
           <div onClick={() => setSidebarOpen(false)} style={{
             position: "fixed", inset: 0, zIndex: 150,
@@ -459,7 +451,6 @@ function ContactMessages({ onBack }) {
             }} />
           </div>
 
-          {/* Search */}
           <div style={{ position: "relative", marginBottom: "14px", animation: "fadeUp 0.4s ease" }}>
             <span style={{
               position: "absolute", left: "14px", top: "50%",
@@ -489,7 +480,6 @@ function ContactMessages({ onBack }) {
             )}
           </div>
 
-          {/* Status filters */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "10px", animation: "fadeUp 0.4s ease" }}>
             {[
               { key: "all",    label: `All (${messages.length})` },
@@ -508,7 +498,6 @@ function ContactMessages({ onBack }) {
             ))}
           </div>
 
-          {/* Time filters */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "20px", animation: "fadeUp 0.4s ease" }}>
             {[
               { key: "all",       label: "All time" },
@@ -529,7 +518,6 @@ function ContactMessages({ onBack }) {
             ))}
           </div>
 
-          {/* Content */}
           {loading ? (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "200px", gap: "14px" }}>
               <div style={{ width: "36px", height: "36px", border: "4px solid #d2b49c", borderTopColor: "#6F4E37", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
@@ -543,7 +531,6 @@ function ContactMessages({ onBack }) {
               gridTemplateColumns: (!isMobile && selected) ? "1fr 1fr" : "1fr",
               gap: "16px", animation: "fadeUp 0.4s ease",
             }}>
-              {/* Message list */}
               <div style={{
                 backgroundColor: "rgba(253,246,238,0.8)", borderRadius: "16px",
                 border: "1px solid rgba(200,168,130,0.25)", overflow: "hidden",
@@ -591,7 +578,6 @@ function ContactMessages({ onBack }) {
                 ))}
               </div>
 
-              {/* Desktop detail panel */}
               {!isMobile && selected && (
                 <div style={{
                   backgroundColor: "rgba(253,246,238,0.92)", borderRadius: "16px",
@@ -670,6 +656,9 @@ function Dashboard() {
   const [reviewPct, setReviewPct]           = useState(0);
   const [reportPct, setReportPct]           = useState(0);
   const [unreadMsgCount, setUnreadMsgCount] = useState(0);
+
+  // ── timeout ref لإخفاء الـ tooltip على الموبايل ──
+  const sliceTimeoutRef = React.useRef(null);
 
   useEffect(() => {
     if (!isMobile) setSidebarOpen(false);
@@ -758,6 +747,23 @@ function Dashboard() {
   ];
 
   const handleNavClick = (action) => { action(); setSidebarOpen(false); };
+
+  // ── handlers للـ pie slices تدعم موبايل ولاب ──
+  const handleSliceEnter = (id) => {
+    if (sliceTimeoutRef.current) clearTimeout(sliceTimeoutRef.current);
+    setHoveredSlice(id);
+  };
+
+  const handleSliceLeave = () => {
+    setHoveredSlice(null);
+  };
+
+  const handleSliceTouch = (e, id) => {
+    e.preventDefault();
+    if (sliceTimeoutRef.current) clearTimeout(sliceTimeoutRef.current);
+    setHoveredSlice(id);
+    sliceTimeoutRef.current = setTimeout(() => setHoveredSlice(null), 1500);
+  };
 
   const SidebarContent = () => (
     <>
@@ -979,7 +985,12 @@ function Dashboard() {
             ) : (
               <>
                 <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flex: 1, position: "relative" }}>
-                  <svg width={isMobile ? "120" : "170"} height={isMobile ? "120" : "170"} viewBox="0 0 140 140">
+                  <svg
+                    width={isMobile ? "120" : "170"}
+                    height={isMobile ? "120" : "170"}
+                    viewBox="0 0 140 140"
+                    style={{ touchAction: "none" }}
+                  >
                     {slices.map((slice) => {
                       const isHovered = hoveredSlice === slice.id;
                       const midRad = ((slice.midAngle - 90) * Math.PI) / 180;
@@ -988,12 +999,17 @@ function Dashboard() {
                       const ty = offset * Math.sin(midRad);
                       const pctNum = parseInt(slice.percent);
                       return (
-                        <g key={slice.id}
-                          onMouseEnter={() => setHoveredSlice(slice.id)}
-                          onMouseLeave={() => setHoveredSlice(null)}
-                          style={{ cursor: "pointer" }}>
+                        <g
+                          key={slice.id}
+                          onMouseEnter={() => handleSliceEnter(slice.id)}
+                          onMouseLeave={handleSliceLeave}
+                          onTouchStart={(e) => handleSliceTouch(e, slice.id)}
+                          onTouchEnd={(e) => e.preventDefault()}
+                          style={{ cursor: "pointer" }}
+                        >
                           <path
-                            d={slice.path} fill={slice.color}
+                            d={slice.path}
+                            fill={slice.color}
                             opacity={isHovered ? 1 : 0.85}
                             transform={`translate(${tx},${ty})`}
                             style={{ transition: "all 0.25s ease" }}
@@ -1014,11 +1030,17 @@ function Dashboard() {
                     <text x="70" y="78" textAnchor="middle" fill="#6F4E37" fontSize="7">approved</text>
                   </svg>
 
+                  {/* Tooltip */}
                   {hoveredSlice && (() => {
                     const s = slices.find((sl) => sl.id === hoveredSlice);
                     return s ? (
                       <div style={{
-                        position: "absolute", top: "0px", right: "-10px",
+                        position: "absolute",
+                        top: isMobile ? "auto" : "0px",
+                        bottom: isMobile ? "calc(100% - 10px)" : "auto",
+                        right: isMobile ? "auto" : "-10px",
+                        left: isMobile ? "50%" : "auto",
+                        transform: isMobile ? "translateX(-50%)" : "none",
                         backgroundColor: "#3B2F2F", color: "white",
                         padding: "6px 10px", borderRadius: "8px",
                         fontSize: "12px", fontWeight: "bold",
