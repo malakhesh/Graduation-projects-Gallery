@@ -16,7 +16,7 @@ import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import Toast from "react-native-toast-message";
 import { Ionicons } from "@expo/vector-icons";
 import UploadProjectModal from "../components/modals/UploadProjectModal";
-import { getApproved } from "../backend/projects";
+import { getApproved, getProj } from "../backend/projects";
 import { auth } from "../backend/firebase";
 import { addBookmark, removeBookmark, getBookmarks } from "../backend/auth";
 import { useTheme } from "../context/ThemeContext";
@@ -101,8 +101,52 @@ type ProjectCardProps = {
   styles: ReturnType<typeof createStyles>;
   saved: boolean;
   saving: boolean;
+  openingGithub: boolean;
   onToggleSave: () => void;
+  onOpenGithub: () => void;
 };
+
+function getProjectId(item: any) {
+  return String(item?.id || item?._id || item?.projectId || item?.title || "");
+}
+
+function getGithubLink(project: any) {
+  return (
+    project?.gitLink ||
+    project?.githubUrl ||
+    project?.githubURL ||
+    project?.githubLink ||
+    project?.github ||
+    project?.gitHub ||
+    project?.gitHubLink ||
+    project?.repoUrl ||
+    project?.repoURL ||
+    project?.repoLink ||
+    project?.repositoryUrl ||
+    project?.repositoryURL ||
+    project?.repositoryLink ||
+    project?.sourceCode ||
+    project?.sourceCodeUrl ||
+    project?.sourceCodeURL ||
+    project?.links?.github ||
+    project?.links?.gitHub ||
+    project?.urls?.github ||
+    project?.urls?.gitHub ||
+    ""
+  );
+}
+
+function normalizeUrl(url: string) {
+  const trimmed = String(url || "").trim();
+
+  if (!trimmed) return "";
+
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed;
+  }
+
+  return `https://${trimmed}`;
+}
 
 function ProjectCard({
   item,
@@ -111,7 +155,9 @@ function ProjectCard({
   styles,
   saved,
   saving,
+  openingGithub,
   onToggleSave,
+  onOpenGithub,
 }: ProjectCardProps) {
   const ratings = Array.isArray(item.ratings) ? item.ratings : [];
 
@@ -163,43 +209,6 @@ function ProjectCard({
     (Array.isArray(item.tags) && item.tags.length > 0
       ? item.tags[0]
       : "General");
-
-  const githubUrl =
-    item.githubUrl ||
-    item.github ||
-    item.githubLink ||
-    item.repoUrl ||
-    item.repositoryUrl ||
-    item.link ||
-    "";
-
-  const openGithub = async () => {
-    if (!githubUrl) {
-      Toast.show({
-        type: "info",
-        text1: "No GitHub link",
-        text2: "This project has no GitHub link yet.",
-      });
-      return;
-    }
-
-    const url =
-      githubUrl.startsWith("http://") || githubUrl.startsWith("https://")
-        ? githubUrl
-        : `https://${githubUrl}`;
-
-    const canOpen = await Linking.canOpenURL(url);
-
-    if (canOpen) {
-      await Linking.openURL(url);
-    } else {
-      Toast.show({
-        type: "error",
-        text1: "Invalid GitHub link",
-        text2: "Could not open this link.",
-      });
-    }
-  };
 
   return (
     <TouchableOpacity
@@ -281,15 +290,19 @@ function ProjectCard({
 
         <View style={styles.githubBookmarkRow}>
           <TouchableOpacity
-            style={[
-              styles.githubButton,
-              { backgroundColor: githubUrl ? colors.black : colors.input },
-            ]}
+            style={[styles.githubButton, { backgroundColor: colors.black }]}
             activeOpacity={0.85}
-            onPress={openGithub}
+            onPress={onOpenGithub}
+            disabled={openingGithub}
           >
-            <Ionicons name="logo-github" size={11} color="#fff" />
-            <Text style={styles.githubText}>GitHub</Text>
+            {openingGithub ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <Ionicons name="logo-github" size={11} color="#fff" />
+                <Text style={styles.githubText}>GitHub</Text>
+              </>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -341,6 +354,7 @@ export default function GalleryScreen() {
     {}
   );
   const [savingBookmarkId, setSavingBookmarkId] = useState<string | null>(null);
+  const [openingGithubId, setOpeningGithubId] = useState<string | null>(null);
 
   const styles = useMemo(() => createStyles(C), [C]);
 
@@ -525,6 +539,44 @@ export default function GalleryScreen() {
     }
   };
 
+  const handleOpenGithub = async (project: any) => {
+    const projectId = getProjectId(project);
+
+    try {
+      setOpeningGithubId(projectId);
+
+      let githubUrl = getGithubLink(project);
+
+      if (!githubUrl && projectId) {
+        const fullProject = await getProj(projectId);
+        githubUrl = getGithubLink(fullProject);
+      }
+
+      const finalUrl = normalizeUrl(githubUrl);
+
+      if (!finalUrl) {
+        Toast.show({
+          type: "info",
+          text1: "No GitHub link",
+          text2: "This project has no GitHub link yet.",
+        });
+        return;
+      }
+
+      await Linking.openURL(finalUrl);
+    } catch (error) {
+      console.log("Open GitHub error:", error);
+
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Could not open GitHub link.",
+      });
+    } finally {
+      setOpeningGithubId(null);
+    }
+  };
+
   const handleUploadSuccess = async (result?: any) => {
     setModalVisible(false);
 
@@ -640,7 +692,7 @@ export default function GalleryScreen() {
           }
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => {
-            const projectId = String(item.id || item._id || item.title);
+            const projectId = getProjectId(item);
 
             return (
               <ProjectCard
@@ -649,7 +701,9 @@ export default function GalleryScreen() {
                 styles={styles}
                 saved={!!savedProjects[projectId]}
                 saving={savingBookmarkId === projectId}
+                openingGithub={openingGithubId === projectId}
                 onToggleSave={() => handleToggleSave(projectId)}
+                onOpenGithub={() => handleOpenGithub(item)}
                 onPress={() =>
                   router.push({
                     pathname: "/project-details",
@@ -919,6 +973,7 @@ function createStyles(C: any) {
 
     githubButton: {
       flex: 1,
+      minHeight: 31,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
