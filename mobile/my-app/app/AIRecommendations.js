@@ -1,8 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { auth, db } from "../backend/firebase";
 import { doc, getDoc, collection, getDocs } from "firebase/firestore";
+import Constants from "expo-constants";
 
-const BASE_URL = "http://192.168.1.2:3000";
+const getBaseUrl = () => {
+  const host = Constants.expoConfig?.hostUri?.split(":")[0];
+  if (host) return `http://${host}:3000`;
+  return "http://192.168.1.4:3000"; // fallback
+};
+
+const BASE_URL = getBaseUrl();
 const TARGET_COUNT = 10;
 
 // جيب projects إضافية من Firebase مباشرة عشان نكمّل لـ 10
