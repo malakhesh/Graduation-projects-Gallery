@@ -12,11 +12,13 @@ import {
   Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import Toast from "react-native-toast-message";
 import { Ionicons } from "@expo/vector-icons";
 import UploadProjectModal from "../components/modals/UploadProjectModal";
 import { getApproved } from "../backend/projects";
+import { auth } from "../backend/firebase";
+import { addBookmark, removeBookmark, getBookmarks } from "../backend/auth";
 import { useTheme } from "../context/ThemeContext";
 import { Colors } from "../constants/theme";
 
@@ -98,6 +100,7 @@ type ProjectCardProps = {
   colors: any;
   styles: ReturnType<typeof createStyles>;
   saved: boolean;
+  saving: boolean;
   onToggleSave: () => void;
 };
 
@@ -107,6 +110,7 @@ function ProjectCard({
   colors,
   styles,
   saved,
+  saving,
   onToggleSave,
 }: ProjectCardProps) {
   const ratings = Array.isArray(item.ratings) ? item.ratings : [];
@@ -294,16 +298,25 @@ function ProjectCard({
               {
                 borderColor: saved ? colors.button : colors.border,
                 backgroundColor: saved ? colors.button : colors.white,
+                opacity: saving ? 0.7 : 1,
               },
             ]}
             activeOpacity={0.85}
             onPress={onToggleSave}
+            disabled={saving}
           >
-            <Ionicons
-              name={saved ? "bookmark" : "bookmark-outline"}
-              size={13}
-              color={saved ? colors.white : colors.button}
-            />
+            {saving ? (
+              <ActivityIndicator
+                size="small"
+                color={saved ? colors.white : colors.button}
+              />
+            ) : (
+              <Ionicons
+                name={saved ? "bookmark" : "bookmark-outline"}
+                size={13}
+                color={saved ? colors.white : colors.button}
+              />
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -323,11 +336,38 @@ export default function GalleryScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [savedProjects, setSavedProjects] = useState<Record<string, boolean>>(
     {}
   );
+  const [savingBookmarkId, setSavingBookmarkId] = useState<string | null>(null);
 
   const styles = useMemo(() => createStyles(C), [C]);
+
+  const syncBookmarks = useCallback(async () => {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      setSavedProjects({});
+      return;
+    }
+
+    try {
+      const ids = await getBookmarks(currentUser.uid);
+      const map: Record<string, boolean> = {};
+
+      if (Array.isArray(ids)) {
+        ids.forEach((projectId: string) => {
+          map[String(projectId)] = true;
+        });
+      }
+
+      setSavedProjects(map);
+    } catch (error) {
+      console.log("Sync bookmarks error:", error);
+      setSavedProjects({});
+    }
+  }, []);
 
   const loadProjects = useCallback(async () => {
     try {
@@ -359,7 +399,14 @@ export default function GalleryScreen() {
 
   useEffect(() => {
     loadProjects();
-  }, [loadProjects]);
+    syncBookmarks();
+  }, [loadProjects, syncBookmarks]);
+
+  useFocusEffect(
+    useCallback(() => {
+      syncBookmarks();
+    }, [syncBookmarks])
+  );
 
   useEffect(() => {
     const openUploadParam = Array.isArray(params.openUpload)
@@ -410,6 +457,7 @@ export default function GalleryScreen() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadProjects();
+    await syncBookmarks();
     setRefreshing(false);
 
     Toast.show({
@@ -417,25 +465,64 @@ export default function GalleryScreen() {
       text1: "Updated",
       text2: "Projects refreshed",
     });
-  }, [loadProjects]);
+  }, [loadProjects, syncBookmarks]);
 
-  const handleToggleSave = (projectId: string) => {
-    setSavedProjects((prev) => {
-      const nextValue = !prev[projectId];
+  const handleToggleSave = async (projectId: string) => {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      Toast.show({
+        type: "error",
+        text1: "Login Required",
+        text2: "Please login first to save this project.",
+      });
+      return;
+    }
+
+    try {
+      setSavingBookmarkId(projectId);
+
+      const alreadySaved = !!savedProjects[projectId];
+
+      if (alreadySaved) {
+        await removeBookmark(currentUser.uid, projectId);
+
+        setSavedProjects((prev) => {
+          const updated = { ...prev };
+          delete updated[projectId];
+          return updated;
+        });
+
+        Toast.show({
+          type: "info",
+          text1: "Removed",
+          text2: "Project removed from bookmarks.",
+        });
+      } else {
+        await addBookmark(currentUser.uid, projectId);
+
+        setSavedProjects((prev) => ({
+          ...prev,
+          [projectId]: true,
+        }));
+
+        Toast.show({
+          type: "success",
+          text1: "Saved",
+          text2: "Project added to bookmarks.",
+        });
+      }
+    } catch (error) {
+      console.log("Bookmark error:", error);
 
       Toast.show({
-        type: nextValue ? "success" : "info",
-        text1: nextValue ? "Saved" : "Removed",
-        text2: nextValue
-          ? "Project added to bookmarks."
-          : "Project removed from bookmarks.",
+        type: "error",
+        text1: "Error",
+        text2: "Could not update bookmark.",
       });
-
-      return {
-        ...prev,
-        [projectId]: nextValue,
-      };
-    });
+    } finally {
+      setSavingBookmarkId(null);
+    }
   };
 
   const handleUploadSuccess = async (result?: any) => {
@@ -561,11 +648,12 @@ export default function GalleryScreen() {
                 colors={C}
                 styles={styles}
                 saved={!!savedProjects[projectId]}
+                saving={savingBookmarkId === projectId}
                 onToggleSave={() => handleToggleSave(projectId)}
                 onPress={() =>
                   router.push({
                     pathname: "/project-details",
-                    params: { id: item.id },
+                    params: { id: projectId },
                   })
                 }
               />
