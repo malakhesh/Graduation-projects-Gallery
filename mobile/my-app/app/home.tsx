@@ -864,7 +864,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingVertical: 10,
+
+    // هنا التعديل عشان ننزل الجزء اللي فوق لتحت
+    paddingTop: 34,
+    paddingBottom: 12,
   },
 
   logoWrapper: {
