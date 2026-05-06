@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { auth, db } from "../backend/firebase";
 import { doc, getDoc, collection, getDocs } from "firebase/firestore";
 
-const BASE_URL = "http://192.168.1.2:3000";
+const BASE_URL = "http://192.168.1.2:4000";
 const TARGET_COUNT = 10;
 
 // جيب projects إضافية من Firebase مباشرة عشان نكمّل لـ 10

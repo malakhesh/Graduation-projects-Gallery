@@ -15,9 +15,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import Toast from "react-native-toast-message";
 import { Ionicons } from "@expo/vector-icons";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
+
 import UploadProjectModal from "../components/modals/UploadProjectModal";
-import { getApproved, getProj } from "../backend/projects";
-import { auth } from "../backend/firebase";
+import { getProj } from "../backend/projects";
+import { auth, db } from "../backend/firebase";
 import { addBookmark, removeBookmark, getBookmarks } from "../backend/auth";
 import { useTheme } from "../context/ThemeContext";
 import { Colors } from "../constants/theme";
@@ -118,6 +125,41 @@ type ProjectCardProps = {
   onToggleSave: () => void;
   onOpenGithub: () => void;
 };
+
+async function getApprovedProjects() {
+  try {
+    const projectsRef = collection(db, "projects");
+
+    const approvedQuery = query(projectsRef, where("status", "==", "approved"));
+    const publishedQuery = query(projectsRef, where("status", "==", "published"));
+
+    const [approvedSnap, publishedSnap] = await Promise.all([
+      getDocs(approvedQuery),
+      getDocs(publishedQuery),
+    ]);
+
+    const approvedProjects = approvedSnap.docs.map((docItem) => ({
+      id: docItem.id,
+      ...docItem.data(),
+    }));
+
+    const publishedProjects = publishedSnap.docs.map((docItem) => ({
+      id: docItem.id,
+      ...docItem.data(),
+    }));
+
+    const mergedMap = new Map<string, any>();
+
+    [...approvedProjects, ...publishedProjects].forEach((project: any) => {
+      mergedMap.set(String(project.id), project);
+    });
+
+    return Array.from(mergedMap.values());
+  } catch (error) {
+    console.log("getApprovedProjects error:", error);
+    return "get-fail";
+  }
+}
 
 function getProjectId(item: any) {
   return String(item?.id || item?._id || item?.projectId || item?.title || "");
@@ -460,7 +502,7 @@ export default function GalleryScreen() {
     try {
       setLoading(true);
 
-      const data = await getApproved();
+      const data = await getApprovedProjects();
 
       if (Array.isArray(data)) {
         setProjects(data);
@@ -472,7 +514,9 @@ export default function GalleryScreen() {
           text2: "Please try again.",
         });
       }
-    } catch {
+    } catch (error) {
+      console.log("Load projects error:", error);
+
       setProjects([]);
       Toast.show({
         type: "error",
