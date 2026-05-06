@@ -156,7 +156,9 @@ function ProjectCard({
 
   const category =
     item.category ||
-    (Array.isArray(item.tags) && item.tags.length > 0 ? item.tags[0] : "General");
+    (Array.isArray(item.tags) && item.tags.length > 0
+      ? item.tags[0]
+      : "General");
 
   const githubUrl =
     item.githubUrl ||
@@ -244,62 +246,66 @@ function ProjectCard({
         </Text>
       )}
 
-      <View style={styles.footerRow}>
-        <View
-          style={[
-            styles.categoryPill,
-            { backgroundColor: colors.bg, borderColor: colors.border },
-          ]}
-        >
-          <Text
-            style={[styles.categoryText, { color: colors.black }]}
-            numberOfLines={1}
+      <View style={styles.cardActions}>
+        <View style={styles.categoryRatingRow}>
+          <View
+            style={[
+              styles.categoryPill,
+              { backgroundColor: colors.bg, borderColor: colors.border },
+            ]}
           >
-            {category}
-          </Text>
+            <Text
+              style={[styles.categoryText, { color: colors.black }]}
+              numberOfLines={1}
+            >
+              {category}
+            </Text>
+          </View>
+
+          <View
+            style={[
+              styles.ratingPill,
+              { backgroundColor: colors.bg, borderColor: colors.border },
+            ]}
+          >
+            <Ionicons name="star" size={10} color="#f5b301" />
+            <Text style={[styles.ratingText, { color: colors.black }]}>
+              {averageRating}
+            </Text>
+          </View>
         </View>
 
-        <View
-          style={[
-            styles.ratingPill,
-            { backgroundColor: colors.bg, borderColor: colors.border },
-          ]}
-        >
-          <Ionicons name="star" size={9} color="#f5b301" />
-          <Text style={[styles.ratingText, { color: colors.black }]}>
-            {averageRating}
-          </Text>
+        <View style={styles.githubBookmarkRow}>
+          <TouchableOpacity
+            style={[
+              styles.githubButton,
+              { backgroundColor: githubUrl ? colors.black : colors.input },
+            ]}
+            activeOpacity={0.85}
+            onPress={openGithub}
+          >
+            <Ionicons name="logo-github" size={11} color="#fff" />
+            <Text style={styles.githubText}>GitHub</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.bookmarkButton,
+              {
+                borderColor: saved ? colors.button : colors.border,
+                backgroundColor: saved ? colors.button : colors.white,
+              },
+            ]}
+            activeOpacity={0.85}
+            onPress={onToggleSave}
+          >
+            <Ionicons
+              name={saved ? "bookmark" : "bookmark-outline"}
+              size={13}
+              color={saved ? colors.white : colors.button}
+            />
+          </TouchableOpacity>
         </View>
-
-        <TouchableOpacity
-          style={[
-            styles.githubButton,
-            { backgroundColor: githubUrl ? colors.black : colors.input },
-          ]}
-          activeOpacity={0.85}
-          onPress={openGithub}
-        >
-          <Ionicons name="logo-github" size={10} color="#fff" />
-          <Text style={styles.githubText}>GitHub</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.bookmarkButton,
-            {
-              borderColor: saved ? colors.button : colors.border,
-              backgroundColor: saved ? colors.button : colors.white,
-            },
-          ]}
-          activeOpacity={0.85}
-          onPress={onToggleSave}
-        >
-          <Ionicons
-            name={saved ? "bookmark" : "bookmark-outline"}
-            size={12}
-            color={saved ? colors.white : colors.button}
-          />
-        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
@@ -776,60 +782,74 @@ function createStyles(C: any) {
       marginBottom: 7,
     },
 
-    footerRow: {
+    cardActions: {
+      gap: 6,
+    },
+
+    categoryRatingRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 4,
+      gap: 6,
+    },
+
+    githubBookmarkRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
     },
 
     categoryPill: {
       flex: 1,
-      minWidth: 0,
-      paddingHorizontal: 6,
-      paddingVertical: 5,
-      borderRadius: 10,
+      minWidth: 72,
+      paddingHorizontal: 9,
+      paddingVertical: 6,
+      borderRadius: 13,
       borderWidth: 1,
+      alignItems: "center",
+      justifyContent: "center",
     },
 
     categoryText: {
-      fontSize: 8.5,
+      fontSize: 10.5,
       fontWeight: "900",
     },
 
     ratingPill: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 2,
-      paddingHorizontal: 5,
-      paddingVertical: 5,
-      borderRadius: 10,
+      gap: 3,
+      paddingHorizontal: 9,
+      paddingVertical: 6,
+      borderRadius: 13,
       borderWidth: 1,
     },
 
     ratingText: {
-      fontSize: 8.5,
+      fontSize: 10,
       fontWeight: "900",
     },
 
     githubButton: {
+      flex: 1,
       flexDirection: "row",
       alignItems: "center",
-      gap: 3,
-      paddingHorizontal: 6,
-      paddingVertical: 6,
-      borderRadius: 11,
+      justifyContent: "center",
+      gap: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 7,
+      borderRadius: 13,
     },
 
     githubText: {
       color: "#fff",
-      fontSize: 8,
+      fontSize: 10,
       fontWeight: "900",
     },
 
     bookmarkButton: {
-      width: 25,
-      height: 25,
-      borderRadius: 9,
+      width: 31,
+      height: 31,
+      borderRadius: 11,
       borderWidth: 1,
       alignItems: "center",
       justifyContent: "center",
