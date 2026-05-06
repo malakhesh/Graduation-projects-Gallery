@@ -1,9 +1,26 @@
 import express from "express"
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, getDocs } from "firebase/firestore"
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, getDocs, query, where } from "firebase/firestore"
 import { db } from "../firebase.js"
 import { getQwenRecommendations } from "../recommendationService.js"
 
 const router = express.Router()
+
+const getAverageRating = (project) => {
+  if (project.userRatings && Object.keys(project.userRatings).length > 0) {
+    const values = Object.values(project.userRatings)
+    return values.reduce((sum, v) => sum + v, 0) / values.length
+  }
+  if (project.ratings && project.ratings.length > 0) {
+    return project.ratings.reduce((sum, v) => sum + v, 0) / project.ratings.length
+  }
+  return 0
+}
+
+const getTopRatedProjects = (projects, n = 10) => {
+  return [...projects]
+    .sort((a, b) => getAverageRating(b) - getAverageRating(a))
+    .slice(0, n)
+}
 
 router.post("/view/:uid/:projectId", async (req, res) => {
   const { uid, projectId } = req.params
@@ -50,13 +67,31 @@ router.get("/:uid", async (req, res) => {
     const userRef = doc(db, "userActivity", uid)
     const userSnap = await getDoc(userRef)
 
-    const projectsSnap = await getDocs(collection(db, "projects"))
+    const projectsQuery = query(collection(db, "projects"), where("status", "==", "approved"))
+    const projectsSnap = await getDocs(projectsQuery)
     const allProjects = projectsSnap.docs.map(d => ({ 
       id: d.id, 
       title: d.data().title,
       description: d.data().description,
+      desc: d.data().desc,
       tags: d.data().tags || [],
-      category: d.data().category || ""
+      category: d.data().category || "",
+      imgUrl: d.data().imgUrl || "",
+      image: d.data().image || "",
+      ratings: d.data().ratings || [],
+      userRatings: d.data().userRatings || {},
+      comments: d.data().comments || [],
+      gitLink: d.data().gitLink || "",
+      github: d.data().github || "",
+      stack: d.data().stack || [],
+      status: d.data().status || "approved",
+      userId: d.data().userId || "",
+      authorId: d.data().authorId || "",
+      avatar: d.data().avatar || "",
+      date: d.data().date || "",
+      createdAt: d.data().createdAt || null,
+      views: d.data().views || 0,
+      year: d.data().year || "",
     }))
 
     if (!userSnap.exists()) {
@@ -72,11 +107,16 @@ router.get("/:uid", async (req, res) => {
     const viewedProjectsData = allProjects.filter(p => viewedProjects.includes(p.id))
     const unseenProjects = allProjects.filter(p => !viewedProjects.includes(p.id))
 
+    console.log("allProjects count:", allProjects.length)
+    console.log("viewedProjects:", viewedProjects)
+    console.log("unseenProjects count:", unseenProjects.length)
+
     if (unseenProjects.length === 0) {
+      const topRated = getTopRatedProjects(allProjects, 10)
       return res.json({ 
         success: true, 
         type: "all_viewed",
-        projects: [] 
+        projects: topRated
       })
     }
 
@@ -87,6 +127,8 @@ router.get("/:uid", async (req, res) => {
         unseenProjects
       )
 
+      console.log("aiRecommendations:", aiRecommendations)
+
       if (aiRecommendations && aiRecommendations.length > 0) {
         return res.json({ 
           success: true, 
@@ -95,17 +137,15 @@ router.get("/:uid", async (req, res) => {
         })
       }
     } catch (aiError) {
-      console.error("⚠️ AI failed, falling back to simple recommendation:", aiError.message)
+      console.error("AI failed, falling back to top-rated projects:", aiError.message)
     }
 
-    const fallback = unseenProjects
-      .filter(p => p.tags?.some(t => searchedTags.includes(t)))
-      .slice(0, 10)
+    const topRated = getTopRatedProjects(allProjects, 10)
 
     res.json({ 
       success: true, 
-      type: "fallback",
-      projects: fallback.length > 0 ? fallback : unseenProjects.slice(0, 10)
+      type: "top_rated",
+      projects: topRated
     })
 
   } catch (error) {

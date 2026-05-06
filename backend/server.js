@@ -1,4 +1,5 @@
 import express from "express"
+import cors from "cors"
 import dotenv from "dotenv"
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
@@ -9,9 +10,11 @@ const __dirname = dirname(__filename)
 
 dotenv.config({ path: join(__dirname, '.env') })
 
-console.log("🔑 OPENROUTER_API_KEY loaded:", process.env.OPENROUTER_API_KEY ? "✅ Yes" : "❌ No")
+console.log(" OPENROUTER_API_KEY loaded:", process.env.OPENROUTER_API_KEY ? " Yes" : " No")
 
 const app = express()
+
+app.use(cors({ origin: "http://localhost:3000" })) 
 app.use(express.json())
 
 app.use("/api/recommendations", recommendationsRouter)
@@ -29,8 +32,8 @@ app.get("/", (req, res) => {
   })
 })
 
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 5000
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`)
+  console.log(` Server running on http://localhost:${PORT}`)
 })
