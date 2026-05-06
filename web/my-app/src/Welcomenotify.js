@@ -148,9 +148,9 @@ const PAGES = [
           category, tech stack, or tag to narrow things down.
         </Row>
         <Row S={S} icon="✨">
-          <strong style={S.strong}>Personalised picks</strong> — head to your{" "}
-          <strong style={S.strong}>Settings</strong> and fill in your
-          preferences for tailored home page recommendations.
+          <strong style={S.strong}>Personalised picks</strong> — our AI studies
+          what you browse and recommends projects tailored to your taste, right on
+          your home page.
         </Row>
       </>
     ),
