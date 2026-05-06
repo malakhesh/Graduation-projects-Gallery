@@ -1,8 +1,21 @@
 import { useState, useEffect, useCallback } from "react";
 import { auth, db } from "../backend/firebase";
 import { doc, getDoc, collection, getDocs } from "firebase/firestore";
+import Constants from "expo-constants";
 
-const BASE_URL = "http://192.168.1.2:4000";
+const getBaseUrl = () => {
+  // For development with Expo Go
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (hostUri) {
+    const ip = hostUri.split(":")[0];
+    return `http://${ip}:3000`;
+  }
+  
+  // Fallback - you can set your IP here
+  return "http://192.168.1.32:3000";
+};
+
+const BASE_URL = getBaseUrl();
 const TARGET_COUNT = 10;
 
 // جيب projects إضافية من Firebase مباشرة عشان نكمّل لـ 10
@@ -74,7 +87,7 @@ export function useAIRecommendations() {
         return;
       }
 
-      const response = await fetch(`${BASE_URL}/api/recommendations/${user.uid}`);
+     const response = await fetch(`${BASE_URL}/api/recommendations/${user.uid}`);
       const data = await response.json();
 
       if (data.success) {
