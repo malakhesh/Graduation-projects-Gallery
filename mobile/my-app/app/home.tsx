@@ -83,9 +83,15 @@ export default function HomeScreen() {
 
       try {
         const data = await getUser(user.uid);
-        setUserData(data);
+
+        if (data !== "no-data" && data !== "get-fail") {
+          setUserData(data);
+        } else {
+          setUserData(null);
+        }
       } catch (error) {
         console.log("Get user error:", error);
+        setUserData(null);
       } finally {
         setLoading(false);
       }
@@ -93,6 +99,17 @@ export default function HomeScreen() {
 
     return unsubscribe;
   }, []);
+
+  const avatarUrl =
+    userData?.photoURL ||
+    userData?.profileImage ||
+    userData?.avatar ||
+    auth.currentUser?.photoURL ||
+    null;
+
+  const avatarSource = avatarUrl
+    ? { uri: avatarUrl }
+    : require("../assets/avatar.jpg");
 
   const normalize = (value: any) =>
     String(value ?? "")
@@ -243,14 +260,11 @@ export default function HomeScreen() {
         >
           <View style={[styles.menuCard, { backgroundColor: C.white }]}>
             <View style={styles.menuHeader}>
-              <Image
-                source={require("../assets/avatar.jpg")}
-                style={styles.menuAvatar}
-              />
+              <Image source={avatarSource} style={styles.menuAvatar} />
 
               <View style={{ flex: 1 }}>
                 <Text style={[styles.menuName, { color: C.black }]}>
-                  {userData?.name || "User"}
+                  {userData?.name || auth.currentUser?.displayName || "User"}
                 </Text>
 
                 <Text
@@ -309,7 +323,7 @@ export default function HomeScreen() {
 
         <TouchableOpacity onPress={() => setMenuVisible(true)}>
           <Image
-            source={require("../assets/avatar.jpg")}
+            source={avatarSource}
             style={[styles.avatarSmall, { borderColor: C.button }]}
           />
         </TouchableOpacity>
@@ -864,8 +878,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-
-    // هنا التعديل عشان ننزل الجزء اللي فوق لتحت
     paddingTop: 34,
     paddingBottom: 12,
   },
@@ -897,6 +909,7 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     borderWidth: 2,
+    backgroundColor: "rgb(254, 251, 245)",
   },
 
   quickLinks: {
@@ -1317,6 +1330,7 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
+    backgroundColor: "rgb(254, 251, 245)",
   },
 
   menuName: {
