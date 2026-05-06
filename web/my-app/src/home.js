@@ -375,7 +375,6 @@ function getRecommendationLabel(type) {
   }
 }
 
-// ── Fallback notice banner ────────────────────────────────────
 function ServerFallbackBanner() {
   return (
     <div
@@ -408,6 +407,8 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
   const sectionRef = useRef(null);
   const containerRef = useRef(null);
   const scrollAccum = useRef(0);
+  const touchStartX = useRef(null);
+  const touchStartY = useRef(null);
   const GAP = 20;
 
   const getVisible = (w) => w < 500 ? 1 : w < 760 ? 2 : 3;
@@ -457,6 +458,8 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+
+    // ── Trackpad / mouse wheel (horizontal) ──
     const handleWheel = (e) => {
       if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) return;
       e.preventDefault();
@@ -470,8 +473,36 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
         setIndex((i) => Math.max(i - 1, 0));
       }
     };
+
+    // ── Touch swipe ──
+    const handleTouchStart = (e) => {
+      touchStartX.current = e.touches[0].clientX;
+      touchStartY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e) => {
+      if (touchStartX.current === null) return;
+      const dx = touchStartX.current - e.changedTouches[0].clientX;
+      const dy = touchStartY.current - e.changedTouches[0].clientY;
+      // Only fire if swipe is more horizontal than vertical and long enough
+      if (Math.abs(dx) < Math.abs(dy) || Math.abs(dx) < 40) return;
+      if (dx > 0) {
+        setIndex((i) => Math.min(i + 1, Math.max(0, projects.length - visible)));
+      } else {
+        setIndex((i) => Math.max(i - 1, 0));
+      }
+      touchStartX.current = null;
+      touchStartY.current = null;
+    };
+
     el.addEventListener("wheel", handleWheel, { passive: false });
-    return () => el.removeEventListener("wheel", handleWheel);
+    el.addEventListener("touchstart", handleTouchStart, { passive: true });
+    el.addEventListener("touchend", handleTouchEnd, { passive: true });
+    return () => {
+      el.removeEventListener("wheel", handleWheel);
+      el.removeEventListener("touchstart", handleTouchStart);
+      el.removeEventListener("touchend", handleTouchEnd);
+    };
   }, [projects.length, visible]);
 
   const handleOpen = (project) => {
