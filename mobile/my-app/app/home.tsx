@@ -15,7 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { auth } from "../backend/firebase";
-import { getUser, logOut } from "../backend/auth";
+import { getUser, logOut, checkStatus } from "../backend/auth";
 import { useTheme } from "../context/ThemeContext";
 import { Colors } from "../constants/theme";
 import {
@@ -82,6 +82,18 @@ export default function HomeScreen() {
       }
 
       try {
+        const accountStatus: any = await checkStatus(user.uid);
+
+        if (
+          accountStatus &&
+          typeof accountStatus === "object" &&
+          accountStatus.status === "suspended"
+        ) {
+          setLoading(false);
+          router.replace("/suspended");
+          return;
+        }
+
         const data = await getUser(user.uid);
 
         if (data !== "no-data" && data !== "get-fail") {
@@ -278,7 +290,10 @@ export default function HomeScreen() {
 
             <View style={[styles.menuDivider, { backgroundColor: C.border }]} />
 
-            <TouchableOpacity style={styles.menuItem} onPress={handleGoToProfile}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={handleGoToProfile}
+            >
               <Ionicons name="person-outline" size={20} color={C.button} />
               <Text style={[styles.menuItemText, { color: C.black }]}>
                 My Profile
@@ -809,7 +824,10 @@ export default function HomeScreen() {
                       </View>
 
                       <View
-                        style={[styles.statDivider, { backgroundColor: C.input }]}
+                        style={[
+                          styles.statDivider,
+                          { backgroundColor: C.input },
+                        ]}
                       />
 
                       <View style={styles.statItem}>
