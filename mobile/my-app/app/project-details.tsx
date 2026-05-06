@@ -711,6 +711,13 @@ export default function ProjectDetails() {
       alignItems: "center",
       justifyContent: "center",
       marginRight: 12,
+      overflow: "hidden",
+    },
+
+    avatarImage: {
+      width: 42,
+      height: 42,
+      borderRadius: 21,
     },
 
     avatarText: {
@@ -1084,6 +1091,13 @@ export default function ProjectDetails() {
   const ownerEmail = owner?.email || "";
   const ownerYear = owner?.year || project.year || "";
 
+  const ownerPhotoURL =
+    owner?.photoURL ||
+    owner?.profileImage ||
+    owner?.avatar ||
+    owner?.image ||
+    null;
+
   const stack = Array.isArray(project.stack) ? project.stack : [];
   const comments = Array.isArray(project.comments) ? project.comments : [];
   const ratings = Array.isArray(project.ratings) ? project.ratings : [];
@@ -1178,9 +1192,17 @@ export default function ProjectDetails() {
         <View style={styles.card}>
           <View style={styles.ownerBox}>
             <View style={styles.avatarCircle}>
-              <Text style={styles.avatarText}>
-                {ownerName.charAt(0).toUpperCase()}
-              </Text>
+              {ownerPhotoURL ? (
+                <Image
+                  source={{ uri: ownerPhotoURL }}
+                  style={styles.avatarImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <Text style={styles.avatarText}>
+                  {ownerName.charAt(0).toUpperCase()}
+                </Text>
+              )}
             </View>
 
             <View style={styles.ownerInfo}>
