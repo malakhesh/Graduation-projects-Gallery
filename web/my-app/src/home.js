@@ -19,7 +19,7 @@ import {
   FaBars, FaTimes, FaChevronLeft, FaChevronRight, FaExclamationTriangle
 } from "react-icons/fa";
 
-const API_BASE = "http://localhost:5000";
+const API_BASE = "https://graduation-projects-gallery-production.up.railway.app";
 
 async function trackView(uid, projectId) {
   try {
