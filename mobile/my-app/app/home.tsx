@@ -104,7 +104,7 @@ export default function HomeScreen() {
           setUserData(null);
         }
 
-        // جيب الـ bookmarks بتاعت الـ user
+        
         const ids: any = await getBookmarks(user.uid);
         if (Array.isArray(ids)) setBookmarkedIds(new Set(ids));
 
