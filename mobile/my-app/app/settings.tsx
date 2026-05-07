@@ -152,7 +152,7 @@ function EditModal({
   );
 }
 
-// ─── Re-authentication Modal ─────────────────────────
+
 function ReauthModal({
   visible,
   onClose,
@@ -242,7 +242,7 @@ function ReauthModal({
   );
 }
 
-// ─── Setting Row ─────────────────────────
+
 function SettingRow({
   icon,
   label,
@@ -291,7 +291,6 @@ function SettingRow({
   );
 }
 
-// ─── Section ─────────────────────────
 function Section({ title, children, C }: SectionProps) {
   return (
     <View style={styles.section}>
@@ -312,7 +311,6 @@ function Section({ title, children, C }: SectionProps) {
   );
 }
 
-// ─── Main Screen ─────────────────────────
 export default function SettingsScreen() {
   const { theme, themeMode, setThemeMode } = useTheme();
 
@@ -391,7 +389,6 @@ export default function SettingsScreen() {
     }
   };
 
-  // ─── Re-authenticate User ─────────────────────────
   const reauthenticateUser = async (password: string) => {
     const user = auth.currentUser;
 
@@ -409,7 +406,6 @@ export default function SettingsScreen() {
     return true;
   };
 
-  // ─── Update Name ─────────────────────────
   const handleUpdateName = async () => {
     if (!newName.trim()) {
       toast("error", "Please enter a name");
@@ -441,7 +437,6 @@ export default function SettingsScreen() {
     }
   };
 
-  // ─── Update Email ─────────────────────────
   const handleUpdateEmail = async (password: string) => {
     if (!newEmail.trim()) {
       toast("error", "Please enter an email");
@@ -483,7 +478,6 @@ export default function SettingsScreen() {
     }
   };
 
-  // ─── Update Password ─────────────────────────
   const handleUpdatePassword = async (password: string) => {
     if (!newPassword || newPassword.length < 6) {
       toast("error", "Password must be at least 6 characters");
