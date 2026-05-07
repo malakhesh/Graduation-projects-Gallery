@@ -15,7 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { auth } from "../backend/firebase";
-import { getUser, logOut, checkStatus } from "../backend/auth";
+import { getUser, logOut, checkStatus, addBookmark, removeBookmark, getBookmarks } from "../backend/auth";
 import { useTheme } from "../context/ThemeContext";
 import { Colors } from "../constants/theme";
 import {
@@ -70,6 +70,8 @@ export default function HomeScreen() {
   const [sortOption, setSortOption] = useState("");
   const [minimumRating, setMinimumRating] = useState(0);
 
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
+
   const { projects: aiProjects = [], loading: aiLoading } =
     useAIRecommendations();
 
@@ -101,6 +103,11 @@ export default function HomeScreen() {
         } else {
           setUserData(null);
         }
+
+        // جيب الـ bookmarks بتاعت الـ user
+        const ids: any = await getBookmarks(user.uid);
+        if (Array.isArray(ids)) setBookmarkedIds(new Set(ids));
+
       } catch (error) {
         console.log("Get user error:", error);
         setUserData(null);
@@ -111,6 +118,22 @@ export default function HomeScreen() {
 
     return unsubscribe;
   }, []);
+
+  const toggleBookmark = async (projectId: string) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    if (bookmarkedIds.has(projectId)) {
+      await removeBookmark(user.uid, projectId);
+      setBookmarkedIds(prev => {
+        const s = new Set(prev);
+        s.delete(projectId);
+        return s;
+      });
+    } else {
+      await addBookmark(user.uid, projectId);
+      setBookmarkedIds(prev => new Set(prev).add(projectId));
+    }
+  };
 
   const avatarUrl =
     userData?.photoURL ||
@@ -746,8 +769,15 @@ export default function HomeScreen() {
                       </View>
                     )}
 
-                    <TouchableOpacity style={styles.bookmarkBtn}>
-                      <Ionicons name="bookmark-outline" size={16} color="#fff" />
+                    <TouchableOpacity
+                      style={styles.bookmarkBtn}
+                      onPress={() => toggleBookmark(projectId)}
+                    >
+                      <Ionicons
+                        name={bookmarkedIds.has(projectId) ? "bookmark" : "bookmark-outline"}
+                        size={16}
+                        color="#fff"
+                      />
                     </TouchableOpacity>
 
                     <View style={styles.projectOverlayInfo}>

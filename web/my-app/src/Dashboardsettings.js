@@ -11,7 +11,7 @@ const DEFAULTS = {
   projectUploadOpen: true,
   autoApprove: false,
   maxProjectsPerUserPerDay: 3,
-  maxMessagesPerDay: 3,        // ← جديد
+  maxMessagesPerDay: 3,
   contactOpen: true,
   suspensionDuration: 7,
   suspensionUnit: "days",
@@ -91,7 +91,6 @@ function Toggle({ checked, onChange, label, sublabel }) {
   )
 }
 
-// ─── Stepper (reusable) ───────────────────────────────────────────────────────
 function Stepper({ label, sublabel, value, onChange, min = 1, max = 20, suffix = "" }) {
   const btnStyle = {
     width: "38px", height: "38px", borderRadius: "50%",
@@ -148,7 +147,6 @@ function Stepper({ label, sublabel, value, onChange, min = 1, max = 20, suffix =
   )
 }
 
-// ─── Suspension Duration Picker ───────────────────────────────────────────────
 const UNIT_OPTIONS = [
   { value: "seconds", label: "Seconds" },
   { value: "minutes", label: "Minutes" },
@@ -255,7 +253,6 @@ function SuspensionDurationPicker({ duration, unit, onDurationChange, onUnitChan
     </div>
   )
 }
-// ─────────────────────────────────────────────────────────────────────────────
 
 function UploadOptionManager({ label, sublabel, listName, items, role, onItemsChange, showToast }) {
   const [input, setInput] = useState("")
@@ -437,10 +434,13 @@ function DashboardSettings({ onBack }) {
     })
   }, [])
 
+  // ── أغلق الـ sidebar لما تضغط بره ──
   useEffect(() => {
     if (!sidebarOpen) return
     const handler = (e) => {
-      if (!e.target.closest("#sidebar")) setSidebarOpen(false)
+      if (!e.target.closest("#sidebar") && !e.target.closest(".ds-hamburger-btn")) {
+        setSidebarOpen(false)
+      }
     }
     document.addEventListener("mousedown", handler)
     document.addEventListener("touchstart", handler)
@@ -475,10 +475,6 @@ function DashboardSettings({ onBack }) {
           from { opacity: 0; transform: translateY(14px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        @keyframes sidebarIn {
-          from { transform: translateX(-100%); }
-          to   { transform: translateX(0); }
-        }
         * { box-sizing: border-box; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -493,16 +489,12 @@ function DashboardSettings({ onBack }) {
           }
           .ds-sidebar.open {
             transform: translateX(0) !important;
-            animation: none !important;
           }
           .ds-main {
             margin-left: 0 !important;
             padding: 72px 16px 32px !important;
           }
-          .ds-overlay {
-            display: block !important;
-          }
-          .ds-hamburger {
+          .ds-hamburger-btn {
             display: flex !important;
           }
         }
@@ -510,10 +502,7 @@ function DashboardSettings({ onBack }) {
           .ds-sidebar {
             transform: translateX(0) !important;
           }
-          .ds-hamburger {
-            display: none !important;
-          }
-          .ds-overlay {
+          .ds-hamburger-btn {
             display: none !important;
           }
         }
@@ -521,19 +510,21 @@ function DashboardSettings({ onBack }) {
 
       <Toast toast={toast} />
 
-      <div
-        className="ds-overlay"
-        onClick={() => setSidebarOpen(false)}
-        style={{
-          display: "none",
-          position: "fixed", inset: 0,
-          backgroundColor: "rgba(0,0,0,0.35)",
-          zIndex: 99,
-        }}
-      />
+      {/* ── Overlay: بس لما السيدبار مفتوح ── */}
+      {isMobile && sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{
+            position: "fixed", inset: 0,
+            backgroundColor: "rgba(0,0,0,0.35)",
+            zIndex: 99,
+          }}
+        />
+      )}
 
+      {/* ── Hamburger ── */}
       <button
-        className="ds-hamburger"
+        className="ds-hamburger-btn"
         onClick={() => setSidebarOpen((v) => !v)}
         style={{
           display: "none",
@@ -734,7 +725,6 @@ function DashboardSettings({ onBack }) {
                 />
               </SectionCard>
 
-              {/* ── Suspension Duration ── */}
               <SectionCard icon="🚫" title="User Suspension">
                 <SuspensionDurationPicker
                   duration={settings.suspensionDuration}
@@ -744,7 +734,6 @@ function DashboardSettings({ onBack }) {
                 />
               </SectionCard>
 
-              {/* ── Contact & Messaging ── */}
               <SectionCard icon="✉️" title="Contact & Messaging">
                 <Toggle
                   checked={settings.contactOpen}
@@ -753,7 +742,6 @@ function DashboardSettings({ onBack }) {
                   sublabel="When disabled, users cannot send messages through the contact form"
                 />
 
-                {/* ── Max messages per day stepper ── */}
                 <Stepper
                   label="Max Messages Per User Per Day"
                   sublabel="Maximum number of contact messages each email can send in a single day"
@@ -764,7 +752,6 @@ function DashboardSettings({ onBack }) {
                   suffix={`messages per email per day (max 20)`}
                 />
 
-                {/* ── Status card ── */}
                 <div style={{
                   marginTop: "16px",
                   padding: "10px 14px",

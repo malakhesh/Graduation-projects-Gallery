@@ -81,7 +81,14 @@ async function resetPass(email) {
   try {
     await sendPasswordResetEmail(auth, email)
     return "reset-sent"
-  } catch { return "reset-fail" }
+  } catch (err) {
+    console.error("RESET ERROR CODE:", err.code)
+    console.error("RESET ERROR MSG:", err.message)
+    if (err.code === "auth/user-not-found")   return "no-user"
+    if (err.code === "auth/invalid-email")     return "invalid-email"
+    if (err.code === "auth/too-many-requests") return "too-many-requests"
+    return "reset-fail"
+  }
 }
 
 async function logOut() {

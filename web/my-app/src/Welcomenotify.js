@@ -15,7 +15,6 @@ function ensureFont() {
   link.href = FONT_HREF;
   document.head.appendChild(link);
 
-  // Inject a scoped style with !important so app-level font overrides can't win
   if (!document.querySelector("#welcome-modal-sig-style")) {
     const style = document.createElement("style");
     style.id = "welcome-modal-sig-style";
@@ -149,9 +148,9 @@ const PAGES = [
           category, tech stack, or tag to narrow things down.
         </Row>
         <Row S={S} icon="✨">
-          <strong style={S.strong}>Personalised picks</strong> — head to your{" "}
-          <strong style={S.strong}>Settings</strong> and fill in your
-          preferences for tailored home page recommendations.
+          <strong style={S.strong}>Personalised picks</strong> — our AI studies
+          what you browse and recommends projects tailored to your taste, right on
+          your home page.
         </Row>
       </>
     ),
@@ -245,8 +244,8 @@ const PAGES = [
           </p>
 
           <p style={{ fontFamily: "'Great Vibes', cursive", fontSize: 34, color: "rgb(104,68,42)", margin: 0, lineHeight: 1.3, letterSpacing: 2 }}>
-          The Development Team
-        </p>
+            The Development Team
+          </p>
         </div>
       </>
     ),
@@ -360,26 +359,47 @@ export default function WelcomeModal({ onClose }) {
     return () => clearTimeout(t);
   }, []);
 
-  const navigate = (dir) => {
-    const next = current + dir;
-    if (next < 0) return;
-    if (next >= TOTAL) {
-      handleClose();
-      return;
-    }
-    setContentKey((k) => k + 1);
-    setCurrent(next);
-  };
+  const navigate = useCallback((dir) => {
+    setCurrent((prev) => {
+      const next = prev + dir;
+      if (next < 0) return prev; // clamp at start
+      if (next >= TOTAL) {
+        // close on forward past last page
+        setVisible(false);
+        setTimeout(onClose, 300);
+        return prev;
+      }
+      setContentKey((k) => k + 1);
+      return next;
+    });
+  }, [onClose]);
+
+  // ── Keyboard navigation ──────────────────
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "Escape") {
+        handleClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [navigate]);
 
   const handleClose = () => {
     setVisible(false);
     setTimeout(onClose, 300);
   };
 
-  /* ── shared style tokens (font sizes bumped up) ── */
+  /* ── shared style tokens ── */
   const S = {
     text: {
-      fontSize: 15.5,           // was 13.5
+      fontSize: 15.5,
       color: "var(--text-secondary)",
       lineHeight: 1.8,
       margin: 0,
@@ -390,7 +410,7 @@ export default function WelcomeModal({ onClose }) {
       padding: "10px 14px",
       background: `rgba(${page.spotColor},0.07)`,
       borderRadius: "0 8px 8px 0",
-      fontSize: 15,             // was 13
+      fontSize: 15,
       color: "var(--text-secondary)",
       lineHeight: 1.65,
       fontFamily: "'EB Garamond', serif",
@@ -400,7 +420,7 @@ export default function WelcomeModal({ onClose }) {
       border: "1px solid var(--border)",
       borderRadius: 20,
       padding: "5px 14px",
-      fontSize: 13.5,           // was 12
+      fontSize: 13.5,
       color: "var(--text-secondary)",
       fontWeight: 500,
     },
@@ -443,7 +463,7 @@ export default function WelcomeModal({ onClose }) {
       marginTop: 2,
     },
     rowText: {
-      fontSize: 15.5,           // was 13.5
+      fontSize: 15.5,
       color: "var(--text-secondary)",
       lineHeight: 1.7,
       margin: 0,
@@ -578,7 +598,7 @@ export default function WelcomeModal({ onClose }) {
           {/* Subtitle */}
           <p
             style={{
-              fontSize: 12,             // was 11
+              fontSize: 12,
               color: "var(--text-muted)",
               fontWeight: 600,
               textTransform: "uppercase",
@@ -594,7 +614,7 @@ export default function WelcomeModal({ onClose }) {
           <h2
             style={{
               fontFamily: "'Playfair Display', serif",
-              fontSize: 25,             // was 23
+              fontSize: 25,
               fontWeight: 600,
               color: "var(--text-primary)",
               margin: 0,
@@ -621,7 +641,7 @@ export default function WelcomeModal({ onClose }) {
         >
           <button
             style={{
-              fontSize: 14,             // was 13
+              fontSize: 14,
               fontWeight: 500,
               padding: "9px 20px",
               borderRadius: 20,
@@ -642,7 +662,7 @@ export default function WelcomeModal({ onClose }) {
 
           <span
             style={{
-              fontSize: 12,             // was 11
+              fontSize: 12,
               color: "var(--text-muted)",
               letterSpacing: "1.2px",
               fontFamily: "'EB Garamond', serif",
@@ -653,7 +673,7 @@ export default function WelcomeModal({ onClose }) {
 
           <button
             style={{
-              fontSize: 14,             // was 13
+              fontSize: 14,
               fontWeight: 600,
               padding: "9px 22px",
               borderRadius: 20,

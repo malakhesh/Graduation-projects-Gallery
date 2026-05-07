@@ -80,7 +80,7 @@ IMPORTANT FORMAT (STRICT):
       throw new Error("Empty AI response")
     }
 
-    console.log("📝 AI RAW content:", aiText)
+    console.log(" AI RAW content:", aiText)
 
     const cleanJson = aiText
       .replace(/```json/g, "")

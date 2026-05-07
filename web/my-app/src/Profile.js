@@ -14,8 +14,10 @@ import {
   FaBars, FaBell, FaBookmark
 } from "react-icons/fa";
 
+const CLOUDINARY_CLOUD = "df4nquqin";
+const CLOUDINARY_PRESET = "snqtqhha";
 
-function Navbar({ isAdmin }) {
+function Navbar({ isAdmin, photoURL }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -69,6 +71,8 @@ function Navbar({ isAdmin }) {
 
   const handleLogout = async () => { await logOut(); navigate('/'); };
   const closeSidebar = () => setSidebarOpen(false);
+
+  const avatarUrl = photoURL || user?.photoURL || null;
 
   return (
     <>
@@ -129,8 +133,8 @@ function Navbar({ isAdmin }) {
           </div>
           <button className="pf-upload-btn" onClick={() => setShowUpload(true)}>Upload Project</button>
           <div className="pf-avatar-pill" ref={dropdownRef} onClick={() => setDropdownOpen(!dropdownOpen)}>
-            {user?.photoURL
-              ? <img src={user.photoURL} alt="avatar" className="pf-nav-avatar" />
+            {avatarUrl
+              ? <img src={avatarUrl} alt="avatar" className="pf-nav-avatar" />
               : <div className="pf-nav-avatar-placeholder"><FaUser /></div>
             }
             <FaChevronDown className={`pf-dropdown-arrow ${dropdownOpen ? 'pf-arrow-up' : ''}`} />
@@ -199,6 +203,7 @@ function Profile() {
   const [projectCount, setProjectCount] = useState(0);
   const [violations, setViolations] = useState(0);
   const [photoPreview, setPhotoPreview] = useState(null);
+  const [photoFile, setPhotoFile] = useState(null);
   const photoRef = useRef();
 
   const [bio, setBio] = useState('');
@@ -244,26 +249,58 @@ function Profile() {
 
   const handleConfirm = async () => {
     setSaving(true); setSaveError(null);
+
+    let photoURL = profileData?.photoURL || user?.photoURL || null;
+
+    if (photoFile) {
+      try {
+        const formData = new FormData();
+        formData.append("file", photoFile);
+        formData.append("upload_preset", CLOUDINARY_PRESET);
+        const res = await fetch(
+          `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`,
+          { method: "POST", body: formData }
+        );
+        const data = await res.json();
+        photoURL = data.secure_url;
+      } catch {
+        setSaving(false);
+        setSaveError("Photo upload failed. Please try again.");
+        return;
+      }
+    }
+
     const result = await updateUser(user.uid, {
-      bio: tempBio, year: tempYear,
+      bio: tempBio,
+      year: tempYear,
+      photoURL,
       socialLinks: { github: tempGithub, linkedin: tempLinkedin, portfolio: tempPortfolio }
     });
+
     setSaving(false);
     if (result === "update-fail") { setSaveError("Failed to save. Please try again."); return; }
+
     setBio(tempBio); setYear(tempYear); setGithub(tempGithub);
     setLinkedin(tempLinkedin); setPortfolio(tempPortfolio);
+    setProfileData((prev) => ({ ...prev, photoURL }));
+    setPhotoFile(null);
     setEditing(false);
   };
 
-  const handleCancel = () => { setEditing(false); setSaveError(null); };
+  const handleCancel = () => {
+    setEditing(false);
+    setSaveError(null);
+    setPhotoFile(null);
+    setPhotoPreview(null);
+  };
 
   const displayName = user?.displayName || profileData?.name || "User";
   const email = user?.email || "";
-  const avatarSrc = user?.photoURL || null;
+  const avatarSrc = photoPreview || profileData?.photoURL || user?.photoURL || null;
 
   return (
     <div className="pf-page">
-      <Navbar isAdmin={isAdmin} />
+      <Navbar isAdmin={isAdmin} photoURL={avatarSrc} />
       <main className="pf-main-content">
         {loading ? (
           <div className="pf-spinner-wrapper"><div className="pf-spinner" /></div>
@@ -284,9 +321,7 @@ function Profile() {
 
             <div className="pf-card-left">
               <div className="pf-avatar-wrapper-edit">
-                {photoPreview
-                  ? <img src={photoPreview} alt="Profile" className="pf-avatar" />
-                  : avatarSrc
+                {avatarSrc
                   ? <img src={avatarSrc} alt="Profile" className="pf-avatar" />
                   : <div className="pf-avatar-placeholder"><FaUser /></div>
                 }
@@ -297,7 +332,10 @@ function Profile() {
                 )}
                 <input ref={photoRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
                   const file = e.target.files[0];
-                  if (file) setPhotoPreview(URL.createObjectURL(file));
+                  if (file) {
+                    setPhotoFile(file);
+                    setPhotoPreview(URL.createObjectURL(file));
+                  }
                 }} />
               </div>
             </div>
