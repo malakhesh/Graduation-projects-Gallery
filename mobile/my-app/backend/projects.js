@@ -3,7 +3,7 @@ import {
 } from "firebase/firestore"
 import { db } from "./firebase.js"
 
-// 🔥 ADD PROJECT (عدلنا هنا)
+// 🔥 ADD PROJECT
 async function addProj(title, desc, userId, year, stack, category, gitLink, imgUrl, tags) {
   try {
     const r = await addDoc(collection(db, "projects"), {
@@ -20,7 +20,7 @@ async function addProj(title, desc, userId, year, stack, category, gitLink, imgU
       comments: [],
       ratings: [],
       status: "pending",
-      hidden: false // ✅ الجديد
+      hidden: false
     })
     return r.id
   } catch {
@@ -28,18 +28,28 @@ async function addProj(title, desc, userId, year, stack, category, gitLink, imgU
   }
 }
 
-// 🔥 TOGGLE HIDE (جديد)
+// 🔥 TOGGLE HIDE (محدثة)
 async function toggleHideProject(id, value) {
   try {
-    await updateDoc(doc(db, "projects", id), {
-      hidden: value
+    const projectRef = doc(db, "projects", id)
+    await updateDoc(projectRef, {
+      hidden: value,
+      updatedAt: serverTimestamp()
     })
+    
+    // إرجاع المشروع المحدث
+    const updatedDoc = await getDoc(projectRef)
+    if (updatedDoc.exists()) {
+      return { id: updatedDoc.id, ...updatedDoc.data() }
+    }
     return "hide-ok"
-  } catch {
+  } catch (error) {
+    console.error("Error in toggleHideProject:", error)
     return "hide-fail"
   }
 }
 
+// 🔥 GET SINGLE PROJECT
 async function getProj(id) {
   try {
     const d = await getDoc(doc(db, "projects", id))
@@ -50,6 +60,7 @@ async function getProj(id) {
   }
 }
 
+// 🔥 GET USER PROJECTS
 async function getUserProjs(uid) {
   try {
     const q = query(collection(db, "projects"), where("userId", "==", uid))
@@ -62,6 +73,7 @@ async function getUserProjs(uid) {
   }
 }
 
+// 🔥 DELETE PROJECT
 async function delProj(id) {
   try {
     await deleteDoc(doc(db, "projects", id))
@@ -71,6 +83,7 @@ async function delProj(id) {
   }
 }
 
+// 🔥 UPDATE PROJECT
 async function updProj(id, data) {
   try {
     await updateDoc(doc(db, "projects", id), data)
@@ -86,5 +99,5 @@ export {
   getUserProjs,
   delProj,
   updProj,
-  toggleHideProject // ✅ مهم
+  toggleHideProject
 }
