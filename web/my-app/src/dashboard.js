@@ -135,12 +135,13 @@ function useIsMobile(breakpoint = 768) {
 // ── ContactMessages sub-view ──────────────────────────────────────────────────
 
 function ContactMessages({ onBack }) {
-  const [messages, setMessages]     = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [selected, setSelected]     = useState(null);
-  const [filter, setFilter]         = useState("all");
+  const [messages, setMessages]       = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [selected, setSelected]       = useState(null);
+  const [filter, setFilter]           = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [timeFilter, setTimeFilter] = useState("all");
+  const [timeFilter, setTimeFilter]   = useState("all");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
 
   const fetchMessages = async () => {
@@ -208,22 +209,108 @@ function ContactMessages({ onBack }) {
     return true;
   };
 
-  const filtered = messages.filter((m) => {
-    if (filter === "unread" && m.status === "read")   return false;
-    if (filter === "read"   && m.status !== "read")   return false;
+  // ── UPDATED FILTER LOGIC ──────────────────────────────────────────────────
+  // Step 1: filter by search (name or email only) — if no query, use all messages
+  const searchResults = searchQuery.trim()
+    ? messages.filter((m) => {
+        const q = searchQuery.toLowerCase();
+        return (
+          (m.name  || "").toLowerCase().includes(q) ||
+          (m.email || "").toLowerCase().includes(q)
+        );
+      })
+    : messages;
+
+  // Step 2: apply read/unread + time filters ON TOP of search results
+  const filtered = searchResults.filter((m) => {
+    if (filter === "unread" && m.status === "read")  return false;
+    if (filter === "read"   && m.status !== "read")  return false;
     if (!passesTimeFilter(m)) return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const inName    = (m.name    || "").toLowerCase().includes(q);
-      const inEmail   = (m.email   || "").toLowerCase().includes(q);
-      const inMessage = (m.message || "").toLowerCase().includes(q);
-      if (!inName && !inEmail && !inMessage) return false;
-    }
     return true;
   });
+  // ─────────────────────────────────────────────────────────────────────────
 
   const unreadCount = messages.filter((m) => m.status !== "read").length;
   const readCount   = messages.filter((m) => m.status === "read").length;
+
+  const MobileDetailPanel = () => {
+    if (!selected) return null;
+    return (
+      <div style={{
+        position: "fixed", inset: 0, zIndex: 300,
+        backgroundColor: "#fdf6ee",
+        display: "flex", flexDirection: "column",
+        animation: "slideUp 0.3s ease",
+        overflowY: "auto",
+      }}>
+        <style>{`@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>
+        <div style={{
+          display: "flex", alignItems: "center", gap: "12px",
+          padding: "16px 20px",
+          borderBottom: "1px solid rgba(180,130,80,0.2)",
+          backgroundColor: "#fdf6ee",
+          position: "sticky", top: 0, zIndex: 10,
+        }}>
+          <button
+            onClick={() => setSelected(null)}
+            style={{
+              background: "none", border: "none", fontSize: "22px",
+              cursor: "pointer", color: "#6F4E37", lineHeight: 1,
+              padding: "4px 8px",
+            }}
+          >←</button>
+          <span style={{
+            fontFamily: "'Georgia', serif", fontSize: "17px",
+            fontWeight: "bold", color: "#3B1F0F", flex: 1,
+          }}>Message Details</span>
+          <button
+            onClick={() => handleDelete(selected.id)}
+            style={{
+              background: "rgba(192,57,43,0.08)", border: "1.5px solid rgba(192,57,43,0.25)",
+              color: "#c0392b", borderRadius: "8px",
+              padding: "6px 12px", cursor: "pointer",
+              fontSize: "13px", fontWeight: "700",
+            }}
+          >🗑 Delete</button>
+        </div>
+        <div style={{ padding: "24px 20px", display: "flex", flexDirection: "column", gap: "20px" }}>
+          <div>
+            <label style={{ fontSize: "11px", color: "#9a7050", textTransform: "uppercase", letterSpacing: "1px", display: "block", marginBottom: "4px" }}>Name</label>
+            <div style={{ fontSize: "17px", fontWeight: "700", color: "#3B2F2F" }}>{selected.name}</div>
+          </div>
+          <div>
+            <label style={{ fontSize: "11px", color: "#9a7050", textTransform: "uppercase", letterSpacing: "1px", display: "block", marginBottom: "4px" }}>Email</label>
+            <a href={`mailto:${selected.email}`} style={{ fontSize: "15px", color: "#6F4E37", fontWeight: "600", textDecoration: "none" }}>{selected.email}</a>
+          </div>
+          <div>
+            <label style={{ fontSize: "11px", color: "#9a7050", textTransform: "uppercase", letterSpacing: "1px", display: "block", marginBottom: "4px" }}>Date</label>
+            <div style={{ fontSize: "14px", color: "#5a4030" }}>{formatDate(selected.createdAt)}</div>
+          </div>
+          <div>
+            <label style={{ fontSize: "11px", color: "#9a7050", textTransform: "uppercase", letterSpacing: "1px", display: "block", marginBottom: "8px" }}>Message</label>
+            <div style={{
+              fontSize: "15px", color: "#3B2F2F", lineHeight: "1.8",
+              backgroundColor: "rgba(111,78,55,0.04)", borderRadius: "12px",
+              padding: "16px", border: "1px solid rgba(180,130,80,0.18)",
+              whiteSpace: "pre-wrap", wordBreak: "break-word",
+            }}>
+              {selected.message}
+            </div>
+          </div>
+          <a
+            href={`mailto:${selected.email}?subject=Re%3A%20Your%20Message&body=Hi%20${encodeURIComponent(selected.name)}%2C%0A%0A`}
+            style={{
+              display: "block", padding: "14px", borderRadius: "12px",
+              backgroundColor: "#6F4E37", color: "#fff",
+              fontWeight: "700", fontSize: "15px",
+              textDecoration: "none", textAlign: "center",
+              boxShadow: "0 4px 14px rgba(111,78,55,0.3)",
+            }}
+          >✉️ Reply via Email</a>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <>
@@ -237,21 +324,63 @@ function ContactMessages({ onBack }) {
         .msg-row:hover { background: rgba(111,78,55,0.08) !important; }
         .search-input::placeholder { color: #b09070; }
         .search-input:focus { outline: none; border-color: #6F4E37 !important; box-shadow: 0 0 0 3px rgba(111,78,55,0.12); }
-        .filter-btn:hover { background: rgba(111,78,55,0.08) !important; }
       `}</style>
+
+      {isMobile && <MobileDetailPanel />}
 
       <div style={{
         display: "flex", minHeight: "100vh",
         fontFamily: "'Poppins', sans-serif",
         background: "linear-gradient(to top, #dfc9aa, #f7f0e8)",
       }}>
+
+        {isMobile && (
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            style={{
+              position: "fixed", top: "14px", left: "14px", zIndex: 200,
+              width: "42px", height: "42px",
+              background: "#fdf6ee",
+              border: "1px solid rgba(111,78,55,0.25)",
+              borderRadius: "8px", cursor: "pointer",
+              display: "flex", flexDirection: "column",
+              justifyContent: "center", alignItems: "center", gap: "5px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+            }}
+          >
+            {[0, 1, 2].map((i) => (
+              <span key={i} style={{
+                display: "block", width: "20px", height: "2px",
+                backgroundColor: "#6F4E37", borderRadius: "2px",
+                transition: "all 0.3s",
+                transform: sidebarOpen
+                  ? i === 0 ? "translateY(7px) rotate(45deg)"
+                  : i === 2 ? "translateY(-7px) rotate(-45deg)"
+                  : "scaleX(0)"
+                  : "none",
+                opacity: sidebarOpen && i === 1 ? 0 : 1,
+              }} />
+            ))}
+          </button>
+        )}
+
+        {isMobile && sidebarOpen && (
+          <div onClick={() => setSidebarOpen(false)} style={{
+            position: "fixed", inset: 0, zIndex: 150,
+            backgroundColor: "rgba(0,0,0,0.3)",
+          }} />
+        )}
+
         <aside style={{
-          position: "fixed", left: 0, top: 0, bottom: 0, width: "200px",
+          position: "fixed",
+          left: isMobile ? (sidebarOpen ? 0 : "-220px") : 0,
+          top: 0, bottom: 0, width: "200px",
           background: "linear-gradient(to top, #dfc9aa, #f7f0e8)",
           borderRight: "2px solid rgba(111,78,55,0.15)",
           display: "flex", flexDirection: "column", justifyContent: "space-between",
-          padding: "24px 20px", zIndex: 100,
-          boxShadow: "4px 0 20px rgba(111,78,55,0.06)",
+          padding: "24px 20px", zIndex: 160,
+          boxShadow: isMobile && sidebarOpen ? "4px 0 20px rgba(111,78,55,0.12)" : "4px 0 20px rgba(111,78,55,0.06)",
+          transition: isMobile ? "left 0.3s ease" : "none",
         }}>
           <div>
             <h2 style={{
@@ -260,7 +389,7 @@ function ContactMessages({ onBack }) {
               marginBottom: "32px", textTransform: "uppercase",
             }}>Dashboard</h2>
             <button
-              onClick={onBack}
+              onClick={() => { onBack(); setSidebarOpen(false); }}
               style={{
                 width: "100%", textAlign: "left",
                 background: "none", border: "none",
@@ -311,20 +440,20 @@ function ContactMessages({ onBack }) {
         </aside>
 
         <main style={{
-          marginLeft: "200px", flex: 1,
-          padding: isMobile ? "32px 16px" : "40px 48px",
+          marginLeft: isMobile ? 0 : "200px", flex: 1,
+          padding: isMobile ? "72px 14px 32px" : "40px 48px",
           overflowY: "auto", minHeight: "100vh",
         }}>
           <div style={{ marginBottom: "24px", animation: "fadeUp 0.4s ease" }}>
             <h1 style={{
               fontFamily: "'Georgia', serif",
-              fontSize: "clamp(22px, 4vw, 30px)",
+              fontSize: isMobile ? "22px" : "30px",
               fontWeight: "bold", color: "#3B1F0F", margin: "0 0 6px",
             }}>User Messages</h1>
             <div style={{
               marginTop: "10px", height: "3px",
               background: "linear-gradient(to right, #6F4E37, #c9a882, transparent)",
-              borderRadius: "4px", width: "220px",
+              borderRadius: "4px", width: isMobile ? "160px" : "220px",
             }} />
           </div>
 
@@ -336,7 +465,7 @@ function ContactMessages({ onBack }) {
             <input
               className="search-input"
               type="text"
-              placeholder="Search by name, email or message…"
+              placeholder="Search by name or email…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
@@ -352,16 +481,26 @@ function ContactMessages({ onBack }) {
                 position: "absolute", right: "12px", top: "50%",
                 transform: "translateY(-50%)",
                 background: "none", border: "none",
-                cursor: "pointer", color: "#9a7050", fontSize: "16px", lineHeight: 1,
+                cursor: "pointer", color: "#9a7050", fontSize: "16px",
               }}>✕</button>
             )}
           </div>
 
+          {/* hint row — shows when searching */}
+          {searchQuery.trim() && (
+            <div style={{
+              fontSize: "12px", color: "#8a6a50", marginBottom: "10px",
+              fontStyle: "italic", animation: "fadeUp 0.3s ease",
+            }}>
+              🔎 Filters are applied to messages from "{searchQuery}" only
+            </div>
+          )}
+
           <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "10px", animation: "fadeUp 0.4s ease" }}>
             {[
-              { key: "all",    label: `All (${messages.length})` },
-              { key: "unread", label: `Unread (${unreadCount})` },
-              { key: "read",   label: `Read (${readCount})` },
+              { key: "all",    label: `All (${searchResults.length})` },
+              { key: "unread", label: `Unread (${searchResults.filter(m => m.status !== "read").length})` },
+              { key: "read",   label: `Read (${searchResults.filter(m => m.status === "read").length})` },
             ].map((t) => (
               <button key={t.key} onClick={() => setFilter(t.key)} style={{
                 padding: "6px 16px", borderRadius: "20px",
@@ -405,7 +544,7 @@ function ContactMessages({ onBack }) {
           ) : (
             <div style={{
               display: "grid",
-              gridTemplateColumns: selected ? (isMobile ? "1fr" : "1fr 1fr") : "1fr",
+              gridTemplateColumns: (!isMobile && selected) ? "1fr 1fr" : "1fr",
               gap: "16px", animation: "fadeUp 0.4s ease",
             }}>
               <div style={{
@@ -414,31 +553,39 @@ function ContactMessages({ onBack }) {
                 boxShadow: "0 4px 16px rgba(111,78,55,0.06)",
               }}>
                 {filtered.map((msg, idx) => (
-                  <div key={msg.id} className="msg-row" onClick={() => openMessage(msg)} style={{
-                    padding: "14px 18px",
-                    borderBottom: idx < filtered.length - 1 ? "1px solid rgba(200,168,130,0.18)" : "none",
-                    cursor: "pointer",
-                    backgroundColor: selected?.id === msg.id ? "rgba(111,78,55,0.1)" : msg.status !== "read" ? "rgba(111,78,55,0.03)" : "transparent",
-                    transition: "background 0.2s",
-                    display: "flex", alignItems: "flex-start", gap: "12px",
-                  }}>
+                  <div
+                    key={msg.id}
+                    className="msg-row"
+                    onClick={() => openMessage(msg)}
+                    style={{
+                      padding: isMobile ? "12px 14px" : "14px 18px",
+                      borderBottom: idx < filtered.length - 1 ? "1px solid rgba(200,168,130,0.18)" : "none",
+                      cursor: "pointer",
+                      backgroundColor: (!isMobile && selected?.id === msg.id) ? "rgba(111,78,55,0.1)"
+                        : msg.status !== "read" ? "rgba(111,78,55,0.03)" : "transparent",
+                      transition: "background 0.2s",
+                      display: "flex", alignItems: "flex-start", gap: "10px",
+                    }}
+                  >
                     <div style={{
-                      width: "8px", height: "8px", borderRadius: "50%",
+                      width: "8px", height: "8px", borderRadius: "50%", flexShrink: 0, marginTop: "6px",
                       backgroundColor: msg.status !== "read" ? "#e74c3c" : "transparent",
-                      flexShrink: 0, marginTop: "6px",
                     }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                         <span style={{ fontWeight: msg.status !== "read" ? "700" : "600", fontSize: "14px", color: "#3B2F2F" }}>{msg.name}</span>
-                        <span style={{ fontSize: "11px", color: "#9a7050" }}>{formatDate(msg.createdAt)}</span>
+                        <span style={{ fontSize: "11px", color: "#9a7050", flexShrink: 0 }}>{formatDate(msg.createdAt)}</span>
                       </div>
                       <div style={{ fontSize: "12px", color: "#6b5040", marginTop: "2px" }}>{msg.email}</div>
                       <div style={{ fontSize: "12px", color: "#8a6a50", marginTop: "4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{msg.message}</div>
                     </div>
-                    <button onClick={(e) => { e.stopPropagation(); handleDelete(msg.id); }} style={{
-                      background: "none", border: "none", color: "#c0392b", cursor: "pointer",
-                      fontSize: "16px", padding: "2px 6px", borderRadius: "6px", flexShrink: 0, transition: "background 0.2s",
-                    }}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDelete(msg.id); }}
+                      style={{
+                        background: "none", border: "none", color: "#c0392b",
+                        cursor: "pointer", fontSize: "16px", padding: "2px 6px",
+                        borderRadius: "6px", flexShrink: 0, transition: "background 0.2s",
+                      }}
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(192,57,43,0.1)"}
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
                       title="Delete"
@@ -447,7 +594,7 @@ function ContactMessages({ onBack }) {
                 ))}
               </div>
 
-              {selected && (
+              {!isMobile && selected && (
                 <div style={{
                   backgroundColor: "rgba(253,246,238,0.92)", borderRadius: "16px",
                   border: "1px solid rgba(200,168,130,0.25)", padding: "24px",
@@ -458,18 +605,16 @@ function ContactMessages({ onBack }) {
                     <h3 style={{ margin: 0, fontFamily: "'Georgia', serif", fontSize: "16px", color: "#3B1F0F" }}>Message Details</h3>
                     <button onClick={() => setSelected(null)} style={{ background: "none", border: "none", fontSize: "18px", cursor: "pointer", color: "#9a7050" }}>✕</button>
                   </div>
-                  <div style={{ marginBottom: "14px" }}>
-                    <label style={{ fontSize: "11px", color: "#9a7050", textTransform: "uppercase", letterSpacing: "1px", display: "block", marginBottom: "4px" }}>Name</label>
-                    <div style={{ fontSize: "15px", fontWeight: "700", color: "#3B2F2F" }}>{selected.name}</div>
-                  </div>
-                  <div style={{ marginBottom: "14px" }}>
-                    <label style={{ fontSize: "11px", color: "#9a7050", textTransform: "uppercase", letterSpacing: "1px", display: "block", marginBottom: "4px" }}>Email</label>
-                    <a href={`mailto:${selected.email}`} style={{ fontSize: "14px", color: "#6F4E37", fontWeight: "600", textDecoration: "none" }}>{selected.email}</a>
-                  </div>
-                  <div style={{ marginBottom: "14px" }}>
-                    <label style={{ fontSize: "11px", color: "#9a7050", textTransform: "uppercase", letterSpacing: "1px", display: "block", marginBottom: "4px" }}>Date</label>
-                    <div style={{ fontSize: "13px", color: "#5a4030" }}>{formatDate(selected.createdAt)}</div>
-                  </div>
+                  {[
+                    { label: "Name", content: <div style={{ fontSize: "15px", fontWeight: "700", color: "#3B2F2F" }}>{selected.name}</div> },
+                    { label: "Email", content: <a href={`mailto:${selected.email}`} style={{ fontSize: "14px", color: "#6F4E37", fontWeight: "600", textDecoration: "none" }}>{selected.email}</a> },
+                    { label: "Date", content: <div style={{ fontSize: "13px", color: "#5a4030" }}>{formatDate(selected.createdAt)}</div> },
+                  ].map(({ label, content }) => (
+                    <div key={label} style={{ marginBottom: "14px" }}>
+                      <label style={{ fontSize: "11px", color: "#9a7050", textTransform: "uppercase", letterSpacing: "1px", display: "block", marginBottom: "4px" }}>{label}</label>
+                      {content}
+                    </div>
+                  ))}
                   <div>
                     <label style={{ fontSize: "11px", color: "#9a7050", textTransform: "uppercase", letterSpacing: "1px", display: "block", marginBottom: "8px" }}>Message</label>
                     <div style={{ fontSize: "14px", color: "#3B2F2F", lineHeight: "1.8", backgroundColor: "rgba(111,78,55,0.04)", borderRadius: "10px", padding: "14px 16px", border: "1px solid rgba(180,130,80,0.18)", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
@@ -484,21 +629,16 @@ function ContactMessages({ onBack }) {
                         backgroundColor: "#6F4E37", color: "#fff", fontWeight: "700", fontSize: "13px",
                         textDecoration: "none", textAlign: "center",
                         boxShadow: "0 4px 12px rgba(111,78,55,0.28)",
-                        fontFamily: "'Poppins', sans-serif", display: "inline-block", transition: "background 0.2s, transform 0.2s",
+                        fontFamily: "'Poppins', sans-serif", display: "inline-block",
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#5a3825"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#6F4E37"; e.currentTarget.style.transform = "translateY(0)"; }}
                     >✉️ Reply</a>
                     <button onClick={() => handleDelete(selected.id)} style={{
                       padding: "10px 16px", borderRadius: "10px",
                       border: "1.5px solid rgba(192,57,43,0.3)",
                       backgroundColor: "rgba(192,57,43,0.07)", color: "#c0392b",
-                      fontWeight: "700", fontSize: "13px", cursor: "pointer", transition: "all 0.2s",
+                      fontWeight: "700", fontSize: "13px", cursor: "pointer",
                       fontFamily: "'Poppins', sans-serif",
-                    }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(192,57,43,0.15)"}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "rgba(192,57,43,0.07)"}
-                    >🗑 Delete</button>
+                    }}>🗑 Delete</button>
                   </div>
                 </div>
               )}
@@ -523,15 +663,17 @@ function Dashboard() {
   const [hoveredSignIn, setHoveredSignIn] = useState(false);
   const [hoveredSlice, setHoveredSlice]   = useState(null);
 
-  const [slices, setSlices]           = useState([]);
+  const [slices, setSlices]               = useState([]);
   const [totalProjects, setTotalProjects] = useState(0);
   const [loadingChart, setLoadingChart]   = useState(true);
 
-  const [pendingCount, setPendingCount]   = useState(0);
-  const [reportsCount, setReportsCount]   = useState(0);
-  const [reviewPct, setReviewPct]         = useState(0);
-  const [reportPct, setReportPct]         = useState(0);
+  const [pendingCount, setPendingCount]     = useState(0);
+  const [reportsCount, setReportsCount]     = useState(0);
+  const [reviewPct, setReviewPct]           = useState(0);
+  const [reportPct, setReportPct]           = useState(0);
   const [unreadMsgCount, setUnreadMsgCount] = useState(0);
+
+  const sliceTimeoutRef = React.useRef(null);
 
   useEffect(() => {
     if (!isMobile) setSidebarOpen(false);
@@ -603,7 +745,7 @@ function Dashboard() {
     backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
     borderRadius: "10px", border: "1px solid rgba(255,255,255,0.3)",
     boxShadow: hoveredBox === id ? "0 12px 28px rgba(0,0,0,0.28)" : "0 4px 16px rgba(0,0,0,0.14)",
-    height: isMobile ? "220px" : "270px",
+    height: isMobile ? "200px" : "270px",
     display: "flex", flexDirection: "column", justifyContent: "space-between",
     alignItems: "stretch", padding: isMobile ? "14px 16px" : "18px 20px",
     transform: hoveredBox === id ? "translateY(-8px) scale(1.03)" : "translateY(0) scale(1)",
@@ -620,6 +762,22 @@ function Dashboard() {
   ];
 
   const handleNavClick = (action) => { action(); setSidebarOpen(false); };
+
+  const handleSliceEnter = (id) => {
+    if (sliceTimeoutRef.current) clearTimeout(sliceTimeoutRef.current);
+    setHoveredSlice(id);
+  };
+
+  const handleSliceLeave = () => {
+    setHoveredSlice(null);
+  };
+
+  const handleSliceTouch = (e, id) => {
+    e.preventDefault();
+    if (sliceTimeoutRef.current) clearTimeout(sliceTimeoutRef.current);
+    setHoveredSlice(id);
+    sliceTimeoutRef.current = setTimeout(() => setHoveredSlice(null), 1500);
+  };
 
   const SidebarContent = () => (
     <>
@@ -679,6 +837,7 @@ function Dashboard() {
       fontFamily: "'Poppins', sans-serif",
       position: "relative",
     }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       {isMobile && (
         <button
@@ -752,8 +911,8 @@ function Dashboard() {
 
         <div style={{
           display: "flex", flexDirection: isMobile ? "column" : "row",
-          padding: isMobile ? "0 16px 24px" : "0 60px 30px",
-          gap: isMobile ? "16px" : "30px",
+          padding: isMobile ? "0 14px 24px" : "0 60px 30px",
+          gap: isMobile ? "12px" : "30px",
           flex: 1, alignItems: isMobile ? "stretch" : "center",
         }}>
 
@@ -761,18 +920,15 @@ function Dashboard() {
           <div style={getBoxStyle(1, "#f2e8db")}
             onMouseEnter={() => setHoveredBox(1)} onMouseLeave={() => setHoveredBox(null)}
             onClick={() => setView("review")}>
-            {/* ✅ FIX: removed overflow:hidden & whiteSpace:nowrap so title wraps */}
             <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
               <span style={{ fontSize: isMobile ? "18px" : "22px", flexShrink: 0, marginTop: "2px" }}>📋</span>
               <span style={{
-                fontSize: isMobile ? "15px" : "18px",
+                fontSize: isMobile ? "14px" : "18px",
                 fontWeight: "700", letterSpacing: "0.5px",
-                color: "#3B1F0F",
-                lineHeight: "1.3",
-                wordBreak: "break-word",
+                color: "#3B1F0F", lineHeight: "1.3", wordBreak: "break-word",
               }}>PROJECTS TO REVIEW</span>
             </div>
-            <div style={{ fontSize: isMobile ? "44px" : "56px", fontWeight: "800", color: "#3B2F2F", lineHeight: 1, textAlign: "center" }}>{pendingCount}</div>
+            <div style={{ fontSize: isMobile ? "40px" : "56px", fontWeight: "800", color: "#3B2F2F", lineHeight: 1, textAlign: "center" }}>{pendingCount}</div>
             <div>
               <div style={{ width: "100%", backgroundColor: "#d4b896", borderRadius: "10px", height: "8px", overflow: "hidden" }}>
                 <div style={{ width: `${reviewPct}%`, backgroundColor: "#6F4E37", height: "100%", borderRadius: "10px", transition: "width 0.5s ease" }} />
@@ -785,18 +941,15 @@ function Dashboard() {
           <div style={getBoxStyle(2, "#ece0ce")}
             onMouseEnter={() => setHoveredBox(2)} onMouseLeave={() => setHoveredBox(null)}
             onClick={() => setView("reports")}>
-            {/* ✅ FIX: removed overflow:hidden & whiteSpace:nowrap so title wraps */}
             <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
               <span style={{ fontSize: isMobile ? "18px" : "22px", flexShrink: 0, marginTop: "2px" }}>📝</span>
               <span style={{
-                fontSize: isMobile ? "15px" : "18px",
+                fontSize: isMobile ? "14px" : "18px",
                 fontWeight: "700", letterSpacing: "0.5px",
-                color: "#3B1F0F",
-                lineHeight: "1.3",
-                wordBreak: "break-word",
+                color: "#3B1F0F", lineHeight: "1.3", wordBreak: "break-word",
               }}>PROJECTS TO REPORT</span>
             </div>
-            <div style={{ fontSize: isMobile ? "44px" : "56px", fontWeight: "800", color: "#3B2F2F", lineHeight: 1, textAlign: "center" }}>{reportsCount}</div>
+            <div style={{ fontSize: isMobile ? "40px" : "56px", fontWeight: "800", color: "#3B2F2F", lineHeight: 1, textAlign: "center" }}>{reportsCount}</div>
             <div>
               <div style={{ width: "100%", backgroundColor: "#c8a882", borderRadius: "10px", height: "8px", overflow: "hidden" }}>
                 <div style={{ width: `${reportPct}%`, backgroundColor: "#5C4033", height: "100%", borderRadius: "10px", transition: "width 0.5s ease" }} />
@@ -809,10 +962,10 @@ function Dashboard() {
           <div style={getBoxStyle(3, "#eeddcc")}
             onMouseEnter={() => setHoveredBox(3)} onMouseLeave={() => setHoveredBox(null)}
             onClick={() => setView("messages")}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", overflow: "hidden", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <span style={{ fontSize: isMobile ? "18px" : "22px", flexShrink: 0 }}>✉️</span>
-                <span style={{ fontSize: isMobile ? "16px" : "22px", fontWeight: "700", letterSpacing: "0.5px", color: "#3B1F0F" }}>MESSAGES</span>
+                <span style={{ fontSize: isMobile ? "14px" : "22px", fontWeight: "700", letterSpacing: "0.5px", color: "#3B1F0F" }}>MESSAGES</span>
               </div>
               {unreadMsgCount > 0 && (
                 <span style={{
@@ -822,7 +975,7 @@ function Dashboard() {
                 }}>{unreadMsgCount} New</span>
               )}
             </div>
-            <div style={{ fontSize: isMobile ? "44px" : "56px", fontWeight: "800", color: "#3B2F2F", lineHeight: 1, textAlign: "center" }}>{unreadMsgCount}</div>
+            <div style={{ fontSize: isMobile ? "40px" : "56px", fontWeight: "800", color: "#3B2F2F", lineHeight: 1, textAlign: "center" }}>{unreadMsgCount}</div>
             <div style={{ fontSize: "13px", color: "#5C4033", textAlign: "center" }}>
               {unreadMsgCount === 0 ? "No new messages" : `${unreadMsgCount} unread message${unreadMsgCount > 1 ? "s" : ""}`}
             </div>
@@ -831,14 +984,13 @@ function Dashboard() {
           {/* Box 4 — Distribution */}
           <div style={getBoxStyle(4, "#e5d4be")}
             onMouseEnter={() => setHoveredBox(4)} onMouseLeave={() => setHoveredBox(null)}>
-            <p style={{ margin: "0", fontSize: isMobile ? "16px" : "22px", fontWeight: "bold", color: "#3B1F0F" }}>
+            <p style={{ margin: "0", fontSize: isMobile ? "14px" : "22px", fontWeight: "bold", color: "#3B1F0F" }}>
               Projects Distribution
             </p>
 
             {loadingChart ? (
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flex: 1 }}>
                 <div style={{ width: "32px", height: "32px", border: "4px solid #d4b896", borderTopColor: "#6F4E37", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
               </div>
             ) : slices.length === 0 ? (
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flex: 1, color: "#6F4E37", fontSize: "13px" }}>
@@ -847,7 +999,12 @@ function Dashboard() {
             ) : (
               <>
                 <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flex: 1, position: "relative" }}>
-                  <svg width={isMobile ? "140" : "170"} height={isMobile ? "140" : "170"} viewBox="0 0 140 140">
+                  <svg
+                    width={isMobile ? "120" : "170"}
+                    height={isMobile ? "120" : "170"}
+                    viewBox="0 0 140 140"
+                    style={{ touchAction: "none" }}
+                  >
                     {slices.map((slice) => {
                       const isHovered = hoveredSlice === slice.id;
                       const midRad = ((slice.midAngle - 90) * Math.PI) / 180;
@@ -856,12 +1013,17 @@ function Dashboard() {
                       const ty = offset * Math.sin(midRad);
                       const pctNum = parseInt(slice.percent);
                       return (
-                        <g key={slice.id}
-                          onMouseEnter={() => setHoveredSlice(slice.id)}
-                          onMouseLeave={() => setHoveredSlice(null)}
-                          style={{ cursor: "pointer" }}>
+                        <g
+                          key={slice.id}
+                          onMouseEnter={() => handleSliceEnter(slice.id)}
+                          onMouseLeave={handleSliceLeave}
+                          onTouchStart={(e) => handleSliceTouch(e, slice.id)}
+                          onTouchEnd={(e) => e.preventDefault()}
+                          style={{ cursor: "pointer" }}
+                        >
                           <path
-                            d={slice.path} fill={slice.color}
+                            d={slice.path}
+                            fill={slice.color}
                             opacity={isHovered ? 1 : 0.85}
                             transform={`translate(${tx},${ty})`}
                             style={{ transition: "all 0.25s ease" }}
@@ -886,7 +1048,12 @@ function Dashboard() {
                     const s = slices.find((sl) => sl.id === hoveredSlice);
                     return s ? (
                       <div style={{
-                        position: "absolute", top: "0px", right: "-10px",
+                        position: "absolute",
+                        top: isMobile ? "auto" : "0px",
+                        bottom: isMobile ? "calc(100% - 10px)" : "auto",
+                        right: isMobile ? "auto" : "-10px",
+                        left: isMobile ? "50%" : "auto",
+                        transform: isMobile ? "translateX(-50%)" : "none",
                         backgroundColor: "#3B2F2F", color: "white",
                         padding: "6px 10px", borderRadius: "8px",
                         fontSize: "12px", fontWeight: "bold",
@@ -899,15 +1066,15 @@ function Dashboard() {
                   })()}
                 </div>
 
-                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center", maxHeight: "52px", overflowY: "auto" }}>
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", justifyContent: "center", maxHeight: "42px", overflowY: "auto" }}>
                   {slices.map((slice) => (
                     <span key={slice.id} style={{
                       display: "flex", alignItems: "center", gap: "4px",
-                      fontSize: "10px", fontWeight: "bold",
+                      fontSize: isMobile ? "9px" : "10px", fontWeight: "bold",
                       opacity: hoveredSlice === slice.id ? 1 : 0.7,
                       transition: "opacity 0.25s ease", cursor: "default",
                     }}>
-                      <span style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: slice.color, display: "inline-block", flexShrink: 0 }} />
+                      <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: slice.color, display: "inline-block", flexShrink: 0 }} />
                       {slice.label}
                     </span>
                   ))}
