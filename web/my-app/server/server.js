@@ -14,7 +14,7 @@ console.log("🔑 OPENROUTER_API_KEY loaded:", process.env.OPENROUTER_API_KEY ? 
 
 const app = express()
 
-app.use(cors({ origin: "http://localhost:3000" })) // ✅ added here
+app.use(cors({ origin: "https://graduation-projects-gallery.vercel.app" }))
 app.use(express.json())
 
 app.use("/api/recommendations", recommendationsRouter)

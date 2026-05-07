@@ -46,7 +46,7 @@ IMPORTANT FORMAT (STRICT):
       method: "POST",
       headers: {
         "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-        "HTTP-Referer": "http://localhost:3000",
+        "HTTP-Referer": "https://graduation-projects-gallery.vercel.app",
         "X-Title": "Graduation Projects Gallery",
         "Content-Type": "application/json"
       },
