@@ -521,7 +521,6 @@ export default function SettingsScreen() {
     }
   };
 
-  // ─── Delete Account ─────────────────────────
   const handleDeleteAccount = async (password: string) => {
     const user = auth.currentUser;
 
