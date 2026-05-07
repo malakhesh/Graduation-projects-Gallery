@@ -209,20 +209,26 @@ function ContactMessages({ onBack }) {
     return true;
   };
 
-  const filtered = messages.filter((m) => {
-    if (filter === "unread" && m.status === "read")   return false;
-    if (filter === "read"   && m.status !== "read")   return false;
+  // ── UPDATED FILTER LOGIC ──────────────────────────────────────────────────
+  // Step 1: filter by search (name or email only) — if no query, use all messages
+  const searchResults = searchQuery.trim()
+    ? messages.filter((m) => {
+        const q = searchQuery.toLowerCase();
+        return (
+          (m.name  || "").toLowerCase().includes(q) ||
+          (m.email || "").toLowerCase().includes(q)
+        );
+      })
+    : messages;
+
+  // Step 2: apply read/unread + time filters ON TOP of search results
+  const filtered = searchResults.filter((m) => {
+    if (filter === "unread" && m.status === "read")  return false;
+    if (filter === "read"   && m.status !== "read")  return false;
     if (!passesTimeFilter(m)) return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      if (
-        !(m.name    || "").toLowerCase().includes(q) &&
-        !(m.email   || "").toLowerCase().includes(q) &&
-        !(m.message || "").toLowerCase().includes(q)
-      ) return false;
-    }
     return true;
   });
+  // ─────────────────────────────────────────────────────────────────────────
 
   const unreadCount = messages.filter((m) => m.status !== "read").length;
   const readCount   = messages.filter((m) => m.status === "read").length;
@@ -459,7 +465,7 @@ function ContactMessages({ onBack }) {
             <input
               className="search-input"
               type="text"
-              placeholder="Search by name, email or message…"
+              placeholder="Search by name or email…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
@@ -480,11 +486,21 @@ function ContactMessages({ onBack }) {
             )}
           </div>
 
+          {/* hint row — shows when searching */}
+          {searchQuery.trim() && (
+            <div style={{
+              fontSize: "12px", color: "#8a6a50", marginBottom: "10px",
+              fontStyle: "italic", animation: "fadeUp 0.3s ease",
+            }}>
+              🔎 Filters are applied to messages from "{searchQuery}" only
+            </div>
+          )}
+
           <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "10px", animation: "fadeUp 0.4s ease" }}>
             {[
-              { key: "all",    label: `All (${messages.length})` },
-              { key: "unread", label: `Unread (${unreadCount})` },
-              { key: "read",   label: `Read (${readCount})` },
+              { key: "all",    label: `All (${searchResults.length})` },
+              { key: "unread", label: `Unread (${searchResults.filter(m => m.status !== "read").length})` },
+              { key: "read",   label: `Read (${searchResults.filter(m => m.status === "read").length})` },
             ].map((t) => (
               <button key={t.key} onClick={() => setFilter(t.key)} style={{
                 padding: "6px 16px", borderRadius: "20px",
@@ -657,7 +673,6 @@ function Dashboard() {
   const [reportPct, setReportPct]           = useState(0);
   const [unreadMsgCount, setUnreadMsgCount] = useState(0);
 
-  // ── timeout ref لإخفاء الـ tooltip على الموبايل ──
   const sliceTimeoutRef = React.useRef(null);
 
   useEffect(() => {
@@ -748,7 +763,6 @@ function Dashboard() {
 
   const handleNavClick = (action) => { action(); setSidebarOpen(false); };
 
-  // ── handlers للـ pie slices تدعم موبايل ولاب ──
   const handleSliceEnter = (id) => {
     if (sliceTimeoutRef.current) clearTimeout(sliceTimeoutRef.current);
     setHoveredSlice(id);
@@ -1030,7 +1044,6 @@ function Dashboard() {
                     <text x="70" y="78" textAnchor="middle" fill="#6F4E37" fontSize="7">approved</text>
                   </svg>
 
-                  {/* Tooltip */}
                   {hoveredSlice && (() => {
                     const s = slices.find((sl) => sl.id === hoveredSlice);
                     return s ? (
