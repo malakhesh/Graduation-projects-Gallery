@@ -19,11 +19,15 @@ import { useTheme } from '../context/ThemeContext';
 import { Colors } from '../constants/theme';
 import { auth } from '../backend/firebase';
 import { getUser, updateUser } from '../backend/auth';
-import {
-  updateUserEmail,
-  updateUserPassword,
-  deleteAccount,
-} from '../backend/Dashsettings';
+import { 
+  EmailAuthProvider, 
+  reauthenticateWithCredential, 
+  updateEmail, 
+  updatePassword, 
+  deleteUser 
+} from 'firebase/auth';
+import { deleteDoc, doc } from 'firebase/firestore';
+import { db } from '../backend/firebase';
 import Toast from 'react-native-toast-message';
 
 // ─── Modal Component for Edit ─────────────────────────
@@ -47,6 +51,52 @@ function EditModal({ visible, onClose, title, value, onChangeText, onSave, loadi
             </TouchableOpacity>
             <TouchableOpacity style={[styles.modalButton, styles.saveButton, { backgroundColor: C.button }]} onPress={onSave} disabled={loading}>
               {loading ? <ActivityIndicator color="white" /> : <Text style={styles.saveButtonText}>Save</Text>}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+// ─── Re-authentication Modal ─────────────────────────
+function ReauthModal({ visible, onClose, onConfirm, loading, C, title, action }) {
+  const [password, setPassword] = useState('');
+
+  const handleConfirm = () => {
+    if (!password) {
+      Toast.show({ type: 'error', text1: 'Please enter your password' });
+      return;
+    }
+    onConfirm(password);
+    setPassword('');
+  };
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalContainer}>
+        <View style={[styles.modalContent, { backgroundColor: C.white }]}>
+          <Text style={[styles.modalTitle, { color: C.black }]}>{title}</Text>
+          <Text style={[styles.warningText, { color: C.black, marginBottom: 10 }]}>
+            For security, please confirm your password to {action}
+          </Text>
+          <TextInput
+            style={[styles.modalInput, { borderColor: C.border, color: C.black }]}
+            placeholder="Enter your password"
+            placeholderTextColor={C.link}
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+          <View style={styles.modalButtons}>
+            <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => {
+              setPassword('');
+              onClose();
+            }}>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.modalButton, styles.saveButton, { backgroundColor: C.button }]} onPress={handleConfirm} disabled={loading}>
+              {loading ? <ActivityIndicator color="white" /> : <Text style={styles.saveButtonText}>Confirm</Text>}
             </TouchableOpacity>
           </View>
         </View>
@@ -110,14 +160,16 @@ export default function SettingsScreen() {
   const [emailModal, setEmailModal] = useState(false);
   const [passwordModal, setPasswordModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
+  const [reauthModal, setReauthModal] = useState(false);
   
   // Input values
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
-  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [deletePassword, setDeletePassword] = useState('');
+  
+  // Pending action
+  const [pendingAction, setPendingAction] = useState(null);
 
   useEffect(() => {
     loadUserData();
@@ -134,6 +186,16 @@ export default function SettingsScreen() {
 
   const toast = (type, msg) =>
     Toast.show({ type, text1: msg });
+
+  // ─── Re-authenticate User ─────────────────────────
+  const reauthenticateUser = async (password) => {
+    const user = auth.currentUser;
+    if (!user) throw new Error('No user logged in');
+    
+    const credential = EmailAuthProvider.credential(user.email, password);
+    await reauthenticateWithCredential(user, credential);
+    return true;
+  };
 
   // ─── Update Name ─────────────────────────
   const handleUpdateName = async () => {
@@ -157,20 +219,27 @@ export default function SettingsScreen() {
     }
   };
 
-  // ─── Update Email ─────────────────────────
-  const handleUpdateEmail = async () => {
-    if (!newEmail.trim()) {
-      toast('error', 'Please enter an email');
-      return;
-    }
-    
+  // ─── Update Email (with reauthentication) ─────────────────────────
+  const handleUpdateEmail = async (password) => {
     setLoading(true);
     try {
-      await updateUserEmail(newEmail);
+      await reauthenticateUser(password);
+      const user = auth.currentUser;
+      await updateEmail(user, newEmail);
+      
+      // تحديث الاسم في Firestore
+      await updateUser(user.uid, { email: newEmail });
+      
       setCurrentEmail(newEmail);
       setEmailModal(false);
+      setReauthModal(false);
       setNewEmail('');
-      toast('success', 'Email updated successfully! Please verify your new email.');
+      toast('success', 'Email updated successfully! Please sign in again.');
+      
+      setTimeout(() => {
+        auth.signOut();
+        router.replace('/login');
+      }, 2000);
     } catch (error) {
       toast('error', error.message);
     } finally {
@@ -178,12 +247,8 @@ export default function SettingsScreen() {
     }
   };
 
-  // ─── Update Password ─────────────────────────
-  const handleUpdatePassword = async () => {
-    if (!currentPassword) {
-      toast('error', 'Please enter current password');
-      return;
-    }
+  // ─── Update Password (with reauthentication) ─────────────────────────
+  const handleUpdatePassword = async (password) => {
     if (!newPassword || newPassword.length < 6) {
       toast('error', 'Password must be at least 6 characters');
       return;
@@ -195,12 +260,20 @@ export default function SettingsScreen() {
     
     setLoading(true);
     try {
-      await updateUserPassword(currentPassword, newPassword);
+      await reauthenticateUser(password);
+      const user = auth.currentUser;
+      await updatePassword(user, newPassword);
+      
       setPasswordModal(false);
-      setCurrentPassword('');
+      setReauthModal(false);
       setNewPassword('');
       setConfirmPassword('');
-      toast('success', 'Password updated successfully!');
+      toast('success', 'Password updated successfully! Please sign in again.');
+      
+      setTimeout(() => {
+        auth.signOut();
+        router.replace('/login');
+      }, 2000);
     } catch (error) {
       toast('error', error.message);
     } finally {
@@ -208,18 +281,23 @@ export default function SettingsScreen() {
     }
   };
 
-  // ─── Delete Account ─────────────────────────
-  const handleDeleteAccount = async () => {
-    if (!deletePassword) {
-      toast('error', 'Please enter your password to confirm');
-      return;
-    }
-    
+  // ─── Delete Account (with reauthentication) ─────────────────────────
+  const handleDeleteAccount = async (password) => {
     setLoading(true);
     try {
-      await deleteAccount(deletePassword);
+      const user = auth.currentUser;
+      await reauthenticateUser(password);
+      
+      // حذف بيانات المستخدم من Firestore
+      await deleteDoc(doc(db, "users", user.uid));
+      
+      // حذف المستخدم من Firebase Auth
+      await deleteUser(user);
+      
       setDeleteModal(false);
+      setReauthModal(false);
       toast('success', 'Account deleted successfully');
+      
       setTimeout(() => {
         router.replace('/login');
       }, 1500);
@@ -243,13 +321,27 @@ export default function SettingsScreen() {
     ]);
   };
 
+  const openReauthModal = (action, data) => {
+    setPendingAction({ action, data });
+    setReauthModal(true);
+  };
+
+  const handleReauthConfirm = async (password) => {
+    if (pendingAction?.action === 'email') {
+      await handleUpdateEmail(password);
+    } else if (pendingAction?.action === 'password') {
+      await handleUpdatePassword(password);
+    } else if (pendingAction?.action === 'delete') {
+      await handleDeleteAccount(password);
+    }
+    setPendingAction(null);
+  };
+
   const Chevron = () => <Text style={{ fontSize: 22, color: C.link }}>›</Text>;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
       <ScrollView>
-
-        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Settings</Text>
         </View>
@@ -302,7 +394,9 @@ export default function SettingsScreen() {
             icon="📧"
             label="Email"
             sublabel={currentEmail}
-            onPress={() => setEmailModal(true)}
+            onPress={() => {
+              setEmailModal(true);
+            }}
             right={<Chevron />}
             C={C}
           />
@@ -334,10 +428,9 @@ export default function SettingsScreen() {
             C={C}
           />
         </Section>
-
       </ScrollView>
 
-      {/* Modals */}
+      {/* Name Modal */}
       <EditModal
         visible={nameModal}
         onClose={() => setNameModal(false)}
@@ -349,13 +442,14 @@ export default function SettingsScreen() {
         C={C}
       />
 
+      {/* Email Modal */}
       <EditModal
         visible={emailModal}
         onClose={() => setEmailModal(false)}
         title="Email"
         value={newEmail}
         onChangeText={setNewEmail}
-        onSave={handleUpdateEmail}
+        onSave={() => openReauthModal('email')}
         loading={loading}
         C={C}
       />
@@ -365,15 +459,6 @@ export default function SettingsScreen() {
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalContainer}>
           <View style={[styles.modalContent, { backgroundColor: C.white }]}>
             <Text style={[styles.modalTitle, { color: C.black }]}>Change Password</Text>
-            
-            <TextInput
-              style={[styles.modalInput, { borderColor: C.border, color: C.black }]}
-              placeholder="Current Password"
-              placeholderTextColor={C.link}
-              secureTextEntry
-              value={currentPassword}
-              onChangeText={setCurrentPassword}
-            />
             
             <TextInput
               style={[styles.modalInput, { borderColor: C.border, color: C.black }]}
@@ -396,13 +481,12 @@ export default function SettingsScreen() {
             <View style={styles.modalButtons}>
               <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => {
                 setPasswordModal(false);
-                setCurrentPassword('');
                 setNewPassword('');
                 setConfirmPassword('');
               }}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, styles.saveButton, { backgroundColor: C.button }]} onPress={handleUpdatePassword} disabled={loading}>
+              <TouchableOpacity style={[styles.modalButton, styles.saveButton, { backgroundColor: C.button }]} onPress={() => openReauthModal('password')} disabled={loading}>
                 {loading ? <ActivityIndicator color="white" /> : <Text style={styles.saveButtonText}>Update</Text>}
               </TouchableOpacity>
             </View>
@@ -419,23 +503,11 @@ export default function SettingsScreen() {
               This action is irreversible! All your data will be permanently deleted.
             </Text>
             
-            <TextInput
-              style={[styles.modalInput, { borderColor: C.border, color: C.black }]}
-              placeholder="Enter your password to confirm"
-              placeholderTextColor={C.link}
-              secureTextEntry
-              value={deletePassword}
-              onChangeText={setDeletePassword}
-            />
-            
             <View style={styles.modalButtons}>
-              <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => {
-                setDeleteModal(false);
-                setDeletePassword('');
-              }}>
+              <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => setDeleteModal(false)}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, { backgroundColor: 'red' }]} onPress={handleDeleteAccount} disabled={loading}>
+              <TouchableOpacity style={[styles.modalButton, { backgroundColor: 'red' }]} onPress={() => openReauthModal('delete')} disabled={loading}>
                 {loading ? <ActivityIndicator color="white" /> : <Text style={styles.saveButtonText}>Delete Forever</Text>}
               </TouchableOpacity>
             </View>
@@ -443,12 +515,29 @@ export default function SettingsScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
+      {/* Re-authentication Modal */}
+      <ReauthModal
+        visible={reauthModal}
+        onClose={() => {
+          setReauthModal(false);
+          setPendingAction(null);
+        }}
+        onConfirm={handleReauthConfirm}
+        loading={loading}
+        C={C}
+        title="Confirm Password"
+        action={
+          pendingAction?.action === 'email' ? 'change your email' :
+          pendingAction?.action === 'password' ? 'change your password' :
+          'delete your account'
+        }
+      />
+
       <Toast />
     </SafeAreaView>
   );
 }
 
-// ─── Styles ─────────────────────────
 const styles = StyleSheet.create({
   header: {
     padding: 20,
