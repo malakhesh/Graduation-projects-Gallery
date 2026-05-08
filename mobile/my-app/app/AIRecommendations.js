@@ -7,7 +7,6 @@ const API_BASE =
 
 const TARGET_COUNT = 10;
 
-// جيب projects إضافية من Firebase مباشرة عشان نكمّل لـ 10
 async function fetchExtraFromFirebase(existingIds, needed) {
   try {
     const snap = await getDocs(collection(db, "projects"));
@@ -18,7 +17,6 @@ async function fetchExtraFromFirebase(existingIds, needed) {
 
       const data = d.data();
 
-      // بس البروجيكتس اللي عندها صورة
       const image = data.image || data.imgUrl || "";
       if (!image) continue;
 
@@ -90,7 +88,6 @@ export function useAIRecommendations() {
       const data = await response.json();
 
       if (data.success) {
-        // شيل التكرار
         const seen = new Set();
 
         const rawProjects = (data.projects || []).filter((p) => {
@@ -99,7 +96,6 @@ export function useAIRecommendations() {
           return true;
         });
 
-        // normalize البروجيكتس اللي جت من السيرفر
         const normalized = await Promise.all(
           rawProjects.map(async (p) => {
             let image = p.image || p.imgUrl || "";
@@ -149,7 +145,6 @@ export function useAIRecommendations() {
           })
         );
 
-        // لو أقل من 10، كمّل من Firebase
         let finalProjects = normalized;
 
         if (normalized.length < TARGET_COUNT) {
