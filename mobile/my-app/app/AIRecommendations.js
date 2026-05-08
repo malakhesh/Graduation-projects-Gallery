@@ -1,32 +1,22 @@
 import { useState, useEffect, useCallback } from "react";
 import { auth, db } from "../backend/firebase";
 import { doc, getDoc, collection, getDocs } from "firebase/firestore";
-import Constants from "expo-constants";
 
-const getBaseUrl = () => {
-  // For development with Expo Go
-  const hostUri = Constants.expoConfig?.hostUri;
-  if (hostUri) {
-    const ip = hostUri.split(":")[0];
-    return `http://${ip}:3000`;
-  }
-  
-  // Fallback - you can set your IP here
-  return "http://192.168.1.32:3000";
-};
+const API_BASE =
+  "https://graduation-projects-gallery-production.up.railway.app";
 
-const BASE_URL = getBaseUrl();
 const TARGET_COUNT = 10;
 
-// جيب projects إضافية من Firebase مباشرة عشان نكمّل لـ 10
 async function fetchExtraFromFirebase(existingIds, needed) {
   try {
     const snap = await getDocs(collection(db, "projects"));
     const extra = [];
+
     for (const d of snap.docs) {
       if (existingIds.has(d.id)) continue;
+
       const data = d.data();
-      // بس البروجيكتس اللي عندها صورة
+
       const image = data.image || data.imgUrl || "";
       if (!image) continue;
 
@@ -49,7 +39,9 @@ async function fetchExtraFromFirebase(existingIds, needed) {
               )
             : ratings.length > 0
             ? parseFloat(
-                (ratings.reduce((s, v) => s + v, 0) / ratings.length).toFixed(1)
+                (
+                  ratings.reduce((s, v) => s + v, 0) / ratings.length
+                ).toFixed(1)
               )
             : 0,
         comments: Array.isArray(data.comments) ? data.comments.length : 0,
@@ -62,6 +54,7 @@ async function fetchExtraFromFirebase(existingIds, needed) {
 
       if (extra.length >= needed) break;
     }
+
     return extra;
   } catch (e) {
     console.warn("fetchExtraFromFirebase failed:", e.message);
@@ -81,25 +74,28 @@ export function useAIRecommendations() {
 
     try {
       const user = auth.currentUser;
+
       if (!user) {
         setProjects([]);
         setLoading(false);
         return;
       }
 
-     const response = await fetch(`${BASE_URL}/api/recommendations/${user.uid}`);
+      const response = await fetch(
+        `${API_BASE}/api/recommendations/${user.uid}`
+      );
+
       const data = await response.json();
 
       if (data.success) {
-        // شيل التكرار
         const seen = new Set();
+
         const rawProjects = (data.projects || []).filter((p) => {
           if (seen.has(p.id)) return false;
           seen.add(p.id);
           return true;
         });
 
-        // normalize البروجيكتس اللي جت من السيرفر
         const normalized = await Promise.all(
           rawProjects.map(async (p) => {
             let image = p.image || p.imgUrl || "";
@@ -107,6 +103,7 @@ export function useAIRecommendations() {
             if (!image) {
               try {
                 const snap = await getDoc(doc(db, "projects", p.id));
+
                 if (snap.exists()) {
                   const d = snap.data();
                   image = d.image || d.imgUrl || "";
@@ -133,7 +130,9 @@ export function useAIRecommendations() {
                     )
                   : ratings.length > 0
                   ? parseFloat(
-                      (ratings.reduce((s, v) => s + v, 0) / ratings.length).toFixed(1)
+                      (
+                        ratings.reduce((s, v) => s + v, 0) / ratings.length
+                      ).toFixed(1)
                     )
                   : 0,
               comments: Array.isArray(p.comments) ? p.comments.length : 0,
@@ -146,12 +145,13 @@ export function useAIRecommendations() {
           })
         );
 
-        // لو أقل من 10، كمّل من Firebase
         let finalProjects = normalized;
+
         if (normalized.length < TARGET_COUNT) {
           const needed = TARGET_COUNT - normalized.length;
           const existingIds = new Set(normalized.map((p) => p.id));
           const extra = await fetchExtraFromFirebase(existingIds, needed);
+
           finalProjects = [...normalized, ...extra];
         }
 
@@ -171,16 +171,27 @@ export function useAIRecommendations() {
     fetchRecommendations();
   }, [fetchRecommendations]);
 
-  return { projects, loading, error, type, refresh: fetchRecommendations };
+  return {
+    projects,
+    loading,
+    error,
+    type,
+    refresh: fetchRecommendations,
+  };
 }
 
 export async function trackProjectView(projectId) {
   try {
     const user = auth.currentUser;
+
     if (!user || !projectId) return;
-    await fetch(`${BASE_URL}/api/recommendations/view/${user.uid}/${projectId}`, {
-      method: "POST",
-    });
+
+    await fetch(
+      `${API_BASE}/api/recommendations/view/${user.uid}/${projectId}`,
+      {
+        method: "POST",
+      }
+    );
   } catch (err) {
     console.warn("trackProjectView failed:", err.message);
   }
@@ -189,10 +200,16 @@ export async function trackProjectView(projectId) {
 export async function trackTagSearch(tag) {
   try {
     const user = auth.currentUser;
+
     if (!user || !tag) return;
+
     await fetch(
-      `${BASE_URL}/api/recommendations/search/${user.uid}/${encodeURIComponent(tag)}`,
-      { method: "POST" }
+      `${API_BASE}/api/recommendations/search/${user.uid}/${encodeURIComponent(
+        tag
+      )}`,
+      {
+        method: "POST",
+      }
     );
   } catch (err) {
     console.warn("trackTagSearch failed:", err.message);
