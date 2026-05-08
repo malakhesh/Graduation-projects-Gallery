@@ -1,0 +1,590 @@
+/* ============================================================
+   Dashboard.css
+   Kol el styles el btet3amel ma3 el Dashboard w el ContactMessages
+   ============================================================ */
+
+
+/* ── Animations ──────────────────────────────────────────────
+   da el animation bta3 el loading spinner elly bydoor
+   ──────────────────────────────────────────────────────────── */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* da el animation bta3 el elements lama btet3amel (bitla3 men taht)
+   ──────────────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* da el animation bta3 el mobile detail panel lama byetzahar
+   ──────────────────────────────────────────────────────────── */
+@keyframes slideUp {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+
+/* ── Scrollbar Styling ───────────────────────────────────────
+   ben3amel el scrollbar yeb2a slim w 7elw
+   ──────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c9a882;
+  border-radius: 10px;
+}
+
+
+/* ── Global Box Sizing ───────────────────────────────────────
+   da bya5od el padding w el border f el hisab lama ben7seb el 3ard
+   ──────────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+
+/* ── Message Row Hover ───────────────────────────────────────
+   lama el user yerod 3ala ay message row byebyan el hover effect
+   ──────────────────────────────────────────────────────────── */
+.msg-row:hover {
+  background: rgba(111, 78, 55, 0.08) !important;
+}
+
+
+/* ── Search Input ────────────────────────────────────────────
+   styling bta3 el placeholder w el focus state lel search bar
+   ──────────────────────────────────────────────────────────── */
+.search-input::placeholder {
+  color: #b09070;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #6F4E37 !important;
+  box-shadow: 0 0 0 3px rgba(111, 78, 55, 0.12);
+}
+
+
+/* ── Dashboard Layout ────────────────────────────────────────
+   el container el assa7 lel dashboard kolo (sidebar + main)
+   ──────────────────────────────────────────────────────────── */
+.dashboard-wrapper {
+  display: flex;
+  height: 100vh;
+  font-family: 'Poppins', sans-serif;
+  position: relative;
+}
+
+/* el background lel main content area bta3 el dashboard
+   ──────────────────────────────────────────────────────────── */
+.dashboard-main {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(to top, #dfc9aa, #f7f0e8);
+  height: 100vh;
+  overflow: hidden;
+}
+
+
+/* ── Sidebar ─────────────────────────────────────────────────
+   el sidebar elly fiha el navigation links w el sign out
+   ──────────────────────────────────────────────────────────── */
+.sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 200px;
+  background: linear-gradient(to bottom, #f7f0e8 0%, #ede0cf 60%, #dfc9aa 100%);
+  padding: 20px;
+  border-right: 2px solid rgba(111, 78, 55, 0.18);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  z-index: 30;
+}
+
+/* el sidebar f el mobile byet7arek ezay (slide in/out)
+   ──────────────────────────────────────────────────────────── */
+.sidebar--mobile-open {
+  left: 0;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+  transition: left 0.3s ease;
+}
+
+.sidebar--mobile-closed {
+  left: -220px;
+  transition: left 0.3s ease;
+}
+
+
+/* ── Overlay (Mobile) ────────────────────────────────────────
+   el overlay el esswed elly byet3amel wara el sidebar f el mobile
+   ──────────────────────────────────────────────────────────── */
+.mobile-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background-color: rgba(0, 0, 0, 0.28);
+}
+
+
+/* ── Hamburger Button ────────────────────────────────────────
+   el button el haya7 byfta7 el sidebar f el mobile
+   ──────────────────────────────────────────────────────────── */
+.hamburger-btn {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 100;
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(160deg, #f7f0e8 0%, #ede0cf 100%);
+  border: 1px solid rgba(111, 78, 55, 0.25);
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* el khat el so3'ayar gowa el hamburger button
+   ──────────────────────────────────────────────────────────── */
+.hamburger-line {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background-color: #6F4E37;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+
+/* ── Nav Items ───────────────────────────────────────────────
+   el lista bta3et el navigation f el sidebar
+   ──────────────────────────────────────────────────────────── */
+.nav-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.nav-item {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(111, 78, 55, 0.15);
+  cursor: pointer;
+  color: #6F4E37;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.3s ease;
+}
+
+.nav-item:hover {
+  background-color: rgba(111, 78, 55, 0.1);
+  transform: translateX(6px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-weight: bold;
+}
+
+/* el badge el a7mar elly byet3amel 3ala el messages f el nav
+   ──────────────────────────────────────────────────────────── */
+.nav-badge {
+  background-color: #e74c3c;
+  color: #fff;
+  border-radius: 12px;
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+
+/* ── Stat Cards (Dashboard Boxes) ────────────────────────────
+   el kart el arba3 elly f el dashboard (review, reports, messages, chart)
+   ──────────────────────────────────────────────────────────── */
+.stat-card {
+  flex: 1;
+  min-width: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  height: 270px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: stretch;
+  padding: 18px 20px;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.stat-card:hover {
+  transform: translateY(-8px) scale(1.03);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+/* el number el kebir gowa el kart (3adad el projects aw messages)
+   ──────────────────────────────────────────────────────────── */
+.stat-card__number {
+  font-size: 56px;
+  font-weight: 800;
+  color: #3B2F2F;
+  line-height: 1;
+  text-align: center;
+}
+
+/* el progress bar gowa el kart
+   ──────────────────────────────────────────────────────────── */
+.progress-bar-track {
+  width: 100%;
+  background-color: #d4b896;
+  border-radius: 10px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.5s ease;
+}
+
+/* el mobile version bta3 el stat cards
+   ──────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .stat-card {
+    width: 100%;
+    height: 200px;
+    padding: 14px 16px;
+  }
+
+  .stat-card__number {
+    font-size: 40px;
+  }
+
+  .dashboard-main {
+    width: 100vw;
+    overflow: auto;
+    padding-top: 60px;
+  }
+}
+
+
+/* ── Wreath Section ──────────────────────────────────────────
+   el wreath elly f nos el dashboard f el fo2
+   ──────────────────────────────────────────────────────────── */
+.wreath-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.wreath-img {
+  object-fit: contain;
+  transform: scaleX(1.4);
+  position: absolute;
+  pointer-events: none;
+}
+
+.wreath-text {
+  font-family: 'Georgia', serif;
+  font-weight: bold;
+  color: #3d1f00;
+  text-transform: uppercase;
+  text-shadow: 0 0 14px rgba(255, 215, 0, 0.6), 0 1px 3px rgba(100, 60, 0, 0.4);
+}
+
+
+/* ── Contact Messages Layout ─────────────────────────────────
+   el full page bta3 el messages section (sidebar + main)
+   ──────────────────────────────────────────────────────────── */
+.messages-wrapper {
+  display: flex;
+  min-height: 100vh;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(to top, #dfc9aa, #f7f0e8);
+}
+
+.messages-sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 200px;
+  background: linear-gradient(to top, #dfc9aa, #f7f0e8);
+  border-right: 2px solid rgba(111, 78, 55, 0.15);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px 20px;
+  z-index: 160;
+}
+
+.messages-main {
+  flex: 1;
+  padding: 40px 48px;
+  overflow-y: auto;
+  min-height: 100vh;
+}
+
+/* lama el screen yb2a mobile el main padding byetghayar
+   ──────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .messages-main {
+    margin-left: 0;
+    padding: 72px 14px 32px;
+  }
+}
+
+
+/* ── Message List ────────────────────────────────────────────
+   el lista bta3et el messages elly byetzahar gowa el messages page
+   ──────────────────────────────────────────────────────────── */
+.message-list-container {
+  background-color: rgba(253, 246, 238, 0.8);
+  border-radius: 16px;
+  border: 1px solid rgba(200, 168, 130, 0.25);
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(111, 78, 55, 0.06);
+}
+
+/* kol row f el message list
+   ──────────────────────────────────────────────────────────── */
+.message-row {
+  padding: 14px 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  transition: background 0.2s;
+}
+
+/* el dot el a7mar elly byet3amel 3ala el messages el unread
+   ──────────────────────────────────────────────────────────── */
+.unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 6px;
+  background-color: #e74c3c;
+}
+
+.read-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 6px;
+  background-color: transparent;
+}
+
+
+/* ── Detail Panel (Desktop) ──────────────────────────────────
+   el panel elly byet3amel 3ala el yemeen lama tetfta7 message f el desktop
+   ──────────────────────────────────────────────────────────── */
+.detail-panel {
+  background-color: rgba(253, 246, 238, 0.92);
+  border-radius: 16px;
+  border: 1px solid rgba(200, 168, 130, 0.25);
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(111, 78, 55, 0.06);
+  animation: fadeUp 0.3s ease;
+  align-self: flex-start;
+  position: sticky;
+  top: 20px;
+}
+
+/* el full screen overlay lama el message btetfta7 f el mobile
+   ──────────────────────────────────────────────────────────── */
+.detail-panel--mobile {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background-color: #fdf6ee;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease;
+  overflow-y: auto;
+}
+
+
+/* ── Filters & Buttons ───────────────────────────────────────
+   el buttons bta3et el filter (all, read, unread) w el time filter
+   ──────────────────────────────────────────────────────────── */
+.filter-btn {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1.5px solid rgba(111, 78, 55, 0.3);
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Poppins', sans-serif;
+}
+
+.filter-btn--active {
+  background-color: #6F4E37;
+  color: #fff;
+}
+
+.filter-btn--inactive {
+  background-color: rgba(255, 255, 255, 0.5);
+  color: #5a3825;
+}
+
+.time-filter-btn {
+  padding: 5px 13px;
+  border-radius: 16px;
+  border: 1.5px solid rgba(111, 78, 55, 0.2);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Poppins', sans-serif;
+}
+
+.time-filter-btn--active {
+  background-color: rgba(111, 78, 55, 0.15);
+  color: #5a3825;
+  font-weight: 700;
+}
+
+.time-filter-btn--inactive {
+  background-color: rgba(255, 255, 255, 0.4);
+  color: #8a6a50;
+  font-weight: 500;
+}
+
+
+/* ── Reply Button ────────────────────────────────────────────
+   el button bta3 el reply via email gowa el detail panel
+   ──────────────────────────────────────────────────────────── */
+.reply-btn {
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background-color: #6F4E37;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  text-decoration: none;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(111, 78, 55, 0.28);
+  font-family: 'Poppins', sans-serif;
+}
+
+/* el delete button gowa el detail panel
+   ──────────────────────────────────────────────────────────── */
+.delete-btn {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(192, 57, 43, 0.3);
+  background-color: rgba(192, 57, 43, 0.07);
+  color: #c0392b;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+}
+
+
+/* ── Loading Spinner ─────────────────────────────────────────
+   el circle el bydoor lama el data betload
+   ──────────────────────────────────────────────────────────── */
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 4px solid #d2b49c;
+  border-top-color: #6F4E37;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.spinner--small {
+  width: 32px;
+  height: 32px;
+  border: 4px solid #d4b896;
+  border-top-color: #6F4E37;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+
+/* ── Pie Chart ───────────────────────────────────────────────
+   el pie chart gowa el 4th kart (projects distribution)
+   ──────────────────────────────────────────────────────────── */
+.pie-tooltip {
+  position: absolute;
+  background-color: #3B2F2F;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: bold;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  z-index: 10;
+}
+
+/* el legend bta3 el pie chart (el circles el so3'ayara ta7t el chart)
+   ──────────────────────────────────────────────────────────── */
+.pie-legend {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-height: 42px;
+  overflow-y: auto;
+}
+
+.pie-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: bold;
+  transition: opacity 0.25s ease;
+  cursor: default;
+}
+
+.pie-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
