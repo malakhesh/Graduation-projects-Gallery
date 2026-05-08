@@ -6,8 +6,7 @@ import {
   updateDoc
 } from "firebase/firestore"
 
-import { sendNotif } from "../notifications.js"
-
+import { sendNotif } from "../notifications/notifications.js"
 import { suspendUser } from "./suspension.js"
 
 async function addViolation(targetUid, reason, adminRole) {

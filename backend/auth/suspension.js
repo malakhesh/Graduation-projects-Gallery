@@ -6,7 +6,7 @@ import {
   updateDoc
 } from "firebase/firestore"
 
-import { sendNotif } from "../notifications.js"
+import { sendNotif } from "../notifications/notifications.js"
 
 async function suspendUser(uid) {
   try {

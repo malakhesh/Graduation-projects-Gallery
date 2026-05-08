@@ -1,23 +1,13 @@
 import { auth, db } from "../firebase.js"
 
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  sendPasswordResetEmail,
-  signOut,
-  onAuthStateChanged,
-  GoogleAuthProvider,
-  GithubAuthProvider,
-  signInWithPopup
-} from "firebase/auth"
+import {createUserWithEmailAndPassword,signInWithEmailAndPassword,sendPasswordResetEmail,signOut,onAuthStateChanged,GoogleAuthProvider,GithubAuthProvider,signInWithPopup
+} 
+from "firebase/auth"
 
-import {
-  doc,
-  setDoc,
-  getDoc
+import {doc, setDoc, getDoc
 } from "firebase/firestore"
 
-import { createWelcomeNotif } from "../notifications.js"
+import { createWelcomeNotif } from "../notifications/notifications.js"
 
 async function regUser(email, pass, name, role, year, techStack) {
   try {

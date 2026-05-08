@@ -2,6 +2,10 @@ import {
   collection, addDoc, doc, getDoc, getDocs, updateDoc, deleteDoc, query, where, serverTimestamp 
 } from "firebase/firestore"
 import { db } from "../firebase.js"
+import { sendNotif } from "../notifications/notifications.js"
+import { getUser } from "../auth/user.js"
+
+
 
 async function addProj(title, desc, userId, year, stack, category, gitLink, imgUrl, tags) {
   try {
@@ -129,7 +133,51 @@ async function updProj(id, data) {
 }
 
 
+
+async function notifyBookmark(projectId, bookmarkerUid) {
+  try {
+    const project = await getProj(projectId)
+    if (!project || project === "no-proj" || project === "get-fail") return
+    const ownerUid = project.userId
+    if (!ownerUid || ownerUid === bookmarkerUid) return
+    const bookmarkerData = await getUser(bookmarkerUid)
+    const bookmarkerName = bookmarkerData?.name || "Someone"
+    const title = project.title || "your project"
+    await sendNotif(ownerUid, {
+      type: "bookmark",
+      message: `${bookmarkerName} bookmarked "${title}"`,
+      projectId: null,
+      clickable: false,
+    })
+  } catch {}
+}
+
+async function searchProjects(keyword) {
+  try {
+    if (!keyword) return "no-keyword"
+
+    const projectsRef = collection(db, "projects")
+    const snapshot = await getDocs(projectsRef)
+
+    let arr = []
+    snapshot.forEach((d) => {
+      const data = d.data()
+      const inTitle = data.title?.toLowerCase().includes(keyword.toLowerCase())
+      const inDesc = data.desc?.toLowerCase().includes(keyword.toLowerCase())
+      const inTags = Array.isArray(data.tags) && data.tags.some(t => t.toLowerCase().includes(keyword.toLowerCase()))
+
+      if (inTitle || inDesc || inTags) {
+        arr.push({ id: d.id, ...data })
+      }
+    })
+
+    return arr
+  } catch {
+    return "search-fail"
+  }
+}
+
 export { 
   addProj, getProj, setStatus, 
-  getUserProjs, addRate, removeRate, delProj, updProj
+  getUserProjs, addRate, removeRate, delProj, updProj,notifyBookmark
 }
