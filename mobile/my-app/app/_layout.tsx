@@ -8,7 +8,6 @@ function RootLayoutContent() {
   const { theme } = useTheme();
 
   useEffect(() => {
-    // كل ما الثيم يتغير، الـ StatusBar يتحدث
     console.log('🔄 Theme changed to:', theme);
   }, [theme]);
 

@@ -1,3 +1,9 @@
+// ============================================================
+//  Dashboard.js
+//  El component el assa7y bta3 el admin dashboard — bygeblo
+//  el stats, el charts, w bywarri el sub-views
+// ============================================================
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { logOut } from "./auth.js";
@@ -20,18 +26,26 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 
-// ── Pie helpers ──────────────────────────────────────────────────────────────
+// el CSS bta3 el component - kol el styles fel Dashboard.css
+import "./dashboard.css";
 
+
+// ── Pie Chart Helpers ─────────────────────────────────────────────────────────
+// el functions dol byt3amalo el pie chart — bithaswelo el angels w el paths
+
+// da bya7awel el angle we el radius le coordinates x,y 3al circle
 const SLICE_COLORS = [
   "#6F4E37", "#a0714f", "#d2a679", "#8B5E3C",
   "#c49a6c", "#5a3825", "#b07d50", "#e8c49a",
 ];
 
+// da bya7awel angle (degree) le noo2ta 3ala el circle
 function polarToCartesian(cx, cy, r, angleDeg) {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
 }
 
+// da beybni el SVG path bta3 kol 2elsha f el pie chart
 function buildSlicePath(cx, cy, r, startAngle, endAngle) {
   const s = polarToCartesian(cx, cy, r, startAngle);
   const e = polarToCartesian(cx, cy, r, endAngle);
@@ -39,6 +53,7 @@ function buildSlicePath(cx, cy, r, startAngle, endAngle) {
   return `M${cx},${cy} L${s.x},${s.y} A${r},${r} 0 ${large},1 ${e.x},${e.y} Z`;
 }
 
+// da bya5od el categories w b3den bybni el slices kollaha ma3 colors we percentages
 function buildSlices(categoryMap, total, cx, cy, r) {
   const slices = [];
   let startAngle = 0;
@@ -71,7 +86,9 @@ function buildSlices(categoryMap, total, cx, cy, r) {
   return slices;
 }
 
-// ── GoldenWreath ─────────────────────────────────────────────────────────────
+
+// ── GoldenWreath Component ────────────────────────────────────────────────────
+// da el wreath el za7raf elly byet3amel f nos el dashboard fo2 el cards
 
 function GoldenWreath({ isMobile }) {
   return (
@@ -82,9 +99,11 @@ function GoldenWreath({ isMobile }) {
     }}>
       <div style={{
         position: "relative",
+        // el 7agm byetghayar 3ala 7asab el screen (mobile aw desktop)
         width: isMobile ? "280px" : "460px",
         height: isMobile ? "130px" : "220px",
       }}>
+        {/* el sora bta3et el wreath */}
         <img src={wreathImg} alt="wreath" style={{
           width: isMobile ? "280px" : "460px",
           height: isMobile ? "280px" : "460px",
@@ -95,6 +114,8 @@ function GoldenWreath({ isMobile }) {
           left: "0",
           pointerEvents: "none",
         }} />
+
+        {/* el nas "Welcome" gowa el wreath */}
         <div style={{
           position: "absolute",
           top: isMobile ? "10px" : "20px",
@@ -120,30 +141,39 @@ function GoldenWreath({ isMobile }) {
   );
 }
 
-// ── useIsMobile hook ──────────────────────────────────────────────────────────
+
+// ── useIsMobile Hook ──────────────────────────────────────────────────────────
+// custom hook bycheck eza el screen mobile aw la (ta7t el breakpoint)
+// byestad3i re-render lama el screen size yetghayar
 
 function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < breakpoint);
   useEffect(() => {
     const handler = () => setIsMobile(window.innerWidth < breakpoint);
     window.addEventListener("resize", handler);
+    // cleanup: mesh nesnazel el event listener lama el component yetsha7
     return () => window.removeEventListener("resize", handler);
   }, [breakpoint]);
   return isMobile;
 }
 
-// ── ContactMessages sub-view ──────────────────────────────────────────────────
+
+// ── ContactMessages Component ─────────────────────────────────────────────────
+// da el sub-view el kamla bta3et el messages — bygebli el messages men
+// firebase we bywarri kalenda filter we search we detail panel
 
 function ContactMessages({ onBack }) {
+  // el state: el messages kollaha, el loading, el selected message, el filters
   const [messages, setMessages]       = useState([]);
   const [loading, setLoading]         = useState(true);
   const [selected, setSelected]       = useState(null);
-  const [filter, setFilter]           = useState("all");
+  const [filter, setFilter]           = useState("all");        // all / read / unread
   const [searchQuery, setSearchQuery] = useState("");
-  const [timeFilter, setTimeFilter]   = useState("all");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [timeFilter, setTimeFilter]   = useState("all");        // all / today / week / month
+  const [sidebarOpen, setSidebarOpen] = useState(false);        // mobile sidebar toggle
   const isMobile = useIsMobile();
 
+  // da bygebli el messages kollaha men firebase مرتبين من الأحدث للأقدم
   const fetchMessages = async () => {
     setLoading(true);
     try {
@@ -156,11 +186,14 @@ function ContactMessages({ onBack }) {
     setLoading(false);
   };
 
+  // byenadi fetchMessages lama el component yetzahar el awwel marra
   useEffect(() => { fetchMessages(); }, []);
 
+  // da bya3mel el message read (byghayar el status f firebase)
   const markRead = async (id) => {
     try {
       await updateDoc(doc(db, "contactMessages", id), { status: "read" });
+      // byghayar el state locally men gher ma yrga3 yegib men firebase
       setMessages((prev) =>
         prev.map((m) => (m.id === id ? { ...m, status: "read" } : m))
       );
@@ -168,31 +201,36 @@ function ContactMessages({ onBack }) {
     } catch (err) { console.error(err); }
   };
 
+  // da byim7i el message men firebase w men el state
   const handleDelete = async (id) => {
     try {
       await deleteDoc(doc(db, "contactMessages", id));
       setMessages((prev) => prev.filter((m) => m.id !== id));
+      // lama temsa7 el message el maftoha, bte2fel el detail panel
       if (selected?.id === id) setSelected(null);
     } catch (err) { console.error(err); }
   };
 
+  // lama el user yefta7 message — bysetlek el selected w bymark read lw kant unread
   const openMessage = (msg) => {
     setSelected(msg);
     if (msg.status !== "read") markRead(msg.id);
   };
 
+  // da byformat el timestamp men firebase le nas mafhooma
   const formatDate = (ts) => {
     if (!ts) return "—";
     const d = ts.toDate ? ts.toDate() : new Date(ts);
     return d.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
   };
 
+  // da bycheck eza el message fet3addi el time filter wala la
   const passesTimeFilter = (msg) => {
     if (timeFilter === "all") return true;
     if (!msg.createdAt) return false;
     const d = msg.createdAt.toDate ? msg.createdAt.toDate() : new Date(msg.createdAt);
     const now = new Date();
-    if (timeFilter === "today") return d.toDateString() === now.toDateString();
+    if (timeFilter === "today")     return d.toDateString() === now.toDateString();
     if (timeFilter === "yesterday") {
       const yest = new Date(now);
       yest.setDate(yest.getDate() - 1);
@@ -209,8 +247,8 @@ function ContactMessages({ onBack }) {
     return true;
   };
 
-  // ── UPDATED FILTER LOGIC ──────────────────────────────────────────────────
-  // Step 1: filter by search (name or email only) — if no query, use all messages
+  // ── Filter Logic ─────────────────────────────────────────────────────────
+  // Step 1: el search bitshtaghal 3ala el name w el email bas
   const searchResults = searchQuery.trim()
     ? messages.filter((m) => {
         const q = searchQuery.toLowerCase();
@@ -221,7 +259,7 @@ function ContactMessages({ onBack }) {
       })
     : messages;
 
-  // Step 2: apply read/unread + time filters ON TOP of search results
+  // Step 2: ba3d el search, benna77i el messages elly mesh matching el read/time filter
   const filtered = searchResults.filter((m) => {
     if (filter === "unread" && m.status === "read")  return false;
     if (filter === "read"   && m.status !== "read")  return false;
@@ -230,9 +268,13 @@ function ContactMessages({ onBack }) {
   });
   // ─────────────────────────────────────────────────────────────────────────
 
+  // counts bensthomhom f el sidebar stats
   const unreadCount = messages.filter((m) => m.status !== "read").length;
   const readCount   = messages.filter((m) => m.status === "read").length;
 
+
+  // ── Mobile Detail Panel ─────────────────────────────────────────────────
+  // da el full screen panel elly byet3amel f el mobile lama tefta7 message
   const MobileDetailPanel = () => {
     if (!selected) return null;
     return (
@@ -244,6 +286,8 @@ function ContactMessages({ onBack }) {
         overflowY: "auto",
       }}>
         <style>{`@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>
+
+        {/* el header bta3 el panel (back button + delete) */}
         <div style={{
           display: "flex", alignItems: "center", gap: "12px",
           padding: "16px 20px",
@@ -273,19 +317,28 @@ function ContactMessages({ onBack }) {
             }}
           >🗑 Delete</button>
         </div>
+
+        {/* content el message (name, email, date, message body) */}
         <div style={{ padding: "24px 20px", display: "flex", flexDirection: "column", gap: "20px" }}>
+          {/* Name */}
           <div>
             <label style={{ fontSize: "11px", color: "#9a7050", textTransform: "uppercase", letterSpacing: "1px", display: "block", marginBottom: "4px" }}>Name</label>
             <div style={{ fontSize: "17px", fontWeight: "700", color: "#3B2F2F" }}>{selected.name}</div>
           </div>
+
+          {/* Email — link byeftah el mail client */}
           <div>
             <label style={{ fontSize: "11px", color: "#9a7050", textTransform: "uppercase", letterSpacing: "1px", display: "block", marginBottom: "4px" }}>Email</label>
             <a href={`mailto:${selected.email}`} style={{ fontSize: "15px", color: "#6F4E37", fontWeight: "600", textDecoration: "none" }}>{selected.email}</a>
           </div>
+
+          {/* Date */}
           <div>
             <label style={{ fontSize: "11px", color: "#9a7050", textTransform: "uppercase", letterSpacing: "1px", display: "block", marginBottom: "4px" }}>Date</label>
             <div style={{ fontSize: "14px", color: "#5a4030" }}>{formatDate(selected.createdAt)}</div>
           </div>
+
+          {/* Message body */}
           <div>
             <label style={{ fontSize: "11px", color: "#9a7050", textTransform: "uppercase", letterSpacing: "1px", display: "block", marginBottom: "8px" }}>Message</label>
             <div style={{
@@ -297,6 +350,8 @@ function ContactMessages({ onBack }) {
               {selected.message}
             </div>
           </div>
+
+          {/* Reply button — byfta7 el mail client ma3 el subject w el body جاهزين */}
           <a
             href={`mailto:${selected.email}?subject=Re%3A%20Your%20Message&body=Hi%20${encodeURIComponent(selected.name)}%2C%0A%0A`}
             style={{
@@ -312,8 +367,10 @@ function ContactMessages({ onBack }) {
     );
   };
 
+
   return (
     <>
+      {/* el styles el global bta3et el messages page */}
       <style>{`
         @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
         @keyframes spin    { to { transform: rotate(360deg); } }
@@ -326,6 +383,7 @@ function ContactMessages({ onBack }) {
         .search-input:focus { outline: none; border-color: #6F4E37 !important; box-shadow: 0 0 0 3px rgba(111,78,55,0.12); }
       `}</style>
 
+      {/* lama el screen mobile, bywarri el detail panel fo2 kol 7aga */}
       {isMobile && <MobileDetailPanel />}
 
       <div style={{
@@ -334,6 +392,7 @@ function ContactMessages({ onBack }) {
         background: "linear-gradient(to top, #dfc9aa, #f7f0e8)",
       }}>
 
+        {/* ── Hamburger Button (Mobile Only) ──────────────────────── */}
         {isMobile && (
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -348,6 +407,7 @@ function ContactMessages({ onBack }) {
               boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
             }}
           >
+            {/* el 3 khotoot el btet3amel X lama el sidebar yefta7 */}
             {[0, 1, 2].map((i) => (
               <span key={i} style={{
                 display: "block", width: "20px", height: "2px",
@@ -364,6 +424,7 @@ function ContactMessages({ onBack }) {
           </button>
         )}
 
+        {/* el overlay el esswed wara el sidebar f el mobile */}
         {isMobile && sidebarOpen && (
           <div onClick={() => setSidebarOpen(false)} style={{
             position: "fixed", inset: 0, zIndex: 150,
@@ -371,6 +432,8 @@ function ContactMessages({ onBack }) {
           }} />
         )}
 
+        {/* ── Sidebar ─────────────────────────────────────────────── */}
+        {/* byetnarrar f el mobile w fixed f el desktop */}
         <aside style={{
           position: "fixed",
           left: isMobile ? (sidebarOpen ? 0 : "-220px") : 0,
@@ -388,6 +451,8 @@ function ContactMessages({ onBack }) {
               letterSpacing: "3px", color: "#3B2F2F",
               marginBottom: "32px", textTransform: "uppercase",
             }}>Dashboard</h2>
+
+            {/* back button byerga3 lel dashboard el assa7y */}
             <button
               onClick={() => { onBack(); setSidebarOpen(false); }}
               style={{
@@ -408,6 +473,8 @@ function ContactMessages({ onBack }) {
                 e.currentTarget.style.transform = "translateX(0)";
               }}
             >← Back</button>
+
+            {/* el active nav item (messages) highlighted */}
             <div style={{
               marginTop: "16px", padding: "10px 12px",
               borderRadius: "10px", backgroundColor: "#6F4E37",
@@ -417,6 +484,7 @@ function ContactMessages({ onBack }) {
               boxShadow: "0 4px 12px rgba(111,78,55,0.3)",
             }}>
               ✉️ Messages
+              {/* el badge el a7mar byet3amel lw fi messages unread */}
               {unreadCount > 0 && (
                 <span style={{
                   marginLeft: "auto", backgroundColor: "#e74c3c", color: "#fff",
@@ -425,6 +493,8 @@ function ContactMessages({ onBack }) {
                 }}>{unreadCount}</span>
               )}
             </div>
+
+            {/* el stats el so3'ayara: total, unread, read */}
             <div style={{ marginTop: "20px", padding: "0 4px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#7a5c42", marginBottom: "6px" }}>
                 <span>Total</span><span style={{ fontWeight: "700", color: "#3B2F2F" }}>{messages.length}</span>
@@ -439,11 +509,13 @@ function ContactMessages({ onBack }) {
           </div>
         </aside>
 
+        {/* ── Main Content ─────────────────────────────────────────── */}
         <main style={{
           marginLeft: isMobile ? 0 : "200px", flex: 1,
           padding: isMobile ? "72px 14px 32px" : "40px 48px",
           overflowY: "auto", minHeight: "100vh",
         }}>
+          {/* el header bta3 el page (el title + el line ta7to) */}
           <div style={{ marginBottom: "24px", animation: "fadeUp 0.4s ease" }}>
             <h1 style={{
               fontFamily: "'Georgia', serif",
@@ -457,6 +529,9 @@ function ContactMessages({ onBack }) {
             }} />
           </div>
 
+          {/* ── Search Bar ──────────────────────────────────────────
+              betsearch fe el name w el email bas (mesh f el message body)
+          ─────────────────────────────────────────────────────────── */}
           <div style={{ position: "relative", marginBottom: "14px", animation: "fadeUp 0.4s ease" }}>
             <span style={{
               position: "absolute", left: "14px", top: "50%",
@@ -476,6 +551,7 @@ function ContactMessages({ onBack }) {
                 transition: "border-color 0.2s, box-shadow 0.2s",
               }}
             />
+            {/* el X button temsa7 el search query */}
             {searchQuery && (
               <button onClick={() => setSearchQuery("")} style={{
                 position: "absolute", right: "12px", top: "50%",
@@ -486,7 +562,8 @@ function ContactMessages({ onBack }) {
             )}
           </div>
 
-          {/* hint row — shows when searching */}
+          {/* hint byet3amel lama el user bysearch — bywarrilu en el filters
+              btetfela3 3ala el search results bas */}
           {searchQuery.trim() && (
             <div style={{
               fontSize: "12px", color: "#8a6a50", marginBottom: "10px",
@@ -496,6 +573,7 @@ function ContactMessages({ onBack }) {
             </div>
           )}
 
+          {/* ── Status Filter Buttons (All / Unread / Read) ────────── */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "10px", animation: "fadeUp 0.4s ease" }}>
             {[
               { key: "all",    label: `All (${searchResults.length})` },
@@ -505,6 +583,7 @@ function ContactMessages({ onBack }) {
               <button key={t.key} onClick={() => setFilter(t.key)} style={{
                 padding: "6px 16px", borderRadius: "20px",
                 border: "1.5px solid rgba(111,78,55,0.3)",
+                // el active button byetlawan bel 7etta el dakoona
                 backgroundColor: filter === t.key ? "#6F4E37" : "rgba(255,255,255,0.5)",
                 color: filter === t.key ? "#fff" : "#5a3825",
                 fontWeight: "600", fontSize: "12px",
@@ -514,6 +593,7 @@ function ContactMessages({ onBack }) {
             ))}
           </div>
 
+          {/* ── Time Filter Buttons (Today / Yesterday / Week / Month) ── */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "20px", animation: "fadeUp 0.4s ease" }}>
             {[
               { key: "all",       label: "All time" },
@@ -534,19 +614,26 @@ function ContactMessages({ onBack }) {
             ))}
           </div>
 
+          {/* ── Messages List ──────────────────────────────────────── */}
+          {/* 3 7alat: loading, empty, aw el lista */}
           {loading ? (
+            // loading state — spinner + nas
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "200px", gap: "14px" }}>
               <div style={{ width: "36px", height: "36px", border: "4px solid #d2b49c", borderTopColor: "#6F4E37", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
               <span style={{ color: "#8a6245", fontStyle: "italic" }}>Loading…</span>
             </div>
           ) : filtered.length === 0 ? (
+            // empty state — lama mesh fi messages btet3amel ma3 el filter
             <div style={{ textAlign: "center", padding: "60px 20px", color: "#9a7050", fontSize: "15px", fontStyle: "italic" }}>No messages found</div>
           ) : (
+            // el grid byta3 el message list + el detail panel
             <div style={{
               display: "grid",
+              // lama fi message maftuha f el desktop — byebqa 2 columns
               gridTemplateColumns: (!isMobile && selected) ? "1fr 1fr" : "1fr",
               gap: "16px", animation: "fadeUp 0.4s ease",
             }}>
+              {/* ── Message List Container ──────────────────────────── */}
               <div style={{
                 backgroundColor: "rgba(253,246,238,0.8)", borderRadius: "16px",
                 border: "1px solid rgba(200,168,130,0.25)", overflow: "hidden",
@@ -561,24 +648,31 @@ function ContactMessages({ onBack }) {
                       padding: isMobile ? "12px 14px" : "14px 18px",
                       borderBottom: idx < filtered.length - 1 ? "1px solid rgba(200,168,130,0.18)" : "none",
                       cursor: "pointer",
+                      // el selected byebyan highlighted
                       backgroundColor: (!isMobile && selected?.id === msg.id) ? "rgba(111,78,55,0.1)"
                         : msg.status !== "read" ? "rgba(111,78,55,0.03)" : "transparent",
                       transition: "background 0.2s",
                       display: "flex", alignItems: "flex-start", gap: "10px",
                     }}
                   >
+                    {/* el dot el a7mar للمقروءة والغير مقروءة */}
                     <div style={{
                       width: "8px", height: "8px", borderRadius: "50%", flexShrink: 0, marginTop: "6px",
                       backgroundColor: msg.status !== "read" ? "#e74c3c" : "transparent",
                     }} />
+
+                    {/* el content bta3 el message row (name, email, preview) */}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                         <span style={{ fontWeight: msg.status !== "read" ? "700" : "600", fontSize: "14px", color: "#3B2F2F" }}>{msg.name}</span>
                         <span style={{ fontSize: "11px", color: "#9a7050", flexShrink: 0 }}>{formatDate(msg.createdAt)}</span>
                       </div>
                       <div style={{ fontSize: "12px", color: "#6b5040", marginTop: "2px" }}>{msg.email}</div>
+                      {/* preview bta3 el message — maqto3 lw taweel */}
                       <div style={{ fontSize: "12px", color: "#8a6a50", marginTop: "4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{msg.message}</div>
                     </div>
+
+                    {/* el delete button lkol row — el stopPropagation beman2 el message mafetsh */}
                     <button
                       onClick={(e) => { e.stopPropagation(); handleDelete(msg.id); }}
                       style={{
@@ -594,6 +688,8 @@ function ContactMessages({ onBack }) {
                 ))}
               </div>
 
+              {/* ── Desktop Detail Panel ────────────────────────────── */}
+              {/* byet3amel bas f el desktop w lma fi message maftuha */}
               {!isMobile && selected && (
                 <div style={{
                   backgroundColor: "rgba(253,246,238,0.92)", borderRadius: "16px",
@@ -601,10 +697,13 @@ function ContactMessages({ onBack }) {
                   boxShadow: "0 4px 16px rgba(111,78,55,0.06)", animation: "fadeUp 0.3s ease",
                   alignSelf: "flex-start", position: "sticky", top: "20px",
                 }}>
+                  {/* header el detail panel + close button */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", paddingBottom: "14px", borderBottom: "2px solid rgba(180,130,80,0.18)" }}>
                     <h3 style={{ margin: 0, fontFamily: "'Georgia', serif", fontSize: "16px", color: "#3B1F0F" }}>Message Details</h3>
                     <button onClick={() => setSelected(null)} style={{ background: "none", border: "none", fontSize: "18px", cursor: "pointer", color: "#9a7050" }}>✕</button>
                   </div>
+
+                  {/* el fields: name, email, date */}
                   {[
                     { label: "Name", content: <div style={{ fontSize: "15px", fontWeight: "700", color: "#3B2F2F" }}>{selected.name}</div> },
                     { label: "Email", content: <a href={`mailto:${selected.email}`} style={{ fontSize: "14px", color: "#6F4E37", fontWeight: "600", textDecoration: "none" }}>{selected.email}</a> },
@@ -615,12 +714,16 @@ function ContactMessages({ onBack }) {
                       {content}
                     </div>
                   ))}
+
+                  {/* el message body kamo */}
                   <div>
                     <label style={{ fontSize: "11px", color: "#9a7050", textTransform: "uppercase", letterSpacing: "1px", display: "block", marginBottom: "8px" }}>Message</label>
                     <div style={{ fontSize: "14px", color: "#3B2F2F", lineHeight: "1.8", backgroundColor: "rgba(111,78,55,0.04)", borderRadius: "10px", padding: "14px 16px", border: "1px solid rgba(180,130,80,0.18)", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                       {selected.message}
                     </div>
                   </div>
+
+                  {/* action buttons: reply + delete */}
                   <div style={{ marginTop: "20px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
                     <a
                       href={`mailto:${selected.email}?subject=Re%3A%20Your%20Message&body=Hi%20${encodeURIComponent(selected.name)}%2C%0A%0A`}
@@ -650,41 +753,54 @@ function ContactMessages({ onBack }) {
   );
 }
 
-// ── Dashboard ─────────────────────────────────────────────────────────────────
+
+// ── Dashboard Component ───────────────────────────────────────────────────────
+// da el component el assa7y elly byet3amel lma el admin yedkhol
+// bygebli el stats kollaha men firebase w bywarri el sub-views
 
 function Dashboard() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
+  // el view el active (main aw ay sub-view zay review, users, etc.)
   const [view, setView]               = useState("main");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // hover states lel UI interactions
   const [hoveredBox, setHoveredBox]   = useState(null);
   const [hoveredNav, setHoveredNav]   = useState(null);
   const [hoveredSignIn, setHoveredSignIn] = useState(false);
   const [hoveredSlice, setHoveredSlice]   = useState(null);
 
+  // el data bta3et el pie chart
   const [slices, setSlices]               = useState([]);
   const [totalProjects, setTotalProjects] = useState(0);
   const [loadingChart, setLoadingChart]   = useState(true);
 
+  // el stats bta3et el dashboard cards
   const [pendingCount, setPendingCount]     = useState(0);
   const [reportsCount, setReportsCount]     = useState(0);
   const [reviewPct, setReviewPct]           = useState(0);
   const [reportPct, setReportPct]           = useState(0);
   const [unreadMsgCount, setUnreadMsgCount] = useState(0);
 
+  // ref 3shan namsak el timeout bta3 el pie chart hover f el mobile
   const sliceTimeoutRef = React.useRef(null);
 
+  // lama el screen yb2a desktop, el sidebar yetnashar tani
   useEffect(() => {
     if (!isMobile) setSidebarOpen(false);
   }, [isMobile]);
 
+  // da bygebli el data kollaha men firebase:
+  // approved projects, pending, rejected, reports, w unread messages
   useEffect(() => {
     const fetchData = async () => {
       const [approved, pending, rejected, reports] = await Promise.all([
         getApproved(), getPending(), getRejected(), getReports("admin"),
       ]);
 
+      // el arrays bnen7asob menhom el stats
       const approvedArr = Array.isArray(approved) ? approved : [];
       const pendingArr  = Array.isArray(pending)  ? pending  : [];
       const rejectedArr = Array.isArray(rejected) ? rejected : [];
@@ -693,12 +809,15 @@ function Dashboard() {
       setPendingCount(pendingArr.length);
       setReportsCount(reportsArr.length);
 
+      // el percentage bta3 el pending men el total (approved + pending)
       const totalReview = approvedArr.length + pendingArr.length;
       setReviewPct(totalReview > 0 ? Math.round((pendingArr.length / totalReview) * 100) : 0);
 
+      // el percentage bta3 el reports men el total kolo
       const totalAll = approvedArr.length + pendingArr.length + rejectedArr.length;
       setReportPct(totalAll > 0 ? Math.round((reportsArr.length / totalAll) * 100) : 0);
 
+      // bebn el categoryMap men el approved projects 3shan ner7alo lel pie chart
       const categoryMap = {};
       approvedArr.forEach((p) => {
         const cat = p.category?.trim() || "Other";
@@ -711,18 +830,21 @@ function Dashboard() {
       setLoadingChart(false);
     };
 
+    // da bygebli el unread messages count 3shan yetzahar f el nav badge
     const fetchUnreadMessages = async () => {
       try {
         const snap = await getDocs(query(collection(db, "contactMessages")));
         const unread = snap.docs.filter((d) => d.data().status !== "read").length;
         setUnreadMsgCount(unread);
-      } catch { /* ignore */ }
+      } catch { /* mesh mohemm lw fat3el */ }
     };
 
     fetchData();
     fetchUnreadMessages();
   }, []);
 
+  // ── Sub-view Routing ──────────────────────────────────────────────────────
+  // lama el view yetghayar, byrender el component el mnaaseb
   if (view === "review")   return <ReviewProjects onBack={() => setView("main")} />;
   if (view === "users")    return <Users onBack={() => setView("main")} />;
   if (view === "projects") return <Projects onBack={() => setView("main")} />;
@@ -730,6 +852,7 @@ function Dashboard() {
   if (view === "settings") return <DashboardSettings onBack={() => setView("main")} />;
   if (view === "messages") return <ContactMessages onBack={() => setView("main")} />;
 
+  // da byghayar el background color el kart lama el hover
   const lightenColor = (hex) => ({
     "#f2e8db": "#f8f0e5",
     "#ece0ce": "#f0e5d8",
@@ -737,6 +860,8 @@ function Dashboard() {
     "#eeddcc": "#f4e8d8",
   }[hex] || hex);
 
+  // da bybni el style object el kamil bta3 kol kart (stat card)
+  // byradd el hover state we el mobile state
   const getBoxStyle = (id, baseColor) => ({
     flex: isMobile ? "none" : 1,
     width: isMobile ? "100%" : undefined,
@@ -753,6 +878,7 @@ function Dashboard() {
     boxSizing: "border-box", position: "relative", zIndex: 1,
   });
 
+  // el navigation items bta3et el sidebar — label + action + badge (lw fi)
   const navItems = [
     { label: "WEBSITE VIEW", action: () => navigate("/home") },
     { label: "ALL PROJECTS", action: () => setView("projects") },
@@ -761,8 +887,10 @@ function Dashboard() {
     { label: "SETTINGS",     action: () => setView("settings") },
   ];
 
+  // da bysafer lel view w beysakkar el sidebar f el mobile
   const handleNavClick = (action) => { action(); setSidebarOpen(false); };
 
+  // pie chart hover handlers — desktop (mouseEnter/Leave) w mobile (touch)
   const handleSliceEnter = (id) => {
     if (sliceTimeoutRef.current) clearTimeout(sliceTimeoutRef.current);
     setHoveredSlice(id);
@@ -772,6 +900,7 @@ function Dashboard() {
     setHoveredSlice(null);
   };
 
+  // el touch handler bymaskha el tooltip ba3d 1.5 second
   const handleSliceTouch = (e, id) => {
     e.preventDefault();
     if (sliceTimeoutRef.current) clearTimeout(sliceTimeoutRef.current);
@@ -779,6 +908,8 @@ function Dashboard() {
     sliceTimeoutRef.current = setTimeout(() => setHoveredSlice(null), 1500);
   };
 
+  // ── Sidebar Content ───────────────────────────────────────────────────────
+  // el content el gowa el sidebar (nav list + sign out)
   const SidebarContent = () => (
     <>
       <div>
@@ -801,6 +932,7 @@ function Dashboard() {
               }}
             >
               <span>{label}</span>
+              {/* el badge el a7mar byet3amel 3ala el messages item */}
               {badge > 0 && (
                 <span style={{
                   backgroundColor: "#e74c3c", color: "#fff",
@@ -812,6 +944,8 @@ function Dashboard() {
           ))}
         </ul>
       </div>
+
+      {/* sign out — bylogged out men firebase w bynawel lel home page */}
       <div style={{ marginTop: "20px", textAlign: "center", color: "#5C4033" }}>
         <span
           onClick={async () => { await logOut(); navigate("/"); }}
@@ -831,6 +965,8 @@ function Dashboard() {
     </>
   );
 
+
+  // ── Main Render ───────────────────────────────────────────────────────────
   return (
     <div style={{
       display: "flex", height: "100vh",
@@ -839,6 +975,7 @@ function Dashboard() {
     }}>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
+      {/* ── Hamburger Button (Mobile Only) ────────────────────────── */}
       {isMobile && (
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -870,6 +1007,7 @@ function Dashboard() {
         </button>
       )}
 
+      {/* el overlay el esswed wara el sidebar f el mobile */}
       {isMobile && sidebarOpen && (
         <div onClick={() => setSidebarOpen(false)} style={{
           position: "fixed", inset: 0, zIndex: 20,
@@ -877,6 +1015,7 @@ function Dashboard() {
         }} />
       )}
 
+      {/* ── Sidebar ───────────────────────────────────────────────── */}
       <aside style={{
         position: "fixed",
         left: isMobile ? (sidebarOpen ? 0 : "-220px") : 0,
@@ -887,6 +1026,7 @@ function Dashboard() {
         zIndex: 30, transition: isMobile ? "left 0.3s ease" : "none",
         boxShadow: isMobile && sidebarOpen ? "4px 0 20px rgba(0,0,0,0.15)" : "none",
       }}>
+        {/* close button byet3amel bas f el mobile */}
         {isMobile && (
           <button onClick={() => setSidebarOpen(false)} style={{
             position: "absolute", top: "12px", right: "12px",
@@ -897,6 +1037,7 @@ function Dashboard() {
         <SidebarContent />
       </aside>
 
+      {/* ── Main Content Area ──────────────────────────────────────── */}
       <main style={{
         display: "flex", flexDirection: "column",
         marginLeft: isMobile ? 0 : "200px",
@@ -907,8 +1048,10 @@ function Dashboard() {
         overflow: isMobile ? "auto" : "hidden",
         paddingTop: isMobile ? "60px" : 0,
       }}>
+        {/* el wreath btet3amel fo2 */}
         <GoldenWreath isMobile={isMobile} />
 
+        {/* ── Stat Cards Container ──────────────────────────────── */}
         <div style={{
           display: "flex", flexDirection: isMobile ? "column" : "row",
           padding: isMobile ? "0 14px 24px" : "0 60px 30px",
@@ -916,7 +1059,9 @@ function Dashboard() {
           flex: 1, alignItems: isMobile ? "stretch" : "center",
         }}>
 
-          {/* Box 1 — Review */}
+          {/* ── Card 1: Projects to Review ────────────────────────
+              bywarri el 3adad el pending projects + progress bar
+          ─────────────────────────────────────────────────────── */}
           <div style={getBoxStyle(1, "#f2e8db")}
             onMouseEnter={() => setHoveredBox(1)} onMouseLeave={() => setHoveredBox(null)}
             onClick={() => setView("review")}>
@@ -937,7 +1082,9 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* Box 2 — Reports */}
+          {/* ── Card 2: Projects with Reports ────────────────────
+              bywarri el 3adad el reported projects + progress bar
+          ─────────────────────────────────────────────────────── */}
           <div style={getBoxStyle(2, "#ece0ce")}
             onMouseEnter={() => setHoveredBox(2)} onMouseLeave={() => setHoveredBox(null)}
             onClick={() => setView("reports")}>
@@ -958,7 +1105,9 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* Box 3 — Messages */}
+          {/* ── Card 3: Unread Messages ───────────────────────────
+              bywarri el unread messages count + badge lw fi messages gedida
+          ─────────────────────────────────────────────────────── */}
           <div style={getBoxStyle(3, "#eeddcc")}
             onMouseEnter={() => setHoveredBox(3)} onMouseLeave={() => setHoveredBox(null)}
             onClick={() => setView("messages")}>
@@ -981,7 +1130,9 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* Box 4 — Distribution */}
+          {/* ── Card 4: Projects Distribution (Pie Chart) ─────────
+              bywarri el approved projects maqsomeen 3ala categories
+          ─────────────────────────────────────────────────────── */}
           <div style={getBoxStyle(4, "#e5d4be")}
             onMouseEnter={() => setHoveredBox(4)} onMouseLeave={() => setHoveredBox(null)}>
             <p style={{ margin: "0", fontSize: isMobile ? "14px" : "22px", fontWeight: "bold", color: "#3B1F0F" }}>
@@ -989,15 +1140,18 @@ function Dashboard() {
             </p>
 
             {loadingChart ? (
+              // spinner lama el chart data betelod
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flex: 1 }}>
                 <div style={{ width: "32px", height: "32px", border: "4px solid #d4b896", borderTopColor: "#6F4E37", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
               </div>
             ) : slices.length === 0 ? (
+              // mesh fi approved projects lessa
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flex: 1, color: "#6F4E37", fontSize: "13px" }}>
                 No approved projects yet
               </div>
             ) : (
               <>
+                {/* ── SVG Pie Chart ──────────────────────────────── */}
                 <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flex: 1, position: "relative" }}>
                   <svg
                     width={isMobile ? "120" : "170"}
@@ -1007,6 +1161,7 @@ function Dashboard() {
                   >
                     {slices.map((slice) => {
                       const isHovered = hoveredSlice === slice.id;
+                      // lama el slice hovered byet7arrak barra shwaya
                       const midRad = ((slice.midAngle - 90) * Math.PI) / 180;
                       const offset = isHovered ? 6 : 0;
                       const tx = offset * Math.cos(midRad);
@@ -1021,6 +1176,7 @@ function Dashboard() {
                           onTouchEnd={(e) => e.preventDefault()}
                           style={{ cursor: "pointer" }}
                         >
+                          {/* el slice path bta3 el pie chart */}
                           <path
                             d={slice.path}
                             fill={slice.color}
@@ -1028,6 +1184,7 @@ function Dashboard() {
                             transform={`translate(${tx},${ty})`}
                             style={{ transition: "all 0.25s ease" }}
                           />
+                          {/* el percentage label fo2 el slice (bas lw 8% aw aktar) */}
                           {pctNum >= 8 && (
                             <text
                               x={slice.labelX + tx} y={slice.labelY + ty}
@@ -1039,11 +1196,14 @@ function Dashboard() {
                         </g>
                       );
                     })}
+
+                    {/* el donut hole f nos el pie chart — bywarri el total */}
                     <circle cx="70" cy="70" r="25" fill="#f4ede3" />
                     <text x="70" y="67" textAnchor="middle" fill="#3B1F0F" fontSize="11" fontWeight="bold">{totalProjects}</text>
                     <text x="70" y="78" textAnchor="middle" fill="#6F4E37" fontSize="7">approved</text>
                   </svg>
 
+                  {/* el tooltip byet3amel fo2 el hovered slice */}
                   {hoveredSlice && (() => {
                     const s = slices.find((sl) => sl.id === hoveredSlice);
                     return s ? (
@@ -1066,6 +1226,7 @@ function Dashboard() {
                   })()}
                 </div>
 
+                {/* el legend el so3'ayar ta7t el chart (dots + category names) */}
                 <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", justifyContent: "center", maxHeight: "42px", overflowY: "auto" }}>
                   {slices.map((slice) => (
                     <span key={slice.id} style={{

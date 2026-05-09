@@ -1,13 +1,6 @@
 import { db } from "../firebase.js"
 
-import {
-  doc,
-  getDoc,
-  collection,
-  query,
-  where,
-  getDocs,
-  updateDoc
+import {doc, getDoc,collection,query,where,getDocs,updateDoc
 } from "firebase/firestore"
 
 async function getUser(uid) {
