@@ -14,9 +14,6 @@ import {
   FaShare, FaFlag, FaTrash, FaEdit
 } from "react-icons/fa";
 
-// ===========================
-// SHARED CIRCLE BUTTON STYLE
-// ===========================
 const circleBtn = {
   background: "var(--bg-card)",
   border: "1.5px solid var(--border)",
@@ -39,9 +36,6 @@ const smallCircleBtn = {
   fontSize: 11,
 };
 
-// ===========================
-// STATUS BADGE
-// ===========================
 function StatusBadge({ status }) {
   const styles = {
     pending:  { background: "var(--warning-bg)",  color: "var(--warning-text)", border: "1px solid var(--border)" },
@@ -64,9 +58,6 @@ function StatusBadge({ status }) {
   );
 }
 
-// ===========================
-// STAR RATING
-// ===========================
 export function StarRating({ value, onChange }) {
   const [hovered, setHovered] = useState(0);
   return (
@@ -84,9 +75,6 @@ export function StarRating({ value, onChange }) {
   );
 }
 
-// ===========================
-// REPORT MODAL
-// ===========================
 function ReportModal({ target, onClose, onSubmit, submitting }) {
   const [reason, setReason] = useState("");
 
@@ -181,9 +169,6 @@ function ReportModal({ target, onClose, onSubmit, submitting }) {
   );
 }
 
-// ===========================
-// AUTHOR CARD (inside modal)
-// ===========================
 export function AuthorCard({ project, onBack }) {
   const [authorData, setAuthorData] = useState(null);
   const [loadingAuthor, setLoadingAuthor] = useState(true);
@@ -226,7 +211,6 @@ export function AuthorCard({ project, onBack }) {
           alignItems: "flex-start",
           gap: "clamp(20px, 4vw, 52px)",
         }}>
-          {/* Avatar */}
           <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "8px" }}>
             {avatar
               ? <img src={avatar} alt={name} style={{
@@ -253,7 +237,6 @@ export function AuthorCard({ project, onBack }) {
             }
           </div>
 
-          {/* Info */}
           <div style={{ flex: 1, minWidth: "200px", display: "flex", flexDirection: "column", gap: "18px" }}>
             <h2 style={{
               fontFamily: "'Times New Roman', Times, serif",
@@ -321,9 +304,6 @@ export function AuthorCard({ project, onBack }) {
   );
 }
 
-// ===========================
-// PROJECT MODAL
-// ===========================
 export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, onDelete }) {
   const [view, setView] = useState("project");
   const [rating, setRating] = useState(0);
@@ -469,7 +449,6 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
       <div className="hg-pm-overlay" onClick={onClose}>
         <div className="hg-pm" onClick={(e) => e.stopPropagation()}>
 
-          {/* Top right buttons */}
           <div style={{
             position: "absolute", top: 14, right: 14,
             display: "flex", gap: 8, zIndex: 10, flexWrap: "wrap", justifyContent: "flex-end",
@@ -527,7 +506,6 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
               </div>
 
               <div className="hg-pm-body">
-                {/* Author row */}
                 <div className="hg-pm-author-row" onClick={() => setView("author")}>
                   {avatar
                     ? <img src={avatar} alt={author} className="hg-pm-author-avatar" />
@@ -550,7 +528,6 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
                   </div>
                 )}
 
-                {/* Actions */}
                 <div className="hg-pm-actions" style={{ flexWrap: "wrap", gap: 8 }}>
                   <a href={github} target="_blank" rel="noreferrer" className="hg-pm-github-btn">
                     <FaGithub /> View on GitHub
@@ -594,7 +571,6 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
                   )}
                 </div>
 
-                {/* Rating & Comments */}
                 {(!project.status || project.status === "approved") && (
                   <>
                     <div className="hg-pm-comment-section">
@@ -713,9 +689,6 @@ export function ProjectModal({ project, bookmarked, onToggleBookmark, onClose, o
   );
 }
 
-// ===========================
-// PROJECT CARD
-// ===========================
 export function ProjectCard({ project, onOpen, bookmarked, onToggleBookmark, showStatus }) {
   const [authorName, setAuthorName] = useState("");
   const [authorPhoto, setAuthorPhoto] = useState(null);

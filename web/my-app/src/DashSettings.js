@@ -13,7 +13,7 @@ const DEFAULTS = {
   notifyOnReport: true,
   contactOpen: true,
   suspensionDuration: 7,
-  suspensionUnit: "days", // "seconds" | "minutes" | "hours" | "days"
+  suspensionUnit: "days", 
 }
 
 async function getSettings() {
@@ -22,7 +22,6 @@ async function getSettings() {
     if (!snap.exists()) return DEFAULTS
     const data = snap.data()
 
-    // Migrate old key → new key for existing Firestore docs
     if (data.maxProjectsPerUser !== undefined && data.maxProjectsPerUserPerDay === undefined) {
       data.maxProjectsPerUserPerDay = data.maxProjectsPerUser
       delete data.maxProjectsPerUser
@@ -40,7 +39,6 @@ function listenSettings(callback) {
     (snap) => {
       if (snap.exists()) {
         const data = snap.data()
-        // Migrate old key on live updates too
         if (data.maxProjectsPerUser !== undefined && data.maxProjectsPerUserPerDay === undefined) {
           data.maxProjectsPerUserPerDay = data.maxProjectsPerUser
           delete data.maxProjectsPerUser
@@ -56,7 +54,6 @@ function listenSettings(callback) {
 
 async function updateSettings(settings) {
   try {
-    // Always persist under the new key; drop the old one if it's somehow still present
     const cleaned = { ...settings }
     if ("maxProjectsPerUser" in cleaned) {
       cleaned.maxProjectsPerUserPerDay = cleaned.maxProjectsPerUserPerDay ?? cleaned.maxProjectsPerUser
@@ -69,12 +66,6 @@ async function updateSettings(settings) {
   }
 }
 
-/**
- * Returns how many projects the given user has uploaded today (UTC date).
- * Reads from: users/{uid}/uploadActivity/daily  →  { count, date }
- *
- * Returns 0 if no record exists or the stored date is not today.
- */
 async function getDailyProjCount(uid) {
   try {
     const today = new Date().toISOString().slice(0, 10) // "YYYY-MM-DD"
@@ -88,10 +79,6 @@ async function getDailyProjCount(uid) {
   }
 }
 
-/**
- * Increments the user's daily upload counter.
- * Call this AFTER a project has been successfully added to Firestore.
- */
 async function incrementDailyProjCount(uid) {
   try {
     const today = new Date().toISOString().slice(0, 10)
@@ -104,20 +91,10 @@ async function incrementDailyProjCount(uid) {
       await setDoc(ref, { count: (snap.data().count ?? 0) + 1, date: today }, { merge: true })
     }
   } catch {
-    // Non-fatal — the project was already saved; just log silently
     console.warn("Failed to increment daily upload count for", uid)
   }
 }
 
-/**
- * Converts a duration + unit into milliseconds.
- * Use this when suspending a user to calculate their suspendedUntil timestamp.
- *
- * Example:
- *   const settings = await getSettings()
- *   const ms = getSuspensionMs(settings.suspensionDuration, settings.suspensionUnit)
- *   const suspendedUntil = new Date(Date.now() + ms)
- */
 function getSuspensionMs(duration, unit) {
   const n = Number(duration) || 0
   switch (unit) {
@@ -129,15 +106,6 @@ function getSuspensionMs(duration, unit) {
   }
 }
 
-/**
- * Pre-checks whether a user is allowed to open the upload modal.
- * Call this BEFORE showing the modal to give instant feedback.
- *
- * Returns one of:
- *   "ok"                    — user can upload
- *   "uploads-closed"        — admin disabled uploads globally
- *   "daily-limit-reached"   — user has hit their daily cap
- */
 async function checkUploadEligibility(uid) {
   try {
     const [settings, dailyCount] = await Promise.all([
@@ -149,7 +117,7 @@ async function checkUploadEligibility(uid) {
     if (dailyCount >= limit) return "daily-limit-reached"
     return "ok"
   } catch {
-    return "ok" // fail open — don't block the user on a transient error
+    return "ok" 
   }
 }
 

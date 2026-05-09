@@ -17,7 +17,6 @@ export function useFilters(projects) {
 
   const [search, setSearchState] = useState(searchParams.get("search") || "");
 
-  // Config-driven options from Firestore
   const [configOptions, setConfigOptions] = useState({
     tags: [],
     categories: [],
@@ -36,7 +35,6 @@ export function useFilters(projects) {
     });
   }, []);
 
-  // Sync filters + search to URL
   useEffect(() => {
     const params = {};
     if (search) params.search = search;
@@ -85,7 +83,6 @@ export function useFilters(projects) {
 
   const isSearchOrFilter = search.trim() !== "" || hasActiveFilters;
 
-  // Use config techStacks if available, fall back to deriving from projects
   const allStacks = useMemo(() => {
     if (configOptions.techStacks.length > 0) return [...configOptions.techStacks].sort();
     const set = new Set();
@@ -105,7 +102,6 @@ export function useFilters(projects) {
     return [...new Set(projects.map((p) => p.category).filter(Boolean))].sort();
   }, [projects, configOptions.categories]);
 
-  // Fuse.js smart search
   const fuse = useMemo(() => new Fuse(projects, {
       keys: [
     { name: "title",       weight: 0.4  },

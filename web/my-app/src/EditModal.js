@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import "./uploadmodal.css"; // reuse the same styles
+import "./uploadmodal.css"; 
 import { FaGithub, FaImage, FaChevronLeft, FaChevronRight, FaCheck } from "react-icons/fa";
 import { updProj } from "./projects.js";
 import { getUploadOptions } from "./configs.js";
@@ -24,7 +24,6 @@ function EditModal({ project, onClose, onUpdated }) {
   const [category, setCategory] = useState(project.category ?? "");
   const [techStack, setTechStack] = useState(project.stack ?? []);
 
-  // Image: keep track of both the existing URL and any new file the user picks
   const [newImageFile, setNewImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(project.imgUrl ?? null);
 
@@ -36,7 +35,6 @@ function EditModal({ project, onClose, onUpdated }) {
   const [options, setOptions] = useState({ tags: [], categories: [], techStacks: [] });
   const [loadingOptions, setLoadingOptions] = useState(true);
 
-  // Ownership guard — silently close if the current user isn't the project owner
   useEffect(() => {
     if (user && project.userId && user.uid !== project.userId) {
       onClose();
@@ -97,7 +95,6 @@ function EditModal({ project, onClose, onUpdated }) {
       if (!category) e.category = "Please select a category";
       if (techStack.length === 0) e.techStack = "Select at least one technology";
     }
-    // Step 2: image is optional to re-upload — existing imgUrl is kept if no new file
     return e;
   };
 
@@ -116,7 +113,6 @@ function EditModal({ project, onClose, onUpdated }) {
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      // Only upload to Cloudinary if the user picked a new image
       let imgUrl = project.imgUrl;
       if (newImageFile) {
         imgUrl = await uploadToCloudinary(newImageFile);
@@ -130,13 +126,13 @@ function EditModal({ project, onClose, onUpdated }) {
         category,
         stack: techStack,
         imgUrl,
-        status: "pending", // triggers admin re-review
+        status: "pending", 
       });
 
       if (result === "upd-ok") {
         setSuccess(true);
         setTimeout(() => {
-          onUpdated?.(); // let parent know to refetch/refresh
+          onUpdated?.(); 
           onClose();
         }, 2000);
       } else {
@@ -284,7 +280,6 @@ function EditModal({ project, onClose, onUpdated }) {
                 </div>
               )}
 
-              {/* Step 2 — Media */}
               {step === 2 && (
                 <div className="um-step-content">
                   <div className="um-field">
@@ -328,7 +323,6 @@ function EditModal({ project, onClose, onUpdated }) {
           )}
         </div>
 
-        {/* Footer */}
         {!success && (
           <div className="um-footer">
             {step > 0 ? (

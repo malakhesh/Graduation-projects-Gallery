@@ -1,4 +1,3 @@
-// ResetPassword.jsx
 import { useState } from "react";
 
 export default function ResetPassword() {
@@ -7,7 +6,6 @@ export default function ResetPassword() {
   const [status, setStatus] = useState(null);
   const [message, setMessage] = useState("");
 
-  // Get token from URL: /reset-password?token=abc123
   const token = new URLSearchParams(window.location.search).get("token");
 
   const handleSubmit = async (e) => {

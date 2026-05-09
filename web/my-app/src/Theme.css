@@ -1,7 +1,4 @@
-/* ============================================================
-   THEME.CSS  —  Import this FIRST in your main entry file
-   e.g. in index.js: import './theme.css';
-   ============================================================ */
+
 
 /* ── LIGHT (default) ── */
 :root {
@@ -240,9 +237,6 @@
 }
 
 
-/* ===========================
-   SEAMLESS THEME TRANSITION
-=========================== */
 *,
 *::before,
 *::after {

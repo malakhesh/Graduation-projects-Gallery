@@ -204,9 +204,6 @@ function Navbar({ isAdmin }) {
   );
 }
 
-// ===========================
-// PROJECT MANAGEMENT SECTION
-// ===========================
 function ProjectManagement({ user }) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -376,9 +373,6 @@ function ProjectManagement({ user }) {
   );
 }
 
-// ===========================
-// THEME SECTION
-// ===========================
 const THEME_OPTIONS = [
   {
     value: "light",
@@ -535,9 +529,6 @@ function ThemeSection() {
   );
 }
 
-// ===========================
-// SECTIONS CONFIG
-// ===========================
 const SECTIONS = [
   { key: "theme",    label: "Appearance",        icon: <FaPalette /> },
   { key: "projects", label: "Project Management", icon: <FaFolderOpen /> },

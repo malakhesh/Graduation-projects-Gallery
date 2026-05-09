@@ -22,11 +22,8 @@ const rand = (arr) => arr[Math.floor(Math.random() * arr.length)]
 const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min
 const randRatings = () => Array.from({ length: randInt(2, 18) }, () => randInt(1, 5))
 
-// Unsplash images matched to each project topic
-// Format: https://images.unsplash.com/photo-{id}?w=800&h=450&fit=crop
 const PROJECTS = [
 
-  // ── Business ───────────────────────────────────────────────
   {
     title: "Tashgheel",
     desc: "A job board built for the Egyptian market. Companies post vacancies and fresh graduates can apply, upload CVs, and track their application status. Built this because finding jobs here still happens mostly through connections and we wanted to change that.",
@@ -108,7 +105,6 @@ const PROJECTS = [
     imgUrl: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=800&h=450&fit=crop", // insurance/handshake
   },
 
-  // ── Education ──────────────────────────────────────────────
   {
     title: "Modhakra",
     desc: "Study group platform for university students. Create a group for your course, share notes, post questions, and do live quiz rounds together before exams. We literally used it while building it during finals.",
@@ -190,7 +186,6 @@ const PROJECTS = [
     imgUrl: "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&h=450&fit=crop", // mentorship/meeting
   },
 
-  // ── E-commerce ─────────────────────────────────────────────
   {
     title: "Dakkany",
     desc: "Online storefront builder for Egyptian small sellers who currently only sell through Instagram DMs. They get a shareable link, a product catalog, and a simple orders inbox — no technical knowledge needed.",
@@ -272,7 +267,6 @@ const PROJECTS = [
     imgUrl: "https://images.unsplash.com/photo-1591769225440-811ad7d6eab2?w=800&h=450&fit=crop", // return/package
   },
 
-  // ── Entertainment ──────────────────────────────────────────
   {
     title: "Filmak",
     desc: "Movie and series tracker for Arabic-speaking users. Log what you've watched, rate it, and get recommendations based on your history. Has a 'watch tonight' feature that picks something based on your mood.",
@@ -354,7 +348,6 @@ const PROJECTS = [
     imgUrl: "https://images.unsplash.com/photo-1593359677879-a4bb92f4d309?w=800&h=450&fit=crop", // TV/streaming
   },
 
-  // ── Blog ───────────────────────────────────────────────────
   {
     title: "Maqal",
     desc: "Arabic-first blogging platform with a clean distraction-free editor. Writers publish articles, build a following, and optionally monetize through a monthly subscription. A Medium but in Arabic.",
@@ -449,7 +442,7 @@ async function seed() {
 
     await addDoc(collection(db, "projects"), {
       title: p.title,
-      description: p.desc,  // <-- changed from desc: p.desc
+      description: p.desc, 
       userId,
       year,
       stack: p.stack,

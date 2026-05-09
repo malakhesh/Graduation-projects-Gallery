@@ -18,7 +18,6 @@ function Reviewprojects({ onBack }) {
       const role = uid ? await checkRole(uid) : null;
       setUserRole(role);
 
-      // جلب الـ 3 أنواع مع بعض
       const [pendingSnap, approvedSnap, rejectedSnap] = await Promise.all([
         getDocs(query(collection(db, "projects"), where("status", "==", "pending"))),
         getDocs(query(collection(db, "projects"), where("status", "==", "approved"))),
@@ -56,7 +55,6 @@ function Reviewprojects({ onBack }) {
   return (
     <div className="rp-page">
 
-      {/* Header */}
       <div className="rp-header">
         <button className="rp-back-btn" onClick={onBack}>← Back</button>
         <h1 className="rp-title">Projects to Review</h1>
@@ -67,7 +65,6 @@ function Reviewprojects({ onBack }) {
         </div>
       </div>
 
-      {/* Filter Buttons */}
       <div className="rp-filter-row">
         <button
           className={`rp-filter-btn ${filter === "pending" ? "rp-filter-active rp-filter-active-pending" : ""}`}
@@ -83,7 +80,6 @@ function Reviewprojects({ onBack }) {
         >❌ Rejected</button>
       </div>
 
-      {/* Loading */}
       {loading && (
         <div className="rp-loading">
           <div className="rp-spinner" />
@@ -91,15 +87,12 @@ function Reviewprojects({ onBack }) {
         </div>
       )}
 
-      {/* No Permission */}
       {!loading && userRole !== "admin" && (
         <div className="rp-empty">
           <p>⛔ You don't have permission to review projects.</p>
         </div>
       )}
 
-      {/* Empty State */}
-{/* Empty State */}
       {!loading && userRole === "admin" && displayed.length === 0 && (
         <div style={{
           display: "flex",
@@ -132,7 +125,6 @@ function Reviewprojects({ onBack }) {
         </div>
       )}
 
-      {/* Cards */}
       {!loading && userRole === "admin" && displayed.length > 0 && (
         <div className="rp-grid">
           {displayed.map((project) => {
@@ -182,7 +174,6 @@ function Reviewprojects({ onBack }) {
                   )}
                 </div>
 
-                {/* Pending → Approve / Reject */}
                 {status === "pending" && (
                   <div className="rp-actions">
                     <button className="rp-btn-approve" onClick={() => handleStatus(project.id, "approved")}>
@@ -194,7 +185,6 @@ function Reviewprojects({ onBack }) {
                   </div>
                 )}
 
-                {/* Approved → Undo + Reject */}
                 {status === "approved" && (
                   <div className="rp-actions">
                     <button className="rp-btn-undo" onClick={() => handleStatus(project.id, "pending")}>
@@ -206,7 +196,6 @@ function Reviewprojects({ onBack }) {
                   </div>
                 )}
 
-                {/* Rejected → Undo + Approve */}
                 {status === "rejected" && (
                   <div className="rp-actions">
                     <button className="rp-btn-undo" onClick={() => handleStatus(project.id, "pending")}>

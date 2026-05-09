@@ -22,7 +22,6 @@ import MaintenancePage from './MaintenancePage';
 import RegistrationClosed from './RegistrationClosed';
 import { initTheme } from './applyTheme.js';
 
-// Apply theme immediately on load, before any component renders
 initTheme();
 
 export const RoleContext = createContext(null);

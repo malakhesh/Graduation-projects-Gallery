@@ -11,7 +11,6 @@ function Suspended() {
   const [timeLeft, setTimeLeft] = useState(null)
   const [expired, setExpired] = useState(false)
 
-  // Live-listen to the user's Firestore doc so if admin lifts suspension it reflects instantly
   useEffect(() => {
     if (!user) return
     const unsub = onSnapshot(doc(db, "users", user.uid), (snap) => {
@@ -23,7 +22,6 @@ function Suspended() {
     return () => unsub()
   }, [user])
 
-  // Countdown timer
   useEffect(() => {
     if (!suspendedUntil) return
 
@@ -76,7 +74,6 @@ function Suspended() {
         gap: "24px",
       }}>
 
-        {/* Icon */}
         <div style={{
           width: "64px",
           height: "64px",
@@ -93,7 +90,6 @@ function Suspended() {
           </svg>
         </div>
 
-        {/* Title */}
         <div>
           <p style={{
             fontFamily: "'Times New Roman', Times, serif",
@@ -118,7 +114,6 @@ function Suspended() {
 
         <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: 0 }} />
 
-        {/* Timer */}
         <div>
           <p style={{
             fontSize: "12px",
@@ -189,7 +184,6 @@ function Suspended() {
 
         <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: 0 }} />
 
-        {/* Violations */}
         {suspendReasons.length > 0 && (
           <div>
             <p style={{
@@ -244,7 +238,6 @@ function Suspended() {
 
         <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: 0 }} />
 
-        {/* Logout */}
         <button
           onClick={logOut}
           style={{

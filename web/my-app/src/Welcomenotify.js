@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 
-/* ─────────────────────────────────────────
-   GOOGLE FONT INJECTION
-   Added: Dancing Script for the calligraphic signature
-───────────────────────────────────────── */
 const FONT_HREF =
   "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,400&family=EB+Garamond:wght@400;500&family=Great+Vibes&display=swap";
 
@@ -33,9 +29,6 @@ function ensureFont() {
   }
 }
 
-/* ─────────────────────────────────────────
-   PAGE DEFINITIONS
-───────────────────────────────────────── */
 const PAGES = [
   {
     key: "welcome",
@@ -222,7 +215,6 @@ const PAGES = [
           your work, and follow our community guidelines.
         </p>
 
-        {/* ── Calligraphic signature ── */}
         <div
           style={{
             borderTop: "1px solid rgba(0,0,0,0.07)",
@@ -254,9 +246,6 @@ const PAGES = [
 
 const TOTAL = PAGES.length;
 
-/* ─────────────────────────────────────────
-   ROW HELPER
-───────────────────────────────────────── */
 function Row({ S, icon, children, iconStyle = {} }) {
   return (
     <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
@@ -266,9 +255,6 @@ function Row({ S, icon, children, iconStyle = {} }) {
   );
 }
 
-/* ─────────────────────────────────────────
-   PARTICLE CANVAS
-───────────────────────────────────────── */
 function ParticleCanvas({ palette }) {
   const canvasRef = useRef(null);
   const frameRef = useRef(null);
@@ -343,9 +329,6 @@ function ParticleCanvas({ palette }) {
   );
 }
 
-/* ─────────────────────────────────────────
-   MAIN MODAL
-───────────────────────────────────────── */
 export default function WelcomeModal({ onClose }) {
   const [current, setCurrent] = useState(0);
   const [visible, setVisible] = useState(false);
@@ -362,9 +345,8 @@ export default function WelcomeModal({ onClose }) {
   const navigate = useCallback((dir) => {
     setCurrent((prev) => {
       const next = prev + dir;
-      if (next < 0) return prev; // clamp at start
+      if (next < 0) return prev;
       if (next >= TOTAL) {
-        // close on forward past last page
         setVisible(false);
         setTimeout(onClose, 300);
         return prev;
@@ -374,7 +356,6 @@ export default function WelcomeModal({ onClose }) {
     });
   }, [onClose]);
 
-  // ── Keyboard navigation ──────────────────
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "ArrowRight" || e.key === "ArrowDown") {
@@ -396,7 +377,6 @@ export default function WelcomeModal({ onClose }) {
     setTimeout(onClose, 300);
   };
 
-  /* ── shared style tokens ── */
   const S = {
     text: {
       fontSize: 15.5,
@@ -512,7 +492,6 @@ export default function WelcomeModal({ onClose }) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Spotlight glow */}
         <div
           style={{
             position: "absolute",
@@ -525,7 +504,6 @@ export default function WelcomeModal({ onClose }) {
           }}
         />
 
-        {/* Close button */}
         <button
           style={{
             position: "absolute",
@@ -550,7 +528,6 @@ export default function WelcomeModal({ onClose }) {
           ✕
         </button>
 
-        {/* Progress dots */}
         <div
           style={{
             display: "flex",
@@ -581,7 +558,6 @@ export default function WelcomeModal({ onClose }) {
           ))}
         </div>
 
-        {/* Page body */}
         <div
           key={contentKey}
           style={{
@@ -595,7 +571,7 @@ export default function WelcomeModal({ onClose }) {
             animation: "modalFadeUp 0.35s ease forwards",
           }}
         >
-          {/* Subtitle */}
+
           <p
             style={{
               fontSize: 12,
@@ -610,7 +586,6 @@ export default function WelcomeModal({ onClose }) {
             {page.subtitle}
           </p>
 
-          {/* Title */}
           <h2
             style={{
               fontFamily: "'Playfair Display', serif",
@@ -627,7 +602,6 @@ export default function WelcomeModal({ onClose }) {
           {page.content(S)}
         </div>
 
-        {/* Footer */}
         <div
           style={{
             display: "flex",

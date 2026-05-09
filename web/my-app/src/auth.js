@@ -177,10 +177,7 @@ async function getBookmarks(uid) {
   } catch { return "bookmarks-fail" }
 }
 
-// ── Timed Suspension ──────────────────────────────────────────────────────────
 
-// Reads suspensionDuration + suspensionUnit from site settings and applies them
-// ONLY to the new suspension. Existing suspendedUntil on other users is never touched.
 async function suspendUser(uid) {
   try {
     const settings       = await getSettings()
@@ -196,7 +193,7 @@ async function suspendUser(uid) {
   } catch { return "suspend-fail" }
 }
 
-// ── Violations & Status ───────────────────────────────────────────────────────
+
 
 async function checkStatus(uid) {
   try {
@@ -206,10 +203,8 @@ async function checkStatus(uid) {
 
     if (data.status === "suspended") {
 
-      // suspended but no suspendedUntil — set it now using current settings
       if (!data.suspendedUntil) {
         await suspendUser(uid)
-        // re-fetch to get the freshly written suspendedUntil
         const fresh = await getDoc(doc(db, "users", uid))
         const freshData = fresh.data()
         return {
@@ -220,7 +215,6 @@ async function checkStatus(uid) {
         }
       }
 
-      // auto-unsuspend if time is up
       const now   = new Date()
       const until = data.suspendedUntil?.toDate
         ? data.suspendedUntil.toDate()
@@ -262,7 +256,6 @@ async function addViolation(targetUid, reason, adminRole) {
 
     await updateDoc(userRef, { violations, suspendReasons, status })
 
-    // suspendUser reads duration from settings — old suspensions are unaffected
     if (violations >= 3) {
       await suspendUser(targetUid)
     }

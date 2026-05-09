@@ -103,7 +103,7 @@ function Navbar({ isAdmin, photoURL }) {
           </Link>
         </div>
         <div className="pf-navbar-right">
-          {/* Bell — mobile only */}
+
           <div ref={mobileNotifRef} className="pf-mobile-bell-wrapper">
             <button className={`pf-mobile-bell${notifOpen ? " pf-mobile-bell-active" : ""}`} onClick={handleBellClick} aria-label="Notifications">
               <span className="pf-notif-wrapper">
@@ -149,7 +149,6 @@ function Navbar({ isAdmin, photoURL }) {
         </div>
       </nav>
 
-      {/* Sidebar overlay */}
       {sidebarOpen && <div className="pf-sidebar-overlay" onClick={closeSidebar} />}
       <div className={`pf-admin-sidebar${sidebarOpen ? " pf-sidebar-open" : ""}`}>
         <div className="pf-sidebar-header">

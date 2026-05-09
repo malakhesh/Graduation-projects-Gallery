@@ -434,7 +434,6 @@ function DashboardSettings({ onBack }) {
     })
   }, [])
 
-  // ── أغلق الـ sidebar لما تضغط بره ──
   useEffect(() => {
     if (!sidebarOpen) return
     const handler = (e) => {
@@ -510,7 +509,6 @@ function DashboardSettings({ onBack }) {
 
       <Toast toast={toast} />
 
-      {/* ── Overlay: بس لما السيدبار مفتوح ── */}
       {isMobile && sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
@@ -522,7 +520,6 @@ function DashboardSettings({ onBack }) {
         />
       )}
 
-      {/* ── Hamburger ── */}
       <button
         className="ds-hamburger-btn"
         onClick={() => setSidebarOpen((v) => !v)}
@@ -554,7 +551,6 @@ function DashboardSettings({ onBack }) {
         background: "linear-gradient(160deg, #f0e5d8 0%, #dcc4a8 50%, #c9a882 100%)",
       }}>
 
-        {/* Sidebar */}
         <aside
           id="sidebar"
           className={`ds-sidebar${sidebarOpen ? " open" : ""}`}
@@ -639,7 +635,6 @@ function DashboardSettings({ onBack }) {
           </button>
         </aside>
 
-        {/* Main content */}
         <main
           className="ds-main"
           style={{

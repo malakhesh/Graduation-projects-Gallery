@@ -91,22 +91,17 @@ function MaintenancePage() {
         </Link>
       </nav>
 
-      {/* Main */}
       <main className="pf-main-content">
         <div className="pf-card mp-card">
 
-          {/* Icon bubble */}
           <div className="mp-icon-bubble">
             <FaTools />
           </div>
 
-          {/* Title */}
           <h1 className="mp-title">Under Maintenance</h1>
 
-          {/* Divider */}
           <div className="pf-divider" style={{ margin: "0 auto 20px" }} />
 
-          {/* Body */}
           <p className="mp-body">
             Graduation Gallery is currently undergoing maintenance.
           </p>
@@ -114,7 +109,6 @@ function MaintenancePage() {
             We'll be back shortly. Thank you for your patience.
           </p>
 
-          {/* Button */}
           <Link to="/login" className="pf-social-btn" style={{ fontSize: "13px", fontWeight: "600", padding: "10px 28px" }}>
             Back to Login
           </Link>

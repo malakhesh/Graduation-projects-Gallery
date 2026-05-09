@@ -1,4 +1,3 @@
-// messages.js — Firebase backend for contact messages
 import { db } from "./firebase.js";
 import {
   collection,

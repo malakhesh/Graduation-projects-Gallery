@@ -4,9 +4,6 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase.js";
 
-// ===========================
-// SEND A NOTIFICATION
-// ===========================
 export async function sendNotif(uid, { type, message, projectId, clickable }) {
   try {
     await addDoc(collection(db, "users", uid, "notifications"), {
@@ -24,9 +21,6 @@ export async function sendNotif(uid, { type, message, projectId, clickable }) {
   }
 }
 
-// ===========================
-// WELCOME NOTIFICATION
-// ===========================
 export async function createWelcomeNotif(uid) {
   try {
     await addDoc(collection(db, "users", uid, "notifications"), {
@@ -44,9 +38,6 @@ export async function createWelcomeNotif(uid) {
   }
 }
 
-// ===========================
-// MARK ALL AS SEEN (red dot goes away)
-// ===========================
 export async function markAllSeen(uid) {
   try {
     const q = query(collection(db, "users", uid, "notifications"));
@@ -64,9 +55,6 @@ export async function markAllSeen(uid) {
   }
 }
 
-// ===========================
-// MARK ONE AS READ (highlight goes away on clickable)
-// ===========================
 export async function markRead(uid, notifId) {
   try {
     await updateDoc(doc(db, "users", uid, "notifications", notifId), { read: true });
@@ -76,9 +64,6 @@ export async function markRead(uid, notifId) {
   }
 }
 
-// ===========================
-// REAL-TIME LISTENER
-// ===========================
 export function listenNotifs(uid, callback) {
   const q = query(
     collection(db, "users", uid, "notifications"),

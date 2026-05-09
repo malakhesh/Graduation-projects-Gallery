@@ -5,21 +5,19 @@ import { getQwenRecommendations } from "../recommendationService.js"
 
 const router = express.Router()
 
-// Helper: calculate average rating from ratings array or userRatings map
 const getAverageRating = (project) => {
-  // Try userRatings map first (e.g. { userId: ratingValue })
+
   if (project.userRatings && Object.keys(project.userRatings).length > 0) {
     const values = Object.values(project.userRatings)
     return values.reduce((sum, v) => sum + v, 0) / values.length
   }
-  // Fall back to ratings array
+
   if (project.ratings && project.ratings.length > 0) {
     return project.ratings.reduce((sum, v) => sum + v, 0) / project.ratings.length
   }
   return 0
 }
 
-// Helper: return top N projects sorted by average rating (descending)
 const getTopRatedProjects = (projects, n = 10) => {
   return [...projects]
     .sort((a, b) => getAverageRating(b) - getAverageRating(a))
@@ -115,7 +113,6 @@ router.get("/:uid", async (req, res) => {
     console.log("viewedProjects:", viewedProjects)
     console.log("unseenProjects count:", unseenProjects.length)
 
-    // ✅ FIX: student has seen everything → fall back to top rated instead of empty
     if (unseenProjects.length === 0) {
       const topRated = getTopRatedProjects(allProjects, 10)
       return res.json({ 
@@ -145,7 +142,6 @@ router.get("/:uid", async (req, res) => {
       console.error("⚠️ AI failed, falling back to top-rated projects:", aiError.message)
     }
 
-    // AI failed or returned nothing → show top 10 highest-rated projects
     const topRated = getTopRatedProjects(allProjects, 10)
 
     res.json({ 

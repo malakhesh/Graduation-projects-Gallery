@@ -71,7 +71,6 @@ function RegistrationClosed() {
         }
       `}</style>
 
-      {/* Navbar */}
       <nav className="pf-navbar">
         <Link to="/" className="pf-navbar-logo">
           <FaGraduationCap className="pf-logo-icon" />
@@ -81,20 +80,15 @@ function RegistrationClosed() {
         </Link>
       </nav>
 
-      {/* Main */}
       <main className="pf-main-content">
         <div className="pf-card rc-card">
 
-          {/* Icon bubble */}
           <div className="rc-icon-bubble">🔒</div>
 
-          {/* Title */}
           <h1 className="rc-title">Registration Closed</h1>
 
-          {/* Divider */}
           <div className="pf-divider" style={{ margin: "0 auto 20px" }} />
 
-          {/* Body */}
           <p className="rc-body">
             New registrations are not being accepted at this time.
           </p>
@@ -102,7 +96,6 @@ function RegistrationClosed() {
             Please check back later or contact the administrator.
           </p>
 
-          {/* Button */}
           <Link to="/login" className="pf-social-btn" style={{ fontSize: "13px", fontWeight: "600", padding: "10px 28px" }}>
             Back to Login
           </Link>

@@ -459,7 +459,6 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
     const el = containerRef.current;
     if (!el) return;
 
-    // ── Trackpad / mouse wheel (horizontal) ──
     const handleWheel = (e) => {
       if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) return;
       e.preventDefault();
@@ -474,7 +473,6 @@ function RecommendedProjects({ uid, bookmarkedIds, onToggleBookmark, onOpenProje
       }
     };
 
-    // ── Touch swipe ──
     const handleTouchStart = (e) => {
       touchStartX.current = e.touches[0].clientX;
       touchStartY.current = e.touches[0].clientY;
